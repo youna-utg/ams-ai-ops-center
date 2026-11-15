@@ -82,13 +82,13 @@
             <button class="ds-button ds-button--primary" type="button" (click)="showToast('Primary Action을 실행했습니다.')">
               Primary
             </button>
-            <button class="ds-button ds-button--secondary" type="button">Secondary</button>
-            <button class="ds-button ds-button--outline" type="button">Outline</button>
-            <button class="ds-button ds-button--ghost" type="button">Ghost</button>
+            <button class="ds-button ds-button--secondary" type="button" (click)="showToast('Secondary Action을 실행했습니다.')">Secondary</button>
+            <button class="ds-button ds-button--outline" type="button" (click)="showToast('Outline Action을 실행했습니다.')">Outline</button>
+            <button class="ds-button ds-button--ghost" type="button" (click)="showToast('Ghost Action을 실행했습니다.')">Ghost</button>
             <button class="ds-button ds-button--danger" type="button" (click)="confirmationOpen.set(true)">
               Danger
             </button>
-            <button class="ds-icon-button" type="button" aria-label="더보기" title="더보기">
+            <button class="ds-icon-button" type="button" aria-label="더보기" title="더보기" (click)="showToast('추가 작업 메뉴를 확인했습니다.')">
               <app-icon name="more" [size]="18" />
             </button>
           </div>
@@ -97,23 +97,23 @@
         <article class="demo-card">
           <h4>Sizes</h4>
           <div class="demo-row demo-row--align-end">
-            <button class="ds-button ds-button--primary ds-button--small" type="button">Small</button>
-            <button class="ds-button ds-button--primary" type="button">Medium</button>
-            <button class="ds-button ds-button--primary ds-button--large" type="button">Large</button>
+            <button class="ds-button ds-button--primary ds-button--small" type="button" (click)="showToast('Small 버튼을 선택했습니다.')">Small</button>
+            <button class="ds-button ds-button--primary" type="button" (click)="showToast('Medium 버튼을 선택했습니다.')">Medium</button>
+            <button class="ds-button ds-button--primary ds-button--large" type="button" (click)="showToast('Large 버튼을 선택했습니다.')">Large</button>
           </div>
         </article>
 
         <article class="demo-card demo-card--full">
           <h4>States</h4>
           <div class="state-grid">
-            <div><small>Default</small><button class="ds-button ds-button--primary" type="button">Button</button></div>
-            <div><small>Hover</small><button class="ds-button ds-button--primary is-demo-hover" type="button">Button</button></div>
-            <div><small>Active</small><button class="ds-button ds-button--primary is-demo-active" type="button">Button</button></div>
+            <div><small>Default</small><button class="ds-button ds-button--primary" type="button" (click)="showToast('Default 상태입니다.')">Button</button></div>
+            <div><small>Hover</small><button class="ds-button ds-button--primary is-demo-hover" type="button" (click)="showToast('Hover 상태 예시입니다.')">Button</button></div>
+            <div><small>Active</small><button class="ds-button ds-button--primary is-demo-active" type="button" (click)="showToast('Active 상태 예시입니다.')">Button</button></div>
             <div><small>Disabled</small><button class="ds-button ds-button--primary" type="button" disabled>Button</button></div>
             <div>
               <small>Loading</small>
-              <button class="ds-button ds-button--primary" type="button" disabled>
-                <span class="button-spinner"></span>Loading
+              <button class="ds-button ds-button--primary" type="button" [disabled]="buttonLoading()" (click)="simulateButtonLoading()">
+                @if (buttonLoading()) { <span class="button-spinner"></span>Loading } @else { 실행 }
               </button>
             </div>
           </div>
@@ -141,8 +141,9 @@
           <span>Search Input</span>
           <span class="input-affix">
             <app-icon name="search" [size]="17" />
-            <input class="ds-input" type="search" placeholder="사용자 검색" />
+            <input class="ds-input" type="search" placeholder="사용자 검색" [value]="formSearch()" (input)="updateFormSearch($event)" />
           </span>
+          @if (searchPreview()) { <small class="field-success">{{ searchPreview() }}</small> }
         </label>
 
         <label class="ds-field">
@@ -202,13 +203,14 @@
           <input class="ds-input" type="date" value="2026-11-15" />
         </label>
 
-        <div class="ds-field ds-field--span-2">
+        <div class="ds-field ds-field--span-2" [class.ds-field--error]="!dateRangeValid()">
           <span>Date Range Picker</span>
           <div class="date-range">
-            <input class="ds-input" type="date" value="2026-11-01" aria-label="시작일" />
+            <input class="ds-input" type="date" [value]="startDate()" aria-label="시작일" (change)="updateDate('start', $event)" />
             <span>–</span>
-            <input class="ds-input" type="date" value="2026-11-15" aria-label="종료일" />
+            <input class="ds-input" type="date" [value]="endDate()" aria-label="종료일" (change)="updateDate('end', $event)" />
           </div>
+          @if (!dateRangeValid()) { <small>시작일은 종료일보다 늦을 수 없습니다.</small> }
         </div>
 
         <label class="ds-field ds-field--span-2">
@@ -216,10 +218,13 @@
           <textarea class="ds-input ds-textarea" placeholder="운영 메모를 입력하세요."></textarea>
         </label>
 
-        <label class="ds-field ds-field--error">
+        <label class="ds-field" [class.ds-field--error]="endpointSubmitted() && !endpointValid()" [class.ds-field--success]="endpointSubmitted() && endpointValid()">
           <span>Input Error</span>
-          <input class="ds-input" type="text" value="invalid endpoint" aria-invalid="true" />
-          <small>올바른 API Endpoint URL을 입력하세요.</small>
+          <input class="ds-input" type="url" [value]="endpointValue()" [attr.aria-invalid]="endpointSubmitted() && !endpointValid()" (input)="updateEndpoint($event)" />
+          <small [class.field-success]="endpointSubmitted() && endpointValid()">
+            {{ endpointSubmitted() && endpointValid() ? '사용 가능한 HTTPS Endpoint입니다.' : 'HTTPS Endpoint URL을 입력하세요.' }}
+          </small>
+          <button class="ds-button ds-button--outline ds-button--small" type="button" (click)="validateEndpoint()">검증</button>
         </label>
 
         <div class="choice-group">
@@ -283,7 +288,7 @@
         <article class="sample-card">
           <h4>Basic Card</h4>
           <p>관련 콘텐츠를 하나의 Surface로 묶는 기본 카드입니다.</p>
-          <button class="text-action" type="button">자세히 보기</button>
+          <button class="text-action" type="button" (click)="showToast('Basic Card 상세 정보를 열었습니다.')">자세히 보기</button>
         </article>
         <article class="sample-card sample-card--kpi">
           <div class="sample-card__top"><span>API Requests</span><app-icon name="usage" [size]="18" /></div>
@@ -351,7 +356,7 @@
             <table class="showcase-table">
               <thead>
                 <tr>
-                  <th class="check-cell"><input type="checkbox" aria-label="전체 행 선택" (change)="toggleAllRows($event)" /></th>
+                  <th class="check-cell"><input type="checkbox" aria-label="전체 행 선택" [checked]="allRowsSelected()" [indeterminate]="someRowsSelected()" (change)="toggleAllRows($event)" /></th>
                   <th>Product</th>
                   <th>Owner</th>
                   <th>Status</th>
@@ -387,7 +392,7 @@
             <button type="button" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
               <app-icon name="collapse" [size]="15" />
             </button>
-            @for (page of [1, 2]; track page) {
+            @for (page of pageNumbers(); track page) {
               <button type="button" [class.is-active]="currentPage() === page" (click)="goToPage(page)">{{ page }}</button>
             }
             <button type="button" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
@@ -449,23 +454,23 @@
       <div class="demo-grid demo-grid--2">
         <article class="demo-card">
           <h4>Tabs</h4>
-          <div class="ds-tabs" role="tablist">
+          <div class="ds-tabs" role="tablist" aria-label="Showcase Tabs" (keydown)="handleTabKey($event)">
             @for (tab of [{id: 'overview', label: 'Overview'}, {id: 'usage', label: 'Usage'}, {id: 'settings', label: 'Settings'}]; track tab.id) {
-              <button type="button" role="tab" [attr.aria-selected]="activeTab() === tab.id" [class.is-active]="activeTab() === tab.id" (click)="activeTab.set($any(tab.id))">{{ tab.label }}</button>
+              <button type="button" role="tab" [id]="'tab-' + tab.id" [attr.aria-controls]="'panel-' + tab.id" [attr.tabindex]="activeTab() === tab.id ? 0 : -1" [attr.aria-selected]="activeTab() === tab.id" [class.is-active]="activeTab() === tab.id" (click)="activeTab.set($any(tab.id))">{{ tab.label }}</button>
             }
           </div>
-          <div class="tab-panel">선택된 Tab: <strong>{{ activeTab() }}</strong></div>
+          <div class="tab-panel" role="tabpanel" [id]="'panel-' + activeTab()" [attr.aria-labelledby]="'tab-' + activeTab()">선택된 Tab: <strong>{{ activeTab() }}</strong></div>
         </article>
         <article class="demo-card">
           <h4>Breadcrumb</h4>
-          <nav class="demo-breadcrumb" aria-label="예시 경로"><a href="#showcase-navigation">AMS</a><app-icon name="chevron-right" [size]="14" /><a href="#showcase-navigation">AI Operations</a><app-icon name="chevron-right" [size]="14" /><strong>Providers</strong></nav>
+          <nav class="demo-breadcrumb" aria-label="예시 경로"><a href="/overview">AMS</a><app-icon name="chevron-right" [size]="14" /><a href="/providers-models">AI Operations</a><app-icon name="chevron-right" [size]="14" /><strong>Providers</strong></nav>
         </article>
         <article class="demo-card">
           <h4>Sidebar Menu</h4>
           <nav class="mini-sidebar">
-            <a href="#showcase-navigation" class="is-active"><app-icon name="overview" [size]="17" />Overview</a>
-            <a href="#showcase-navigation"><app-icon name="providers" [size]="17" />Providers</a>
-            <a href="#showcase-navigation"><app-icon name="settings" [size]="17" />Settings</a>
+            <a href="/overview" class="is-active"><app-icon name="overview" [size]="17" />Dashboard</a>
+            <a href="/providers-models"><app-icon name="providers" [size]="17" />Providers</a>
+            <a href="/settings"><app-icon name="settings" [size]="17" />Settings</a>
           </nav>
         </article>
         <article class="demo-card">
@@ -473,7 +478,7 @@
           <div class="dropdown-demo">
             <button class="ds-button ds-button--outline" type="button" [attr.aria-expanded]="dropdownOpen()" (click)="toggleDropdown()">Actions <app-icon name="chevron-down" [size]="14" /></button>
             @if (dropdownOpen()) {
-              <div class="dropdown-menu"><button type="button" (click)="showToast('Edit를 선택했습니다.')">Edit</button><button type="button">Duplicate</button><button type="button" class="danger">Delete</button></div>
+              <div class="dropdown-menu" role="menu"><button type="button" role="menuitem" (click)="chooseDropdownAction('Edit')">Edit</button><button type="button" role="menuitem" (click)="chooseDropdownAction('Duplicate')">Duplicate</button><button type="button" role="menuitem" class="danger" (click)="chooseDropdownAction('Delete')">Delete</button></div>
             }
           </div>
         </article>
@@ -512,7 +517,7 @@
           <h4>Toast & Tooltip</h4>
           <div class="demo-row">
             <button class="ds-button ds-button--primary" type="button" (click)="showToast()">Toast 표시</button>
-            <span class="tooltip-demo" tabindex="0">Tooltip 대상<span role="tooltip">운영 데이터에 대한 보조 설명입니다.</span></span>
+            <span class="tooltip-demo" tabindex="0" aria-describedby="showcase-tooltip">Tooltip 대상<span id="showcase-tooltip" role="tooltip">운영 데이터에 대한 보조 설명입니다.</span></span>
           </div>
         </article>
         <article class="demo-card">
@@ -541,7 +546,7 @@
           <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="sample-modal-title" (click)="$event.stopPropagation()">
             <header><div><h4 id="sample-modal-title">Provider 설정</h4><p>연결할 Provider의 기본 정보를 확인합니다.</p></div><button type="button" aria-label="Modal 닫기" (click)="modalOpen.set(false)"><app-icon name="close" [size]="18" /></button></header>
             <div class="dialog__body"><label class="ds-field"><span>Provider Name</span><input class="ds-input" value="OpenAI" /></label><label class="ds-field"><span>Default Model</span><select class="ds-input"><option>GPT-4.1</option><option>GPT-4o</option></select></label></div>
-            <footer><button class="ds-button ds-button--ghost" type="button" (click)="modalOpen.set(false)">취소</button><button class="ds-button ds-button--primary" type="button" (click)="modalOpen.set(false); showToast()">저장</button></footer>
+            <footer><button class="ds-button ds-button--ghost" type="button" [disabled]="modalSaving()" (click)="modalOpen.set(false)">취소</button><button class="ds-button ds-button--primary" type="button" [disabled]="modalSaving()" (click)="saveModal()">@if (modalSaving()) { <span class="button-spinner"></span>저장 중 } @else { 저장 }</button></footer>
           </section>
         </div>
       }
@@ -590,11 +595,13 @@
         </article>
         <article class="demo-card">
           <h4>Search & Filter</h4>
-          <div class="compact-toolbar"><label><app-icon name="search" [size]="16" /><input placeholder="Search..." /></label><button type="button"><app-icon name="filter" [size]="16" />Filter</button></div>
+          <div class="compact-toolbar"><label><app-icon name="search" [size]="16" /><input placeholder="Search..." [value]="compactSearch()" (input)="updateCompactSearch($event)" /></label><button type="button" [class.is-active]="compactFilterActive()" (click)="compactFilterActive.set(!compactFilterActive())"><app-icon name="filter" [size]="16" />Filter{{ compactFilterActive() ? ' · 1' : '' }}</button></div>
+          @if (compactSearch()) { <p class="interaction-result">"{{ compactSearch() }}" 검색 결과를 표시합니다.</p> }
         </article>
         <article class="demo-card">
           <h4>Date Range Selector</h4>
-          <div class="compact-date"><app-icon name="calendar" [size]="17" /><input type="date" value="2026-11-01" /><span>–</span><input type="date" value="2026-11-15" /></div>
+          <div class="compact-date" [class.is-error]="!dateRangeValid()"><app-icon name="calendar" [size]="17" /><input type="date" [value]="startDate()" (change)="updateDate('start', $event)" /><span>–</span><input type="date" [value]="endDate()" (change)="updateDate('end', $event)" /></div>
+          <p class="interaction-result">{{ dateRangeValid() ? startDate() + ' ~ ' + endDate() + ' 적용' : '날짜 범위를 확인하세요.' }}</p>
         </article>
       </div>
     </section>

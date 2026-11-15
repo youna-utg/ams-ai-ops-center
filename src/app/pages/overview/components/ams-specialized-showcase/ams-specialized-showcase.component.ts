@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnDestroy, computed, signal } from '@angular/core';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ChartComponent } from '../../../../shared/components/chart/chart.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
@@ -114,17 +114,27 @@ const PRESETS: Record<Exclude<PermissionPreset, 'Custom'>, string[]> = {
   templateUrl: './ams-specialized-showcase.component.html',
   styleUrl: './ams-specialized-showcase.component.scss',
 })
-export class AmsSpecializedShowcaseComponent {
+export class AmsSpecializedShowcaseComponent implements OnDestroy {
   protected readonly accounts = ACCOUNTS;
   protected readonly permissions = PERMISSIONS;
   protected readonly selectedAccountId = signal('luna');
-  protected readonly selectedPreset = signal<PermissionPreset>('Super Admin');
+  protected readonly accountPresets = signal<Record<string, PermissionPreset>>({
+    luna: 'Super Admin',
+    seoyeon: 'Product Manager',
+    doyun: 'System Admin',
+  });
   protected readonly accountPermissions = signal<Record<string, string[]>>({
     luna: [...PRESETS['Super Admin']],
     seoyeon: [...PRESETS['Product Manager']],
     doyun: [...PRESETS['System Admin']],
   });
   protected readonly apiKeyVisible = signal(false);
+  protected readonly permissionSaving = signal(false);
+  protected readonly permissionMessage = signal('');
+  protected readonly pricingActionMessage = signal('');
+  protected readonly severityFilter = signal<'All' | 'Info' | 'Warning' | 'Error'>('All');
+
+  private permissionTimer?: number;
 
   protected readonly selectedAccount = computed(
     () =>
@@ -135,6 +145,9 @@ export class AmsSpecializedShowcaseComponent {
 
   protected readonly selectedPermissions = computed(
     () => this.accountPermissions()[this.selectedAccountId()] ?? [],
+  );
+  protected readonly selectedPreset = computed(
+    () => this.accountPresets()[this.selectedAccountId()] ?? 'Custom',
   );
 
   protected readonly permissionGroups = computed(() =>
@@ -198,21 +211,21 @@ export class AmsSpecializedShowcaseComponent {
     },
   };
 
+  ngOnDestroy(): void {
+    if (this.permissionTimer) {
+      window.clearTimeout(this.permissionTimer);
+    }
+  }
+
   protected selectAccount(account: AdminAccount): void {
     this.selectedAccountId.set(account.id);
-    this.selectedPreset.set(
-      account.role === 'Super Admin' ||
-        account.role === 'System Admin' ||
-        account.role === 'Product Manager'
-        ? account.role
-        : 'Custom',
-    );
+    this.permissionMessage.set('');
   }
 
   protected setPreset(event: Event): void {
     const preset = (event.target as HTMLSelectElement)
       .value as PermissionPreset;
-    this.selectedPreset.set(preset);
+    this.updateSelectedPreset(preset);
 
     if (preset !== 'Custom') {
       this.updateSelectedPermissions(PRESETS[preset]);
@@ -225,21 +238,57 @@ export class AmsSpecializedShowcaseComponent {
       ? current.delete(permissionId)
       : current.add(permissionId);
     this.updateSelectedPermissions([...current]);
-    this.selectedPreset.set('Custom');
+    this.updateSelectedPreset('Custom');
   }
 
   protected selectAllPermissions(): void {
     this.updateSelectedPermissions(PERMISSIONS.map((item) => item.id));
-    this.selectedPreset.set('Custom');
+    this.updateSelectedPreset('Custom');
   }
 
   protected clearPermissions(): void {
     this.updateSelectedPermissions([]);
-    this.selectedPreset.set('Custom');
+    this.updateSelectedPreset('Custom');
   }
 
   protected hasPermission(permissionId: string): boolean {
     return this.selectedPermissions().includes(permissionId);
+  }
+
+  protected savePermissions(): void {
+    if (this.permissionSaving()) {
+      return;
+    }
+    this.permissionSaving.set(true);
+    this.permissionMessage.set('');
+    if (this.permissionTimer) {
+      window.clearTimeout(this.permissionTimer);
+    }
+    this.permissionTimer = window.setTimeout(() => {
+      this.permissionSaving.set(false);
+      this.permissionMessage.set(
+        `${this.selectedAccount().name} 계정 권한을 저장했습니다.`,
+      );
+    }, 900);
+  }
+
+  protected choosePricingAction(model: string): void {
+    this.pricingActionMessage.set(`${model} 가격 편집 화면을 준비했습니다.`);
+  }
+
+  protected cycleSeverityFilter(): void {
+    const filters: Array<'All' | 'Info' | 'Warning' | 'Error'> = [
+      'All',
+      'Info',
+      'Warning',
+      'Error',
+    ];
+    const next = (filters.indexOf(this.severityFilter()) + 1) % filters.length;
+    this.severityFilter.set(filters[next]);
+  }
+
+  protected logVisible(severity: string): boolean {
+    return this.severityFilter() === 'All' || this.severityFilter() === severity;
   }
 
   protected statusTone(status: string): StatusTone {
@@ -252,9 +301,18 @@ export class AmsSpecializedShowcaseComponent {
   }
 
   private updateSelectedPermissions(permissions: string[]): void {
+    this.permissionMessage.set('');
     this.accountPermissions.update((accounts) => ({
       ...accounts,
       [this.selectedAccountId()]: permissions,
+    }));
+  }
+
+  private updateSelectedPreset(preset: PermissionPreset): void {
+    this.permissionMessage.set('');
+    this.accountPresets.update((presets) => ({
+      ...presets,
+      [this.selectedAccountId()]: preset,
     }));
   }
 }

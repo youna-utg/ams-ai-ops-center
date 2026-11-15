@@ -1,4 +1,10 @@
-import { Component, OnDestroy, computed, signal } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  OnDestroy,
+  computed,
+  signal,
+} from '@angular/core';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ChartComponent } from '../../../../shared/components/chart/chart.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
@@ -74,9 +80,20 @@ export class ComponentShowcaseComponent implements OnDestroy {
   protected readonly selectedRows = signal<Set<number>>(new Set([1]));
   protected readonly currentPage = signal(1);
   protected readonly iconLiked = signal(false);
+  protected readonly buttonLoading = signal(false);
+  protected readonly modalSaving = signal(false);
+  protected readonly endpointValue = signal('invalid endpoint');
+  protected readonly endpointSubmitted = signal(false);
+  protected readonly formSearch = signal('');
+  protected readonly compactSearch = signal('');
+  protected readonly compactFilterActive = signal(false);
+  protected readonly startDate = signal('2026-11-01');
+  protected readonly endDate = signal('2026-11-15');
 
   private toastTimer?: number;
   private loadingTimer?: number;
+  private buttonTimer?: number;
+  private modalTimer?: number;
 
   protected readonly filteredRows = computed(() => {
     const query = this.tableSearch().trim().toLowerCase();
@@ -104,6 +121,34 @@ export class ComponentShowcaseComponent implements OnDestroy {
   protected readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.filteredRows().length / 3)),
   );
+  protected readonly pageNumbers = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
+  );
+  protected readonly allRowsSelected = computed(
+    () =>
+      this.filteredRows().length > 0 &&
+      this.filteredRows().every((row) => this.selectedRows().has(row.id)),
+  );
+  protected readonly someRowsSelected = computed(
+    () =>
+      !this.allRowsSelected() &&
+      this.filteredRows().some((row) => this.selectedRows().has(row.id)),
+  );
+  protected readonly endpointValid = computed(() => {
+    try {
+      const url = new URL(this.endpointValue());
+      return url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  });
+  protected readonly dateRangeValid = computed(
+    () => this.startDate() <= this.endDate(),
+  );
+  protected readonly searchPreview = computed(() => {
+    const query = this.formSearch().trim();
+    return query ? `"${query}" 검색 결과 3명` : '';
+  });
 
   protected readonly lineData: ChartData<'line'> = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -309,6 +354,20 @@ export class ComponentShowcaseComponent implements OnDestroy {
     if (this.loadingTimer) {
       window.clearTimeout(this.loadingTimer);
     }
+    if (this.buttonTimer) {
+      window.clearTimeout(this.buttonTimer);
+    }
+    if (this.modalTimer) {
+      window.clearTimeout(this.modalTimer);
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  protected closeOverlays(): void {
+    this.dropdownOpen.set(false);
+    this.multiSelectOpen.set(false);
+    this.modalOpen.set(false);
+    this.confirmationOpen.set(false);
   }
 
   protected toggleModel(model: string): void {
@@ -363,6 +422,36 @@ export class ComponentShowcaseComponent implements OnDestroy {
     );
   }
 
+  protected updateEndpoint(event: Event): void {
+    this.endpointValue.set((event.target as HTMLInputElement).value);
+    this.endpointSubmitted.set(false);
+  }
+
+  protected validateEndpoint(): void {
+    this.endpointSubmitted.set(true);
+    this.showToast(
+      this.endpointValid()
+        ? 'Endpoint 검증에 성공했습니다.'
+        : 'Endpoint 형식을 확인해 주세요.',
+    );
+  }
+
+  protected updateFormSearch(event: Event): void {
+    this.formSearch.set((event.target as HTMLInputElement).value);
+  }
+
+  protected updateCompactSearch(event: Event): void {
+    this.compactSearch.set((event.target as HTMLInputElement).value);
+  }
+
+  protected updateDate(
+    boundary: 'start' | 'end',
+    event: Event,
+  ): void {
+    const value = (event.target as HTMLInputElement).value;
+    boundary === 'start' ? this.startDate.set(value) : this.endDate.set(value);
+  }
+
   protected goToPage(page: number): void {
     this.currentPage.set(Math.min(Math.max(page, 1), this.totalPages()));
   }
@@ -373,6 +462,54 @@ export class ComponentShowcaseComponent implements OnDestroy {
       window.clearTimeout(this.loadingTimer);
     }
     this.loadingTimer = window.setTimeout(() => this.tableLoading.set(false), 1200);
+  }
+
+  protected simulateButtonLoading(): void {
+    if (this.buttonLoading()) {
+      return;
+    }
+    this.buttonLoading.set(true);
+    if (this.buttonTimer) {
+      window.clearTimeout(this.buttonTimer);
+    }
+    this.buttonTimer = window.setTimeout(() => {
+      this.buttonLoading.set(false);
+      this.showToast('비동기 작업이 완료되었습니다.');
+    }, 1200);
+  }
+
+  protected saveModal(): void {
+    this.modalSaving.set(true);
+    if (this.modalTimer) {
+      window.clearTimeout(this.modalTimer);
+    }
+    this.modalTimer = window.setTimeout(() => {
+      this.modalSaving.set(false);
+      this.modalOpen.set(false);
+      this.showToast('Provider 설정이 저장되었습니다.');
+    }, 900);
+  }
+
+  protected chooseDropdownAction(action: string): void {
+    this.dropdownOpen.set(false);
+    action === 'Delete'
+      ? this.confirmationOpen.set(true)
+      : this.showToast(`${action} 작업을 실행했습니다.`);
+  }
+
+  protected handleTabKey(event: KeyboardEvent): void {
+    const tabs: ShowcaseTab[] = ['overview', 'usage', 'settings'];
+    const current = tabs.indexOf(this.activeTab());
+    let next = current;
+
+    if (event.key === 'ArrowRight') next = (current + 1) % tabs.length;
+    else if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = tabs.length - 1;
+    else return;
+
+    event.preventDefault();
+    this.activeTab.set(tabs[next]);
   }
 
   protected showToast(message = '설정이 저장되었습니다.'): void {

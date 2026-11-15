@@ -198,12 +198,15 @@
                 <td class="numeric data">{{ row.input }}</td><td class="numeric data">{{ row.output }}</td>
                 <td>{{ row.currency }}</td><td class="data">{{ row.date }}</td>
                 <td><app-status-badge [label]="row.status === 'Active' ? '적용 중' : '검토 필요'" [tone]="row.status === 'Active' ? 'success' : 'warning'" /></td>
-                <td><button class="icon-action" type="button" [attr.aria-label]="row.model + ' 가격 작업'"><app-icon name="more" [size]="18" /></button></td>
+                <td><button class="icon-action" type="button" [attr.aria-label]="row.model + ' 가격 작업'" (click)="choosePricingAction(row.model)"><app-icon name="more" [size]="18" /></button></td>
               </tr>
             }
           </tbody>
         </table>
       </div>
+      @if (pricingActionMessage()) {
+        <p class="inline-success" role="status"><app-icon name="health" [size]="14" />{{ pricingActionMessage() }}</p>
+      }
     </article>
   </section>
 
@@ -275,7 +278,13 @@
             </section>
           }
         </div>
-        <p class="policy-note">예시 권한 항목이며 최종 권한 정책으로 확정되지 않았습니다.</p>
+        <footer class="permission-footer">
+          <p class="policy-note">예시 권한 항목이며 최종 권한 정책으로 확정되지 않았습니다.</p>
+          <button type="button" [disabled]="permissionSaving()" (click)="savePermissions()">
+            @if (permissionSaving()) { <span class="small-spinner"></span>저장 중 } @else { 변경사항 저장 }
+          </button>
+        </footer>
+        @if (permissionMessage()) { <p class="inline-success" role="status"><app-icon name="health" [size]="14" />{{ permissionMessage() }}</p> }
       </article>
     </div>
   </section>
@@ -328,7 +337,7 @@
     <article class="special-card activity-card">
       <header class="activity-toolbar">
         <div><h4>Recent Activity</h4><p>최근 AI Operations 이벤트</p></div>
-        <button type="button"><app-icon name="filter" [size]="15" />Severity Filter</button>
+        <button type="button" [class.is-active]="severityFilter() !== 'All'" (click)="cycleSeverityFilter()"><app-icon name="filter" [size]="15" />Severity · {{ severityFilter() }}</button>
       </header>
       <div class="table-scroll">
         <table class="special-table">
@@ -340,12 +349,14 @@
               { type: '가격 정보 변경', status: 'Success', statusLabel: '완료', time: '2026-11-15 13:18:04', user: 'Luna Kim', product: 'AMS', severity: 'Warning', tone: 'warning' },
               { type: '영상 자막 생성', status: 'Processing', statusLabel: '처리 중', time: '2026-11-15 12:56:41', user: '이도윤', product: 'TimeUp', severity: 'Info', tone: 'info' }
             ]; track log.time) {
-              <tr>
-                <td><strong>{{ log.type }}</strong></td>
-                <td><app-status-badge [label]="log.statusLabel" [tone]="log.status === 'Success' ? 'success' : log.status === 'Failed' ? 'danger' : 'info'" /></td>
-                <td class="data">{{ log.time }}</td><td>{{ log.user }}</td><td>{{ log.product }}</td>
-                <td><span [class]="'severity severity--' + log.tone"><i></i>{{ log.severity }}</span></td>
-              </tr>
+              @if (logVisible(log.severity)) {
+                <tr>
+                  <td><strong>{{ log.type }}</strong></td>
+                  <td><app-status-badge [label]="log.statusLabel" [tone]="log.status === 'Success' ? 'success' : log.status === 'Failed' ? 'danger' : 'info'" /></td>
+                  <td class="data">{{ log.time }}</td><td>{{ log.user }}</td><td>{{ log.product }}</td>
+                  <td><span [class]="'severity severity--' + log.tone"><i></i>{{ log.severity }}</span></td>
+                </tr>
+              }
             }
           </tbody>
         </table>

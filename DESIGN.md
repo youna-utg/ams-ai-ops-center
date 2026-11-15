@@ -899,3 +899,20 @@ were retained to prevent regressions during incremental migration.
 -   Kept the Overview navigation group and the `/overview` route so the
     information architecture and existing links remain stable.
 -   Breadcrumb follows the navigation label, so it now displays Dashboard.
+
+### 2026-11-15 --- Interaction and state completion
+
+-   Audited all interactive-looking controls and connected previously static
+    buttons to visible mock outcomes or meaningful navigation.
+-   Added working button loading, dynamic form validation success/error,
+    search feedback, date-range validation, synchronized table selection, and
+    result-aware pagination.
+-   Added keyboard-aware Tabs, Escape dismissal for Showcase overlays,
+    actionable Dropdown items, connected Tooltip semantics, and asynchronous
+    Modal save feedback.
+-   Preserved account-specific permission presets and custom states when
+    switching administrators; added save loading and success confirmation.
+-   Added Provider Pricing action feedback and a cycling Severity filter for
+    Activity & Logs.
+-   Completed Hover, Focus, Active, Disabled, Loading, Error, and Success
+    styling for the new interactive states without backend dependencies.
