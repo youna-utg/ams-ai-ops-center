@@ -16,17 +16,17 @@
 
   /* Primitive · Neutral */
   --color-neutral-0: #ffffff;
-  --color-neutral-25: #fcfdfe;
-  --color-neutral-50: #f8fafc;
-  --color-neutral-100: #f1f5f9;
-  --color-neutral-200: #e2e8f0;
-  --color-neutral-300: #cbd5e1;
-  --color-neutral-400: #94a3b8;
-  --color-neutral-500: #64748b;
-  --color-neutral-600: #475569;
-  --color-neutral-700: #334155;
-  --color-neutral-800: #1e293b;
-  --color-neutral-900: #0f172a;
+  --color-neutral-25: #fdfdfd;
+  --color-neutral-50: #f7f8fa;
+  --color-neutral-100: #f1f2f4;
+  --color-neutral-200: #e9ebef;
+  --color-neutral-300: #d8dce2;
+  --color-neutral-400: #a6abb4;
+  --color-neutral-500: #727883;
+  --color-neutral-600: #555b66;
+  --color-neutral-700: #383d46;
+  --color-neutral-800: #242830;
+  --color-neutral-900: #15181e;
 
   /* Core actions */
   --color-primary: var(--color-primary-500);
@@ -43,9 +43,9 @@
   --color-on-secondary: var(--color-neutral-0);
 
   /* Surfaces */
-  --color-background: var(--color-neutral-50);
+  --color-background: #f8f8f8;
   --color-surface: var(--color-neutral-0);
-  --color-surface-subtle: var(--color-neutral-50);
+  --color-surface-subtle: #f7f8fa;
   --color-surface-raised: var(--color-neutral-0);
   --color-surface-overlay: var(--color-neutral-0);
   --color-overlay: rgba(15, 23, 42, 0.38);
@@ -98,14 +98,14 @@
 
   /* Data visualization */
   --chart-series-primary: #2f9aff;
-  --chart-series-secondary: #475569;
-  --chart-series-success: #16a36a;
-  --chart-series-warning: #d99016;
-  --chart-series-muted: #94a3b8;
+  --chart-series-secondary: #38bdf8;
+  --chart-series-success: #818cf8;
+  --chart-series-warning: #2dd4bf;
+  --chart-series-muted: #cbd5e1;
   --chart-fill-primary: rgba(47, 154, 255, 0.12);
-  --chart-fill-secondary: rgba(71, 85, 105, 0.08);
-  --chart-fill-success: rgba(22, 163, 106, 0.1);
-  --chart-grid: rgba(148, 163, 184, 0.2);
+  --chart-fill-secondary: rgba(56, 189, 248, 0.16);
+  --chart-fill-success: rgba(129, 140, 248, 0.16);
+  --chart-grid: rgba(21, 24, 30, 0.06);
   --chart-tooltip-bg: #0f172a;
 
   /* Backward-compatible aliases */

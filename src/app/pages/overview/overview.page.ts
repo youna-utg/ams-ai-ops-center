@@ -1,5 +1,5 @@
 import { Component, computed, signal } from '@angular/core';
-import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
+import { ChartData, ChartOptions, Plugin, TooltipItem } from 'chart.js';
 import {
   DateRangeKey,
   HealthStatus,
@@ -15,6 +15,8 @@ import {
   TREND_DATA,
 } from '../../data/mocks/overview.mock';
 import { ChartComponent } from '../../shared/components/chart/chart.component';
+import { GaugeComponent } from '../../shared/components/gauge/gauge.component';
+import { areaFade, barGradientPlugin } from '../../shared/charts/chart-fill';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 import {
   StatusBadgeComponent,
@@ -23,6 +25,7 @@ import {
 import { ComponentShowcaseComponent } from './components/component-showcase/component-showcase.component';
 
 type DashboardPopover = 'filter' | 'customize' | null;
+type ProductSortKey = 'name' | 'users' | 'requests' | 'cost';
 type DashboardSection =
   | 'usage'
   | 'cost'
@@ -81,6 +84,7 @@ const lineBaseOptions: ChartOptions<'line'> = {
       },
       grid: {
         color: 'var(--chart-grid)',
+        drawTicks: false,
       },
       ticks: {
         color: 'var(--color-text-muted)',
@@ -88,8 +92,10 @@ const lineBaseOptions: ChartOptions<'line'> = {
           family: 'var(--font-family-data)',
           size: 11,
         },
-        padding: 8,
+        maxTicksLimit: 4,
+        padding: 10,
       },
+      beginAtZero: true,
     },
   },
 };
@@ -99,6 +105,7 @@ const lineBaseOptions: ChartOptions<'line'> = {
   standalone: true,
   imports: [
     ChartComponent,
+    GaugeComponent,
     ComponentShowcaseComponent,
     IconComponent,
     StatusBadgeComponent,
@@ -108,11 +115,32 @@ const lineBaseOptions: ChartOptions<'line'> = {
 })
 export class OverviewPage {
   protected readonly selectedRange = signal<DateRangeKey>('30d');
+  protected readonly rangeOpen = signal(false);
+  protected readonly rangeOptions: ReadonlyArray<{
+    key: DateRangeKey;
+    label: string;
+  }> = [
+    { key: '14d', label: '최근 14일' },
+    { key: '30d', label: '최근 30일' },
+    { key: '90d', label: '최근 90일' },
+  ];
   protected readonly activePopover = signal<DashboardPopover>(null);
   protected readonly pendingStatus = signal('all');
   protected readonly pendingProvider = signal('all');
   protected readonly appliedStatus = signal('all');
   protected readonly appliedProvider = signal('all');
+  protected readonly productSearch = signal('');
+  protected readonly productSortOpen = signal(false);
+  protected readonly productSort = signal<ProductSortKey>('name');
+  protected readonly productSortOptions: Array<{
+    key: ProductSortKey;
+    label: string;
+  }> = [
+    { key: 'name', label: 'Product' },
+    { key: 'users', label: 'Active Users' },
+    { key: 'requests', label: 'API Requests' },
+    { key: 'cost', label: 'Provider Cost' },
+  ];
   protected readonly sectionVisibility = signal<Record<DashboardSection, boolean>>({
     usage: true,
     cost: true,
@@ -152,9 +180,28 @@ export class OverviewPage {
 
   protected readonly filteredProducts = computed(() => {
     const status = this.appliedStatus();
-    return status === 'all'
-      ? this.products
-      : this.products.filter((product) => product.status === status);
+    const query = this.productSearch().trim().toLowerCase();
+
+    return this.products
+      .filter((product) => {
+        const matchesStatus = status === 'all' || product.status === status;
+        const matchesQuery =
+          !query ||
+          `${product.product} ${product.domain}`.toLowerCase().includes(query);
+        return matchesStatus && matchesQuery;
+      })
+      .sort((left, right) => {
+        switch (this.productSort()) {
+          case 'users':
+            return right.activeUsers - left.activeUsers;
+          case 'requests':
+            return right.apiRequests - left.apiRequests;
+          case 'cost':
+            return right.providerCost - left.providerCost;
+          default:
+            return left.product.localeCompare(right.product);
+        }
+      });
   });
 
   protected readonly filteredProviders = computed(() => {
@@ -173,14 +220,14 @@ export class OverviewPage {
         label: 'API Requests',
         data: this.trend().apiRequests,
         borderColor: 'var(--chart-series-primary)',
-        backgroundColor: 'var(--chart-fill-primary)',
+        backgroundColor: areaFade('--chart-series-primary', '#2f9aff'),
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 4,
         pointHoverBorderWidth: 2,
         pointHoverBackgroundColor: 'var(--color-surface)',
         fill: true,
-        tension: 0.34,
+        tension: 0.42,
       },
     ],
   }));
@@ -192,23 +239,23 @@ export class OverviewPage {
         label: 'Input Tokens',
         data: this.trend().inputTokens,
         borderColor: 'var(--chart-series-primary)',
-        backgroundColor: 'var(--chart-fill-primary)',
+        backgroundColor: areaFade('--chart-series-primary', '#2f9aff'),
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 3,
         fill: true,
-        tension: 0.34,
+        tension: 0.42,
       },
       {
         label: 'Output Tokens',
         data: this.trend().outputTokens,
         borderColor: 'var(--chart-series-secondary)',
-        backgroundColor: 'var(--chart-fill-secondary)',
+        backgroundColor: areaFade('--chart-series-secondary', '#38bdf8'),
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 3,
         fill: true,
-        tension: 0.34,
+        tension: 0.42,
       },
     ],
   }));
@@ -221,36 +268,39 @@ export class OverviewPage {
           label: 'Provider Cost',
           data: this.trend().providerCost,
           borderColor: 'var(--chart-series-success)',
-          backgroundColor: 'var(--chart-fill-success)',
+          backgroundColor: areaFade('--chart-series-success', '#818cf8'),
           borderWidth: 2,
           pointRadius: 0,
           pointHoverRadius: 3,
           fill: true,
-          tension: 0.34,
+          tension: 0.42,
         },
       ],
     }),
   );
 
-  protected readonly productCostData: ChartData<'bar'> = {
+  protected readonly productCostData = {
     labels: PRODUCTS.map((product) => product.product),
     datasets: [
       {
         label: 'Provider Cost',
         data: PRODUCTS.map((product) => product.providerCost),
-        backgroundColor: [
-          'var(--chart-series-primary)',
-          'var(--chart-series-secondary)',
-          'var(--chart-series-success)',
-          'var(--chart-series-warning)',
-          'var(--chart-series-muted)',
+        backgroundColor: '#2f9aff',
+        gradientTokens: [
+          '--chart-series-primary',
+          '--chart-series-secondary',
+          '--chart-series-success',
+          '--chart-series-warning',
+          '--chart-series-muted',
         ],
-        borderRadius: 5,
+        borderRadius: 10,
         borderSkipped: false,
-        maxBarThickness: 34,
+        maxBarThickness: 42,
+        categoryPercentage: 0.86,
+        barPercentage: 0.92,
       },
     ],
-  };
+  } as unknown as ChartData<'bar'>;
 
   protected readonly providerCostData: ChartData<'doughnut'> = {
     labels: COST_BY_PROVIDER.labels,
@@ -261,8 +311,8 @@ export class OverviewPage {
           'var(--chart-series-primary)',
           'var(--chart-series-secondary)',
           'var(--chart-series-success)',
-          'var(--color-primary-300)',
           'var(--chart-series-warning)',
+          'var(--chart-series-muted)',
         ],
         borderColor: 'var(--color-surface)',
         borderWidth: 3,
@@ -271,19 +321,22 @@ export class OverviewPage {
     ],
   };
 
-  protected readonly modelCostData: ChartData<'bar'> = {
+  protected readonly modelCostData = {
     labels: COST_BY_MODEL.labels,
     datasets: [
       {
         label: 'Provider Cost',
         data: COST_BY_MODEL.values,
-        backgroundColor: 'var(--chart-series-primary)',
-        borderRadius: 4,
+        backgroundColor: '#2f9aff',
+        gradientTokens: ['--chart-series-primary'],
+        borderRadius: 10,
         borderSkipped: false,
-        maxBarThickness: 18,
+        maxBarThickness: 28,
+        categoryPercentage: 0.82,
+        barPercentage: 0.92,
       },
     ],
-  };
+  } as unknown as ChartData<'bar'>;
 
   protected readonly apiTrendOptions: ChartOptions<'line'> = {
     ...lineBaseOptions,
@@ -303,12 +356,13 @@ export class OverviewPage {
         ...lineBaseOptions.scales?.['y'],
         ticks: {
           color: 'var(--color-text-muted)',
-          callback: (value) => {
-            const amount = Number(value);
-            return amount >= 1000
-              ? `${Math.round(amount / 1000)}K`
-              : `${amount}`;
+          font: {
+            family: 'var(--font-family-data)',
+            size: 11,
           },
+          maxTicksLimit: 4,
+          padding: 10,
+          callback: (value) => this.formatCompact(Number(value)),
         },
       },
     },
@@ -411,20 +465,56 @@ export class OverviewPage {
         },
       },
       y: {
+        beginAtZero: true,
         border: {
           display: false,
         },
         grid: {
           color: 'var(--chart-grid)',
+          drawTicks: false,
         },
         ticks: {
           color: 'var(--color-text-muted)',
+          maxTicksLimit: 4,
+          padding: 10,
           callback: (value) =>
             `$${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(value))}`,
         },
       },
     },
   };
+
+  protected readonly barPlugins = [barGradientPlugin];
+
+  protected readonly doughnutPlugins: Plugin<'doughnut'>[] = [
+    {
+      id: 'donutCenterText',
+      afterDraw: (chart) => {
+        const { chartArea, ctx } = chart;
+        const x = (chartArea.left + chartArea.right) / 2;
+        const y = (chartArea.top + chartArea.bottom) / 2;
+        const style = getComputedStyle(chart.canvas);
+        const font =
+          style.getPropertyValue('--font-family-data').trim() ||
+          'Figtree, sans-serif';
+        const muted =
+          style.getPropertyValue('--color-text-muted').trim() || '#6b7280';
+        const ink =
+          style.getPropertyValue('--color-text-primary').trim() || '#15181e';
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = muted;
+        ctx.font = `500 10px ${font}`;
+        ctx.fillText('Total Cost', x, y - 10);
+        ctx.fillStyle = ink;
+        ctx.font = `700 16px ${font}`;
+        ctx.fillText(this.formatCurrency(this.totalProviderCost), x, y + 9);
+        ctx.restore();
+      },
+    },
+  ];
 
   protected readonly doughnutOptions: ChartOptions<'doughnut'> = {
     responsive: true,
@@ -503,10 +593,16 @@ export class OverviewPage {
     },
   };
 
-  protected setRange(event: Event): void {
-    this.selectedRange.set(
-      (event.target as HTMLSelectElement).value as DateRangeKey,
+  protected rangeLabel(): string {
+    return (
+      this.rangeOptions.find((option) => option.key === this.selectedRange())
+        ?.label ?? '최근 30일'
     );
+  }
+
+  protected selectRange(range: DateRangeKey): void {
+    this.selectedRange.set(range);
+    this.rangeOpen.set(false);
   }
 
   protected togglePopover(popover: Exclude<DashboardPopover, null>): void {
@@ -521,6 +617,15 @@ export class OverviewPage {
 
   protected setPendingProvider(event: Event): void {
     this.pendingProvider.set((event.target as HTMLSelectElement).value);
+  }
+
+  protected updateProductSearch(event: Event): void {
+    this.productSearch.set((event.target as HTMLInputElement).value);
+  }
+
+  protected setProductSort(key: ProductSortKey): void {
+    this.productSort.set(key);
+    this.productSortOpen.set(false);
   }
 
   protected applyFilters(): void {
@@ -552,7 +657,7 @@ export class OverviewPage {
   }
 
   protected formatCompact(value: number): string {
-    return new Intl.NumberFormat('ko-KR', {
+    return new Intl.NumberFormat('en-US', {
       notation: 'compact',
       maximumFractionDigits: 1,
     }).format(value);

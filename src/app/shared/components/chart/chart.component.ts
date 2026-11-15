@@ -13,6 +13,7 @@ import {
   ChartData,
   ChartOptions,
   ChartType,
+  Plugin,
   registerables,
 } from 'chart.js';
 
@@ -28,6 +29,7 @@ export class ChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input({ required: true }) type!: ChartType;
   @Input({ required: true }) data!: ChartData;
   @Input() options: ChartOptions = {};
+  @Input() plugins: Plugin[] = [];
   @Input() height = 280;
   @Input() label = '데이터 차트';
 
@@ -46,7 +48,10 @@ export class ChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   ngOnChanges(changes: SimpleChanges): void {
     if (
       this.viewReady &&
-      (changes['data'] || changes['options'] || changes['type'])
+      (changes['data'] ||
+        changes['options'] ||
+        changes['plugins'] ||
+        changes['type'])
     ) {
       this.render();
     }
@@ -69,6 +74,7 @@ export class ChartComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.chart = new Chart(this.canvas.nativeElement, {
       type: this.type,
       data: this.resolveCssVariables(this.data),
+      plugins: this.plugins,
       options: {
         responsive: true,
         maintainAspectRatio: false,

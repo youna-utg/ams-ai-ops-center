@@ -1,7 +1,6 @@
 <section class="showcase" aria-labelledby="showcase-title">
   <header class="showcase__header">
     <div>
-      <p class="showcase__eyebrow">Design System</p>
       <h2 id="showcase-title">Component Showcase</h2>
       <p>
         AMS 전반에서 사용할 공통 UI와 상태를 한곳에서 검토합니다. 모든 예시는
@@ -334,12 +333,64 @@
       <article class="table-demo">
         <header class="table-demo__toolbar">
           <label class="table-search">
-            <app-icon name="search" [size]="17" />
+            <app-icon name="search" [size]="15" />
             <input type="search" placeholder="Product 또는 담당자 검색" [value]="tableSearch()" (input)="updateSearch($event)" />
           </label>
           <div>
             <span>{{ selectedRows().size }}개 선택</span>
-            <button class="ds-button ds-button--outline ds-button--small" type="button" (click)="simulateLoading()">
+            <button class="toolbar-chip" type="button" (click)="toggleSort()">
+              <app-icon name="sort" [size]="15" />
+              정렬
+              <app-icon name="chevron-down" [size]="14" />
+            </button>
+            <div class="table-filter">
+              <button
+                class="toolbar-chip"
+                type="button"
+                [class.is-active]="tableFilterOpen() || activeFilterCount() > 0"
+                [attr.aria-expanded]="tableFilterOpen()"
+                (click)="tableFilterOpen.set(!tableFilterOpen())"
+              >
+                <app-icon name="filter" [size]="15" />
+                필터
+                @if (activeFilterCount() > 0) {
+                  <span class="filter-count">{{ activeFilterCount() }}</span>
+                }
+              </button>
+              @if (tableFilterOpen()) {
+                <section class="filter-popover" aria-label="테이블 필터">
+                  <header>
+                    <div><strong>필터</strong><span>표시할 데이터를 좁혀보세요.</span></div>
+                    <button type="button" aria-label="필터 닫기" (click)="tableFilterOpen.set(false)"><app-icon name="close" [size]="16" /></button>
+                  </header>
+                  <div class="filter-popover__body">
+                    <label class="ds-field">
+                      <span>Status</span>
+                      <select class="ds-input" [value]="tableStatusFilter()" (change)="updateStatusFilter($event)">
+                        <option value="All">전체 상태</option>
+                        <option value="Active">활성</option>
+                        <option value="Pending">대기</option>
+                        <option value="Inactive">비활성</option>
+                      </select>
+                    </label>
+                    <label class="ds-field">
+                      <span>Owner</span>
+                      <select class="ds-input" [value]="tableOwnerFilter()" (change)="updateOwnerFilter($event)">
+                        <option value="All">전체 담당자</option>
+                        @for (owner of tableOwners; track owner) {
+                          <option [value]="owner">{{ owner }}</option>
+                        }
+                      </select>
+                    </label>
+                  </div>
+                  <footer>
+                    <button class="ds-button ds-button--ghost ds-button--small" type="button" (click)="clearTableFilters()">초기화</button>
+                    <button class="ds-button ds-button--primary ds-button--small" type="button" (click)="tableFilterOpen.set(false)">적용</button>
+                  </footer>
+                </section>
+              }
+            </div>
+            <button class="toolbar-chip" type="button" (click)="simulateLoading()">
               데이터 새로고침
             </button>
           </div>
@@ -347,6 +398,16 @@
 
         <div class="table-demo__meta">
           <span>총 {{ filteredRows().length }}개 결과</span>
+          @if (tableStatusFilter() !== 'All') {
+            <button class="filter-chip" type="button" (click)="tableStatusFilter.set('All')">
+              상태: {{ statusLabel($any(tableStatusFilter())) }} <app-icon name="close" [size]="12" />
+            </button>
+          }
+          @if (tableOwnerFilter() !== 'All') {
+            <button class="filter-chip" type="button" (click)="tableOwnerFilter.set('All')">
+              담당자: {{ tableOwnerFilter() }} <app-icon name="close" [size]="12" />
+            </button>
+          }
         </div>
 
         <div class="table-wrap">
@@ -369,6 +430,7 @@
                       <app-icon [name]="sortAscending() ? 'arrow-up' : 'arrow-down'" [size]="13" />
                     </button>
                   </th>
+                  <th class="table-actions-heading">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -381,9 +443,13 @@
                     <td>{{ row.owner }}</td>
                     <td><app-status-badge [label]="statusLabel(row.status)" [tone]="statusTone(row.status)" /></td>
                     <td class="numeric text-data">{{ formatNumber(row.requests) }}</td>
+                    <td class="table-actions">
+                      <button type="button" (click)="openDetailModal(row)">Config</button>
+                      <button type="button" (click)="openDetailModal(row)">Edit</button>
+                    </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="5"><div class="inline-empty"><app-icon name="search" [size]="22" /><strong>검색 결과가 없습니다</strong><span>다른 검색어를 입력해 보세요.</span></div></td></tr>
+                  <tr><td colspan="6"><div class="inline-empty"><app-icon name="search" [size]="22" /><strong>검색 결과가 없습니다</strong><span>검색어나 필터 조건을 변경해 보세요.</span></div></td></tr>
                 }
               </tbody>
             </table>
@@ -393,7 +459,7 @@
         <footer class="table-demo__footer">
           <nav class="pagination" aria-label="테이블 페이지">
             <button type="button" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
-              <app-icon name="collapse" [size]="15" />
+              <app-icon name="chevron-left" [size]="15" />
             </button>
             @for (page of pageNumbers(); track page) {
               <button type="button" [class.is-active]="currentPage() === page" (click)="goToPage(page)">{{ page }}</button>
@@ -434,8 +500,8 @@
       </header>
       <div class="chart-showcase-grid">
         <article class="demo-card"><h4>Line Chart</h4><app-chart type="line" [data]="lineData" [options]="lineOptions" [height]="180" label="Line Chart 예시" /></article>
-        <article class="demo-card"><h4>Bar Chart</h4><app-chart type="bar" [data]="barData" [options]="barOptions" [height]="180" label="Bar Chart 예시" /></article>
-        <article class="demo-card"><h4>Stacked Bar Chart</h4><app-chart type="bar" [data]="stackedData" [options]="stackedOptions" [height]="180" label="Stacked Bar Chart 예시" /></article>
+        <article class="demo-card"><h4>Bar Chart</h4><app-chart type="bar" [data]="barData" [options]="barOptions" [plugins]="barPlugins" [height]="180" label="Bar Chart 예시" /></article>
+        <article class="demo-card"><h4>Stacked Bar Chart</h4><app-chart type="bar" [data]="stackedData" [options]="stackedOptions" [plugins]="barPlugins" [height]="180" label="Stacked Bar Chart 예시" /></article>
         <article class="demo-card"><h4>Donut Chart</h4><app-chart type="doughnut" [data]="donutData" [options]="donutOptions" [height]="180" label="Donut Chart 예시" /></article>
         <article class="demo-card"><h4>Area Chart</h4><app-chart type="line" [data]="areaData" [options]="lineOptions" [height]="180" label="Area Chart 예시" /></article>
         <article class="demo-card chart-micro">
@@ -526,7 +592,7 @@
         <article class="demo-card">
           <h4>Modal & Confirmation</h4>
           <div class="demo-row">
-            <button class="ds-button ds-button--outline" type="button" (click)="modalOpen.set(true)">Modal 열기</button>
+            <button class="ds-button ds-button--outline" type="button" (click)="openDetailModal(selectedDetailRow())">상세 설정 Modal</button>
             <button class="ds-button ds-button--danger" type="button" (click)="confirmationOpen.set(true)">삭제 확인</button>
           </div>
         </article>
@@ -546,9 +612,39 @@
 
       @if (modalOpen()) {
         <div class="dialog-backdrop" role="presentation" (click)="modalOpen.set(false)">
-          <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="sample-modal-title" (click)="$event.stopPropagation()">
-            <header><div><h4 id="sample-modal-title">Provider 설정</h4><p>연결할 Provider의 기본 정보를 확인합니다.</p></div><button type="button" aria-label="Modal 닫기" (click)="modalOpen.set(false)"><app-icon name="close" [size]="18" /></button></header>
-            <div class="dialog__body"><label class="ds-field"><span>Provider Name</span><input class="ds-input" value="OpenAI" /></label><label class="ds-field"><span>Default Model</span><select class="ds-input"><option>GPT-4.1</option><option>GPT-4o</option></select></label></div>
+          <section class="dialog dialog--detail" role="dialog" aria-modal="true" aria-labelledby="sample-modal-title" (click)="$event.stopPropagation()">
+            <header>
+              <div>
+                <span class="dialog__eyebrow">Product Configuration</span>
+                <h4 id="sample-modal-title">{{ selectedDetailRow().product }} 설정</h4>
+                <p>Product 정보, Provider 연결 및 운영 상태를 관리합니다.</p>
+              </div>
+              <button type="button" aria-label="Modal 닫기" (click)="modalOpen.set(false)"><app-icon name="close" [size]="18" /></button>
+            </header>
+            <nav class="dialog-tabs" aria-label="상세 설정 메뉴">
+              <button type="button" class="is-active">기본 정보</button>
+              <button type="button">Provider 연결</button>
+              <button type="button">권한</button>
+            </nav>
+            <div class="dialog__body dialog__body--detail">
+              <section class="detail-summary">
+                <span class="detail-summary__icon"><app-icon name="products" [size]="20" /></span>
+                <div><strong>{{ selectedDetailRow().product }}</strong><span>담당자 {{ selectedDetailRow().owner }} · 최근 수정 2026-11-15</span></div>
+                <app-status-badge [label]="statusLabel(selectedDetailRow().status)" [tone]="statusTone(selectedDetailRow().status)" />
+              </section>
+              <div class="dialog-form-grid">
+                <label class="ds-field"><span>Product Name</span><input class="ds-input" [value]="selectedDetailRow().product" /></label>
+                <label class="ds-field"><span>Owner</span><select class="ds-input"><option>{{ selectedDetailRow().owner }}</option><option>김서연</option><option>이도윤</option></select></label>
+                <label class="ds-field"><span>Status</span><select class="ds-input"><option>{{ statusLabel(selectedDetailRow().status) }}</option><option>활성</option><option>대기</option><option>비활성</option></select></label>
+                <label class="ds-field"><span>Default Provider</span><select class="ds-input"><option>OpenAI</option><option>Anthropic</option><option>Google</option></select></label>
+                <label class="ds-field ds-field--span-2"><span>Allowed IPs</span><input class="ds-input" placeholder="예: 10.0.0.1, 10.0.0.2" /><small>쉼표로 구분하여 여러 IP를 입력할 수 있습니다.</small></label>
+              </div>
+              <section class="detail-connections">
+                <header><div><strong>Provider 연결</strong><span>이 Product에서 사용할 Model을 관리합니다.</span></div><button class="ds-button ds-button--outline ds-button--small" type="button">연결 추가</button></header>
+                <div class="detail-connection-row"><div><strong>OpenAI</strong><small>GPT-4.1 · Production</small></div><app-status-badge label="연결됨" tone="success" /><button type="button">설정</button></div>
+                <div class="detail-connection-row"><div><strong>Anthropic</strong><small>Claude 3.7 Sonnet</small></div><app-status-badge label="검토 필요" tone="warning" /><button type="button">설정</button></div>
+              </section>
+            </div>
             <footer><button class="ds-button ds-button--ghost" type="button" [disabled]="modalSaving()" (click)="modalOpen.set(false)">취소</button><button class="ds-button ds-button--primary" type="button" [disabled]="modalSaving()" (click)="saveModal()">@if (modalSaving()) { <span class="button-spinner"></span>저장 중 } @else { 저장 }</button></footer>
           </section>
         </div>

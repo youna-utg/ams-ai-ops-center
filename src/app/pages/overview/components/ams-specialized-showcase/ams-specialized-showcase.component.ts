@@ -1,5 +1,6 @@
 import { Component, OnDestroy, computed, signal } from '@angular/core';
 import { ChartData, ChartOptions } from 'chart.js';
+import { areaFade } from '../../../../shared/charts/chart-fill';
 import { ChartComponent } from '../../../../shared/components/chart/chart.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import {
@@ -170,12 +171,12 @@ export class AmsSpecializedShowcaseComponent implements OnDestroy {
         label: 'Provider Cost',
         data: [248, 261, 255, 286, 302, 318, 329.5],
         borderColor: 'var(--chart-series-primary)',
-        backgroundColor: 'var(--chart-fill-primary)',
+        backgroundColor: areaFade('--chart-series-primary', '#2f9aff'),
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 4,
         fill: true,
-        tension: 0.35,
+        tension: 0.42,
       },
     ],
   };

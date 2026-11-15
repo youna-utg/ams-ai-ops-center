@@ -8,6 +8,7 @@ export type UiIcon =
   | 'search'
   | 'bell'
   | 'chevron-down'
+  | 'chevron-left'
   | 'chevron-right'
   | 'close'
   | 'command'
@@ -16,6 +17,7 @@ export type UiIcon =
   | 'sliders'
   | 'arrow-up'
   | 'arrow-down'
+  | 'sort'
   | 'more'
   | 'info';
 

@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.gauge {
+  position: relative;
+  width: min(100%, 340px);
+  margin: 0 auto;
+}
+
+.gauge svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.gauge__readout {
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  left: 0;
+  text-align: center;
+}
+
+.gauge__readout strong {
+  display: block;
+  color: var(--color-text-primary);
+  font-size: 32px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge__readout span {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-caption);
+}

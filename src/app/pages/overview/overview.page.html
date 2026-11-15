@@ -1,7 +1,6 @@
 <section class="page">
   <header class="page__header">
     <div>
-      <p class="page__eyebrow">운영 현황</p>
       <h1 class="page__title">Dashboard</h1>
       <p class="page__desc">
         제품, 플랫폼 활동, AI 운영 현황을 한눈에 확인합니다.
@@ -9,15 +8,33 @@
     </div>
 
     <div class="page-actions">
-      <label class="range-select">
-        <app-icon name="calendar" [size]="17" />
-        <span class="u-sr-only">조회 기간</span>
-        <select [value]="selectedRange()" (change)="setRange($event)">
-          <option value="14d">최근 14일</option>
-          <option value="30d">최근 30일</option>
-          <option value="90d">최근 90일</option>
-        </select>
-      </label>
+      <div class="range-select">
+        <button
+          type="button"
+          class="range-select__trigger"
+          [attr.aria-expanded]="rangeOpen()"
+          aria-haspopup="menu"
+          (click)="rangeOpen.set(!rangeOpen())"
+        >
+          <app-icon name="calendar" [size]="15" />
+          {{ rangeLabel() }}
+          <app-icon name="chevron-down" [size]="14" />
+        </button>
+        @if (rangeOpen()) {
+          <div class="range-select__menu" role="menu">
+            @for (option of rangeOptions; track option.key) {
+              <button
+                type="button"
+                role="menuitem"
+                [class.is-active]="selectedRange() === option.key"
+                (click)="selectRange(option.key)"
+              >
+                {{ option.label }}
+              </button>
+            }
+          </div>
+        }
+      </div>
 
       <div class="action-menu">
         <button
@@ -159,137 +176,196 @@
   <div class="sample-notice" role="note">
     <span class="sample-notice__dot"></span>
     <strong>Sample Data</strong>
-    <span>화면 검토를 위한 가상 운영 데이터이며 실제 서비스와 연결되지 않습니다.</span>
+    <span>화면 검토를 위한 가상 운영 데이터입니다.</span>
   </div>
 
   <section class="dashboard-section dashboard-section--kpi" aria-labelledby="kpi-title">
     <div class="section-heading section-heading--compact">
       <div>
-        <p class="section-heading__eyebrow">Key metrics</p>
         <h2 id="kpi-title">운영 핵심 지표</h2>
       </div>
     </div>
 
     <div class="kpi-grid">
+      <article class="kpi-card kpi-card--requests">
+        <div class="kpi-card__copy">
+          <p class="kpi-card__label">Total API Requests</p>
+          <div class="kpi-card__metric">
+            <strong class="kpi-card__value text-data">
+              {{ formatCompact(totalRequests) }}
+            </strong>
+            <span class="trend trend--up">
+              <app-icon name="arrow-up" [size]="11" />
+              12.7%
+            </span>
+          </div>
+          <p class="kpi-card__help">{{ formatNumber(totalRequests) }}건 처리</p>
+        </div>
+        <span class="kpi-card__icon">
+          <app-icon name="usage" [size]="18" />
+        </span>
+      </article>
+
       <article class="kpi-card kpi-card--products">
-        <div class="kpi-card__top">
-          <span class="kpi-card__icon">
-            <app-icon name="products" [size]="18" />
-          </span>
-          <span class="trend trend--up">
-            <app-icon name="arrow-up" [size]="12" />
-            1
-          </span>
+        <div class="kpi-card__copy">
+          <p class="kpi-card__label">Total Products</p>
+          <div class="kpi-card__metric">
+            <strong class="kpi-card__value text-data">{{ products.length }}</strong>
+            <span class="trend trend--up">
+              <app-icon name="arrow-up" [size]="11" />
+              1
+            </span>
+          </div>
+          <p class="kpi-card__help">전월 대비 신규 Product 1개</p>
         </div>
-        <p class="kpi-card__label">Total Products</p>
-        <strong class="kpi-card__value text-data">{{ products.length }}</strong>
-        <p class="kpi-card__help">전월 대비 신규 Product 1개</p>
-        <div class="product-marks" aria-label="등록된 프로덕트">
-          @for (product of products; track product.product) {
-            <span [title]="product.product">{{ product.mark }}</span>
-          }
-        </div>
+        <span class="kpi-card__icon">
+          <app-icon name="products" [size]="18" />
+        </span>
       </article>
 
       <article class="kpi-card kpi-card--users">
-        <div class="kpi-card__top">
-          <span class="kpi-card__icon">
-            <app-icon name="users" [size]="18" />
-          </span>
-          <span class="trend trend--up">
-            <app-icon name="arrow-up" [size]="12" />
-            8.4%
-          </span>
+        <div class="kpi-card__copy">
+          <p class="kpi-card__label">Active Users</p>
+          <div class="kpi-card__metric">
+            <strong class="kpi-card__value text-data">
+              {{ formatNumber(totalActiveUsers) }}
+            </strong>
+            <span class="trend trend--up">
+              <app-icon name="arrow-up" [size]="11" />
+              8.4%
+            </span>
+          </div>
+          <p class="kpi-card__help">최근 30일 활성 사용자</p>
         </div>
-        <p class="kpi-card__label">Active Users</p>
-        <strong class="kpi-card__value text-data">
-          {{ formatNumber(totalActiveUsers) }}
-        </strong>
-        <p class="kpi-card__help">최근 30일 활성 사용자</p>
-        <div class="avatar-stack" aria-label="최근 활성 사용자 샘플">
-          <span>KS</span><span>LD</span><span>PJ</span><span>+79</span>
-        </div>
-      </article>
-
-      <article class="kpi-card kpi-card--requests">
-        <div class="kpi-card__top">
-          <span class="kpi-card__icon">
-            <app-icon name="usage" [size]="18" />
-          </span>
-          <span class="trend trend--up">
-            <app-icon name="arrow-up" [size]="12" />
-            12.7%
-          </span>
-        </div>
-        <p class="kpi-card__label">Total API Requests</p>
-        <strong class="kpi-card__value text-data">
-          {{ formatCompact(totalRequests) }}
-        </strong>
-        <p class="kpi-card__help">{{ formatNumber(totalRequests) }}건 처리</p>
-        <svg class="sparkline" viewBox="0 0 120 32" aria-hidden="true">
-          <path class="sparkline__area" d="M2 27 L17 24 L32 26 L47 18 L62 20 L77 13 L92 15 L118 4 L118 32 L2 32 Z" />
-          <path class="sparkline__line" d="M2 27 L17 24 L32 26 L47 18 L62 20 L77 13 L92 15 L118 4" />
-        </svg>
+        <span class="kpi-card__icon">
+          <app-icon name="users" [size]="18" />
+        </span>
       </article>
 
       <article class="kpi-card kpi-card--cost">
-        <div class="kpi-card__top">
-          <span class="kpi-card__icon">
-            <app-icon name="pricing" [size]="18" />
-          </span>
-          <span class="trend trend--down">
-            <app-icon name="arrow-down" [size]="12" />
-            3.2%
-          </span>
+        <div class="kpi-card__copy">
+          <p class="kpi-card__label">Total Provider Cost</p>
+          <div class="kpi-card__metric">
+            <strong class="kpi-card__value text-data">
+              {{ formatCurrency(totalProviderCost) }}
+            </strong>
+            <span class="trend trend--down">
+              <app-icon name="arrow-down" [size]="11" />
+              3.2%
+            </span>
+          </div>
+          <p class="kpi-card__help">외부 Provider 지불 원가</p>
         </div>
-        <p class="kpi-card__label">Total Provider Cost</p>
-        <strong class="kpi-card__value text-data">
-          {{ formatCurrency(totalProviderCost) }}
-        </strong>
-        <p class="kpi-card__help">외부 Provider 지불 원가</p>
-        <div class="cost-progress">
-          <span style="--value: 82%"></span>
-        </div>
-        <p class="cost-progress__label">전월 동기간 예상 대비 82%</p>
+        <span class="kpi-card__icon">
+          <app-icon name="pricing" [size]="18" />
+        </span>
       </article>
 
       <article class="kpi-card kpi-card--tokens">
-        <div class="kpi-card__top">
-          <span class="kpi-card__icon">
-            <app-icon name="providers" [size]="18" />
-          </span>
-          <span class="trend trend--up">
-            <app-icon name="arrow-up" [size]="12" />
-            14.1%
-          </span>
+        <div class="kpi-card__copy">
+          <p class="kpi-card__label">Total Tokens</p>
+          <div class="kpi-card__metric">
+            <strong class="kpi-card__value text-data">
+              {{ formatCompact(totalTokens) }}
+            </strong>
+            <span class="trend trend--up">
+              <app-icon name="arrow-up" [size]="11" />
+              14.1%
+            </span>
+          </div>
         </div>
-        <p class="kpi-card__label">Total Tokens</p>
-        <strong class="kpi-card__value text-data">
-          {{ formatCompact(totalTokens) }}
-        </strong>
-        <div class="token-split">
-          <span><i class="token-split__input"></i>Input <b>79%</b></span>
-          <span><i class="token-split__output"></i>Output <b>21%</b></span>
-        </div>
-        <div class="token-bar" aria-label="Input 79%, Output 21%">
-          <span></span>
-        </div>
+        <span class="kpi-card__icon">
+          <app-icon name="providers" [size]="18" />
+        </span>
       </article>
 
       <article class="kpi-card kpi-card--error">
-        <div class="kpi-card__top">
-          <span class="kpi-card__icon">
-            <app-icon name="health" [size]="18" />
-          </span>
-          <app-status-badge label="안정" tone="success" [showDot]="true" />
+        <div class="kpi-card__copy">
+          <p class="kpi-card__label">Error Rate</p>
+          <div class="kpi-card__metric">
+            <strong class="kpi-card__value text-data">0.42%</strong>
+            <app-status-badge label="안정" tone="success" [showDot]="true" />
+          </div>
+          <p class="kpi-card__help">목표 임계값 1.0% 미만</p>
         </div>
-        <p class="kpi-card__label">Error Rate</p>
-        <strong class="kpi-card__value text-data">0.42%</strong>
-        <p class="kpi-card__help">목표 임계값 1.0% 미만</p>
-        <div class="error-scale">
-          <span style="--value: 42%"></span>
+        <span class="kpi-card__icon">
+          <app-icon name="health" [size]="18" />
+        </span>
+      </article>
+    </div>
+  </section>
+
+  <section class="dashboard-section" aria-labelledby="outcome-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="outcome-title">작업 성과와 포인트</h2>
+        <p>AI 작업 성공률과 포인트 잔여·소진 현황입니다.</p>
+      </div>
+    </div>
+
+    <div class="gauge-grid">
+      <article class="panel gauge-card">
+        <header class="panel__header">
+          <div>
+            <h3>AI 작업 성공률</h3>
+            <p>완료된 작업 중 성공 비율</p>
+          </div>
+        </header>
+        <app-gauge [value]="96.4" label="작업 성공률" />
+        <div class="gauge-stats">
+          <div>
+            <span>성공 작업</span>
+            <strong class="text-data">
+              24.6K
+              <span class="trend trend--up">
+                <app-icon name="arrow-up" [size]="11" />
+                2.4%
+              </span>
+            </strong>
+          </div>
+          <div>
+            <span>실패 작업</span>
+            <strong class="text-data">
+              918
+              <span class="trend trend--down">
+                <app-icon name="arrow-down" [size]="11" />
+                0.6%
+              </span>
+            </strong>
+          </div>
         </div>
-        <div class="error-scale__labels"><span>0%</span><span>1.0%</span></div>
+      </article>
+
+      <article class="panel gauge-card">
+        <header class="panel__header">
+          <div>
+            <h3>포인트 · 크레딧</h3>
+            <p>잔여율과 이번 기간 소진</p>
+          </div>
+        </header>
+        <app-gauge [value]="70.8" label="포인트 잔여율" />
+        <div class="gauge-stats">
+          <div>
+            <span>크레딧 소진</span>
+            <strong class="text-data">
+              18.4K
+              <span class="trend trend--up">
+                <app-icon name="arrow-up" [size]="11" />
+                4.5%
+              </span>
+            </strong>
+          </div>
+          <div>
+            <span>잔여 포인트</span>
+            <strong class="text-data">
+              44.2K
+              <span class="trend trend--down">
+                <app-icon name="arrow-down" [size]="11" />
+                4.5%
+              </span>
+            </strong>
+          </div>
+        </div>
       </article>
     </div>
   </section>
@@ -298,7 +374,6 @@
     <section class="dashboard-section" aria-labelledby="usage-title">
       <div class="section-heading">
         <div>
-          <p class="section-heading__eyebrow">Usage Analytics</p>
           <h2 id="usage-title">API 및 AI 사용량</h2>
           <p>선택한 기간의 요청량, Token 사용량과 Provider 원가 추이를 비교합니다.</p>
         </div>
@@ -364,7 +439,6 @@
     <section class="dashboard-section" aria-labelledby="cost-title">
       <div class="section-heading">
         <div>
-          <p class="section-heading__eyebrow">Cost Analytics</p>
           <h2 id="cost-title">Provider 원가 분석</h2>
           <p>동일한 외부 Provider 지불 원가를 Product, Provider, Model 기준으로 나누어 표시합니다.</p>
         </div>
@@ -383,6 +457,7 @@
             type="bar"
             [data]="productCostData"
             [options]="barChartOptions"
+            [plugins]="barPlugins"
             [height]="250"
             label="Product별 Provider 원가 막대 차트"
           />
@@ -395,19 +470,14 @@
               <p>Provider별 지불 비중</p>
             </div>
           </header>
-          <div class="donut-wrap">
-            <app-chart
-              type="doughnut"
-              [data]="providerCostData"
-              [options]="doughnutOptions"
-              [height]="250"
-              label="Provider별 원가 비중 도넛 차트"
-            />
-            <div class="donut-total" aria-hidden="true">
-              <small>Total Cost</small>
-              <strong class="text-data">{{ formatCurrency(totalProviderCost) }}</strong>
-            </div>
-          </div>
+          <app-chart
+            type="doughnut"
+            [data]="providerCostData"
+            [options]="doughnutOptions"
+            [plugins]="doughnutPlugins"
+            [height]="250"
+            label="Provider별 원가 비중 도넛 차트"
+          />
         </article>
 
         <article class="panel">
@@ -421,6 +491,7 @@
             type="bar"
             [data]="modelCostData"
             [options]="horizontalBarOptions"
+            [plugins]="barPlugins"
             [height]="250"
             label="Model별 Provider 원가 가로 막대 차트"
           />
@@ -433,7 +504,6 @@
     <section class="dashboard-section" aria-labelledby="products-title">
       <div class="section-heading">
         <div>
-          <p class="section-heading__eyebrow">Product Overview</p>
           <h2 id="products-title">Product 운영 현황</h2>
           <p>등록된 Product의 사용량과 Provider 원가를 비교합니다.</p>
         </div>
@@ -441,6 +511,49 @@
       </div>
 
       <div class="table-panel">
+        <header class="table-panel__toolbar">
+          <div class="table-panel__title">
+            <strong>Products</strong>
+            <span>{{ filteredProducts().length }}개 항목</span>
+          </div>
+          <div class="table-panel__tools">
+            <label class="table-panel__search">
+              <app-icon name="search" [size]="15" />
+              <input
+                type="search"
+                placeholder="Product 검색"
+                [value]="productSearch()"
+                (input)="updateProductSearch($event)"
+              />
+            </label>
+            <div class="table-sort">
+              <button
+                type="button"
+                class="toolbar-chip"
+                [attr.aria-expanded]="productSortOpen()"
+                (click)="productSortOpen.set(!productSortOpen())"
+              >
+                <app-icon name="sort" [size]="15" />
+                정렬
+                <app-icon name="chevron-down" [size]="14" />
+              </button>
+              @if (productSortOpen()) {
+                <div class="table-sort__menu" role="menu">
+                  @for (option of productSortOptions; track option.key) {
+                    <button
+                      type="button"
+                      role="menuitem"
+                      [class.is-active]="productSort() === option.key"
+                      (click)="setProductSort(option.key)"
+                    >
+                      {{ option.label }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </header>
         <div class="table-scroll">
           <table>
             <thead>
@@ -458,7 +571,6 @@
                 <tr>
                   <td>
                     <div class="identity">
-                      <span class="identity__mark">{{ product.mark }}</span>
                       <span>
                         <strong>{{ product.product }}</strong>
                         <small>{{ product.domain }}</small>
@@ -492,14 +604,13 @@
     <section class="dashboard-section" aria-labelledby="provider-title">
       <div class="section-heading">
         <div>
-          <p class="section-heading__eyebrow">Provider Usage</p>
           <h2 id="provider-title">Provider 사용량</h2>
           <p>Provider와 Model별 요청량, Token 사용량 및 총 원가입니다.</p>
         </div>
         <span class="result-count">{{ filteredProviders().length }} Providers / Models</span>
       </div>
 
-      <div class="table-panel">
+      <div class="table-panel table-panel--provider">
         <div class="table-scroll">
           <table>
             <thead>
@@ -516,10 +627,7 @@
               @for (provider of filteredProviders(); track provider.provider + provider.model) {
                 <tr>
                   <td>
-                    <div class="provider-name">
-                      <span class="provider-name__mark">{{ provider.provider.slice(0, 1) }}</span>
-                      <strong>{{ provider.provider }}</strong>
-                    </div>
+                    <strong class="provider-name">{{ provider.provider }}</strong>
                   </td>
                   <td>{{ provider.model }}</td>
                   <td class="numeric text-data">{{ formatNumber(provider.requests) }}</td>
@@ -549,7 +657,6 @@
         <article class="panel activity-panel" aria-labelledby="activity-title">
           <header class="panel__header">
             <div>
-              <p class="section-heading__eyebrow">Recent Activities</p>
               <h2 id="activity-title">최근 시스템 활동</h2>
             </div>
           </header>
@@ -589,7 +696,6 @@
         <article class="panel health-panel" aria-labelledby="health-title">
           <header class="panel__header">
             <div>
-              <p class="section-heading__eyebrow">System Health</p>
               <h2 id="health-title">시스템 상태</h2>
             </div>
             <span class="health-panel__updated">13:58 기준</span>

@@ -54,6 +54,15 @@ a:hover {
   outline-offset: var(--focus-outline-offset);
 }
 
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none;
+}
+
 ul,
 ol {
   margin: 0;

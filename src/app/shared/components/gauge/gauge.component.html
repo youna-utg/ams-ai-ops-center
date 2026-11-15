@@ -1,0 +1,17 @@
+<div class="gauge">
+  <svg viewBox="0 0 320 180" role="img" [attr.aria-label]="label() + ' ' + value() + '%'">
+    @for (notch of notches; track notch.index) {
+      <path
+        [attr.d]="notch.d"
+        [attr.fill]="notchColor(notch.index)"
+        [attr.stroke]="notchColor(notch.index)"
+        stroke-width="14"
+        stroke-linejoin="round"
+      />
+    }
+  </svg>
+  <div class="gauge__readout">
+    <strong>{{ formatted() }}</strong>
+    <span>{{ label() }}</span>
+  </div>
+</div>

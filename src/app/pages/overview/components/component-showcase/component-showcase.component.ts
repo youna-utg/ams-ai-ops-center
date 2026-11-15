@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { ChartData, ChartOptions } from 'chart.js';
+import { areaFade, barGradientPlugin } from '../../../../shared/charts/chart-fill';
 import { ChartComponent } from '../../../../shared/components/chart/chart.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
@@ -76,8 +77,12 @@ export class ComponentShowcaseComponent implements OnDestroy {
   protected readonly alertVisible = signal(true);
   protected readonly tableLoading = signal(false);
   protected readonly tableSearch = signal('');
+  protected readonly tableFilterOpen = signal(false);
+  protected readonly tableStatusFilter = signal<'All' | ShowcaseTableRow['status']>('All');
+  protected readonly tableOwnerFilter = signal('All');
   protected readonly sortAscending = signal(false);
   protected readonly selectedRows = signal<Set<number>>(new Set([1]));
+  protected readonly selectedDetailRow = signal<ShowcaseTableRow>(TABLE_ROWS[0]);
   protected readonly currentPage = signal(1);
   protected readonly iconLiked = signal(false);
   protected readonly buttonLoading = signal(false);
@@ -97,13 +102,21 @@ export class ComponentShowcaseComponent implements OnDestroy {
 
   protected readonly filteredRows = computed(() => {
     const query = this.tableSearch().trim().toLowerCase();
-    const filtered = query
-      ? TABLE_ROWS.filter((row) =>
-          `${row.product} ${row.owner} ${row.status}`
+    const filtered = TABLE_ROWS.filter((row) => {
+      const matchesQuery = query
+        ? `${row.product} ${row.owner} ${row.status}`
             .toLowerCase()
-            .includes(query),
-        )
-      : TABLE_ROWS;
+            .includes(query)
+        : true;
+      const matchesStatus =
+        this.tableStatusFilter() === 'All' ||
+        row.status === this.tableStatusFilter();
+      const matchesOwner =
+        this.tableOwnerFilter() === 'All' ||
+        row.owner === this.tableOwnerFilter();
+
+      return matchesQuery && matchesStatus && matchesOwner;
+    });
 
     return [...filtered].sort((a, b) =>
       this.sortAscending()
@@ -134,6 +147,14 @@ export class ComponentShowcaseComponent implements OnDestroy {
       !this.allRowsSelected() &&
       this.filteredRows().some((row) => this.selectedRows().has(row.id)),
   );
+  protected readonly activeFilterCount = computed(
+    () =>
+      Number(this.tableStatusFilter() !== 'All') +
+      Number(this.tableOwnerFilter() !== 'All'),
+  );
+  protected readonly tableOwners = [
+    ...new Set(TABLE_ROWS.map((row) => row.owner)),
+  ];
   protected readonly endpointValid = computed(() => {
     try {
       const url = new URL(this.endpointValue());
@@ -157,10 +178,11 @@ export class ComponentShowcaseComponent implements OnDestroy {
         label: 'Requests',
         data: [38, 44, 41, 56, 52, 68, 74],
         borderColor: 'var(--chart-series-primary)',
-        backgroundColor: 'var(--chart-fill-primary)',
+        backgroundColor: areaFade('--chart-series-primary', '#2f9aff'),
         borderWidth: 2,
-        pointRadius: 2,
-        tension: 0.35,
+        pointRadius: 0,
+        fill: true,
+        tension: 0.42,
       },
     ],
   };
@@ -172,45 +194,57 @@ export class ComponentShowcaseComponent implements OnDestroy {
         label: 'Tokens',
         data: [22, 28, 25, 39, 35, 46, 52],
         borderColor: 'var(--chart-series-success)',
-        backgroundColor: 'var(--chart-fill-success)',
+        backgroundColor: areaFade('--chart-series-success', '#818cf8'),
         borderWidth: 2,
         pointRadius: 0,
         fill: true,
-        tension: 0.38,
+        tension: 0.42,
       },
     ],
   };
 
-  protected readonly barData: ChartData<'bar'> = {
+  protected readonly barData = {
     labels: ['ChangeUp', 'TimeUp', 'DeckUp', 'DocUp'],
     datasets: [
       {
         label: 'Requests',
         data: [82, 67, 43, 59],
-        backgroundColor: 'var(--chart-series-primary)',
-        borderRadius: 4,
+        backgroundColor: '#2f9aff',
+        gradientTokens: ['--chart-series-primary'],
+        borderRadius: 10,
         borderSkipped: false,
+        maxBarThickness: 42,
+        categoryPercentage: 0.86,
+        barPercentage: 0.92,
       },
     ],
-  };
+  } as unknown as ChartData<'bar'>;
 
-  protected readonly stackedData: ChartData<'bar'> = {
+  protected readonly stackedData = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
     datasets: [
       {
         label: 'Input',
         data: [34, 39, 36, 46, 51],
-        backgroundColor: 'var(--chart-series-primary)',
-        borderRadius: 3,
+        backgroundColor: '#2f9aff',
+        gradientTokens: ['--chart-series-primary'],
+        borderRadius: 8,
+        maxBarThickness: 36,
+        categoryPercentage: 0.84,
+        barPercentage: 0.9,
       },
       {
         label: 'Output',
         data: [12, 14, 13, 17, 19],
-        backgroundColor: 'var(--chart-series-secondary)',
-        borderRadius: 3,
+        backgroundColor: '#38bdf8',
+        gradientTokens: ['--chart-series-secondary'],
+        borderRadius: 8,
+        maxBarThickness: 36,
+        categoryPercentage: 0.84,
+        barPercentage: 0.9,
       },
     ],
-  };
+  } as unknown as ChartData<'bar'>;
 
   protected readonly donutData: ChartData<'doughnut'> = {
     labels: ['OpenAI', 'Anthropic', 'Google', 'Others'],
@@ -228,6 +262,8 @@ export class ComponentShowcaseComponent implements OnDestroy {
       },
     ],
   };
+
+  protected readonly barPlugins = [barGradientPlugin];
 
   protected readonly lineOptions: ChartOptions<'line'> = {
     responsive: true,
@@ -366,6 +402,7 @@ export class ComponentShowcaseComponent implements OnDestroy {
   protected closeOverlays(): void {
     this.dropdownOpen.set(false);
     this.multiSelectOpen.set(false);
+    this.tableFilterOpen.set(false);
     this.modalOpen.set(false);
     this.confirmationOpen.set(false);
   }
@@ -401,6 +438,31 @@ export class ComponentShowcaseComponent implements OnDestroy {
   protected updateSearch(event: Event): void {
     this.tableSearch.set((event.target as HTMLInputElement).value);
     this.currentPage.set(1);
+  }
+
+  protected updateStatusFilter(event: Event): void {
+    this.tableStatusFilter.set(
+      (event.target as HTMLSelectElement).value as
+        | 'All'
+        | ShowcaseTableRow['status'],
+    );
+    this.currentPage.set(1);
+  }
+
+  protected updateOwnerFilter(event: Event): void {
+    this.tableOwnerFilter.set((event.target as HTMLSelectElement).value);
+    this.currentPage.set(1);
+  }
+
+  protected clearTableFilters(): void {
+    this.tableStatusFilter.set('All');
+    this.tableOwnerFilter.set('All');
+    this.currentPage.set(1);
+  }
+
+  protected openDetailModal(row: ShowcaseTableRow): void {
+    this.selectedDetailRow.set(row);
+    this.modalOpen.set(true);
   }
 
   protected toggleSort(): void {
