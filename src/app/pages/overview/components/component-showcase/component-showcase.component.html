@@ -1,0 +1,604 @@
+<section class="showcase" aria-labelledby="showcase-title">
+  <header class="showcase__header">
+    <div>
+      <p class="showcase__eyebrow">Design System</p>
+      <h2 id="showcase-title">Component Showcase</h2>
+      <p>
+        AMS 전반에서 사용할 공통 UI와 상태를 한곳에서 검토합니다. 모든 예시는
+        프로젝트 디자인 토큰을 사용합니다.
+      </p>
+    </div>
+    <app-status-badge label="Interactive Preview" tone="info" />
+  </header>
+
+  <nav class="showcase-nav" aria-label="Component Showcase 바로가기">
+    @for (anchor of anchors; track anchor.id) {
+      <a [href]="'#' + anchor.id">{{ anchor.label }}</a>
+    }
+  </nav>
+
+  <div class="showcase__content">
+    <section class="showcase-block" id="showcase-typography">
+      <header class="block-heading">
+        <span>01</span>
+        <div>
+          <h3>Typography</h3>
+          <p>정보 위계와 운영 데이터 가독성을 위한 타입 스케일입니다.</p>
+        </div>
+      </header>
+      <div class="type-specimen ds-surface">
+        <div class="type-row">
+          <span class="type-row__meta">Display · 32 / 700</span>
+          <p class="text-display">AI Operations Center</p>
+        </div>
+        <div class="type-row">
+          <span class="type-row__meta">H1 · 24 / 700</span>
+          <p class="text-h1">Dashboard</p>
+        </div>
+        <div class="type-row">
+          <span class="type-row__meta">H2 · 20 / 700</span>
+          <p class="text-h2">Provider Usage Analytics</p>
+        </div>
+        <div class="type-row">
+          <span class="type-row__meta">H3 · 16 / 600</span>
+          <p class="text-h3">Cost by Model</p>
+        </div>
+        <div class="type-row">
+          <span class="type-row__meta">H4 · 14 / 600</span>
+          <p class="text-h4">Request Details</p>
+        </div>
+        <div class="type-row">
+          <span class="type-row__meta">Body · 14 / 400</span>
+          <p class="text-body">제품, 플랫폼 활동, AI 운영 현황을 한눈에 확인합니다.</p>
+        </div>
+        <div class="type-row">
+          <span class="type-row__meta">Label · 13 / 500</span>
+          <p class="text-label">Provider Model</p>
+        </div>
+        <div class="type-row">
+          <span class="type-row__meta">Caption · 12 / 400</span>
+          <p class="text-caption">마지막 업데이트 2026-11-15 14:32</p>
+        </div>
+        <div class="type-row">
+          <span class="type-row__meta">Numeric Data · Tabular</span>
+          <p class="text-data type-row__numeric">$329.50 · 13,752,000 Tokens · 0.42%</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="showcase-block" id="showcase-buttons">
+      <header class="block-heading">
+        <span>02</span>
+        <div>
+          <h3>Buttons</h3>
+          <p>행동 우선순위, 크기와 주요 상태를 비교합니다.</p>
+        </div>
+      </header>
+
+      <div class="demo-grid demo-grid--2">
+        <article class="demo-card">
+          <h4>Variants</h4>
+          <div class="demo-row demo-row--wrap">
+            <button class="ds-button ds-button--primary" type="button" (click)="showToast('Primary Action을 실행했습니다.')">
+              Primary
+            </button>
+            <button class="ds-button ds-button--secondary" type="button">Secondary</button>
+            <button class="ds-button ds-button--outline" type="button">Outline</button>
+            <button class="ds-button ds-button--ghost" type="button">Ghost</button>
+            <button class="ds-button ds-button--danger" type="button" (click)="confirmationOpen.set(true)">
+              Danger
+            </button>
+            <button class="ds-icon-button" type="button" aria-label="더보기" title="더보기">
+              <app-icon name="more" [size]="18" />
+            </button>
+          </div>
+        </article>
+
+        <article class="demo-card">
+          <h4>Sizes</h4>
+          <div class="demo-row demo-row--align-end">
+            <button class="ds-button ds-button--primary ds-button--small" type="button">Small</button>
+            <button class="ds-button ds-button--primary" type="button">Medium</button>
+            <button class="ds-button ds-button--primary ds-button--large" type="button">Large</button>
+          </div>
+        </article>
+
+        <article class="demo-card demo-card--full">
+          <h4>States</h4>
+          <div class="state-grid">
+            <div><small>Default</small><button class="ds-button ds-button--primary" type="button">Button</button></div>
+            <div><small>Hover</small><button class="ds-button ds-button--primary is-demo-hover" type="button">Button</button></div>
+            <div><small>Active</small><button class="ds-button ds-button--primary is-demo-active" type="button">Button</button></div>
+            <div><small>Disabled</small><button class="ds-button ds-button--primary" type="button" disabled>Button</button></div>
+            <div>
+              <small>Loading</small>
+              <button class="ds-button ds-button--primary" type="button" disabled>
+                <span class="button-spinner"></span>Loading
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="showcase-block" id="showcase-forms">
+      <header class="block-heading">
+        <span>03</span>
+        <div>
+          <h3>Form Elements</h3>
+          <p>입력, 선택, 검증과 도움말 상태를 포함합니다.</p>
+        </div>
+      </header>
+
+      <div class="form-grid ds-surface">
+        <label class="ds-field">
+          <span>Text Input</span>
+          <input class="ds-input" type="text" placeholder="Product 이름 입력" />
+          <small>고유한 Product 이름을 입력하세요.</small>
+        </label>
+
+        <label class="ds-field">
+          <span>Search Input</span>
+          <span class="input-affix">
+            <app-icon name="search" [size]="17" />
+            <input class="ds-input" type="search" placeholder="사용자 검색" />
+          </span>
+        </label>
+
+        <label class="ds-field">
+          <span>Password Input</span>
+          <span class="input-action">
+            <input
+              class="ds-input"
+              [type]="passwordVisible() ? 'text' : 'password'"
+              value="sample-api-key"
+            />
+            <button type="button" (click)="togglePasswordVisibility()">
+              {{ passwordVisible() ? '숨기기' : '보기' }}
+            </button>
+          </span>
+        </label>
+
+        <label class="ds-field">
+          <span>Select</span>
+          <select class="ds-input">
+            <option>OpenAI</option>
+            <option>Anthropic</option>
+            <option>Google</option>
+          </select>
+        </label>
+
+        <div class="ds-field">
+          <span>Multi Select</span>
+          <div class="multi-select">
+            <button
+              type="button"
+              class="multi-select__trigger"
+              [attr.aria-expanded]="multiSelectOpen()"
+              (click)="toggleMultiSelect()"
+            >
+              <span>{{ selectedModels().length }}개 Model 선택</span>
+              <app-icon name="chevron-down" [size]="15" />
+            </button>
+            @if (multiSelectOpen()) {
+              <div class="multi-select__menu">
+                @for (model of ['GPT-4.1', 'Claude 3.7', 'Gemini 2.5']; track model) {
+                  <label>
+                    <input
+                      type="checkbox"
+                      [checked]="selectedModels().includes(model)"
+                      (change)="toggleModel(model)"
+                    />
+                    {{ model }}
+                  </label>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <label class="ds-field">
+          <span>Date Picker</span>
+          <input class="ds-input" type="date" value="2026-11-15" />
+        </label>
+
+        <div class="ds-field ds-field--span-2">
+          <span>Date Range Picker</span>
+          <div class="date-range">
+            <input class="ds-input" type="date" value="2026-11-01" aria-label="시작일" />
+            <span>–</span>
+            <input class="ds-input" type="date" value="2026-11-15" aria-label="종료일" />
+          </div>
+        </div>
+
+        <label class="ds-field ds-field--span-2">
+          <span>Textarea</span>
+          <textarea class="ds-input ds-textarea" placeholder="운영 메모를 입력하세요."></textarea>
+        </label>
+
+        <label class="ds-field ds-field--error">
+          <span>Input Error</span>
+          <input class="ds-input" type="text" value="invalid endpoint" aria-invalid="true" />
+          <small>올바른 API Endpoint URL을 입력하세요.</small>
+        </label>
+
+        <div class="choice-group">
+          <span class="choice-group__label">Checkbox</span>
+          <label><input type="checkbox" checked /> Email 알림</label>
+          <label><input type="checkbox" /> Slack 알림</label>
+        </div>
+
+        <div class="choice-group">
+          <span class="choice-group__label">Radio</span>
+          <label><input type="radio" name="billing" checked /> Monthly</label>
+          <label><input type="radio" name="billing" /> Annual</label>
+        </div>
+
+        <div class="choice-group">
+          <span class="choice-group__label">Switch</span>
+          <label class="switch-row">
+            <button
+              type="button"
+              class="ds-switch"
+              role="switch"
+              [attr.aria-checked]="switchEnabled()"
+              [class.ds-switch--on]="switchEnabled()"
+              (click)="toggleSwitch()"
+            ><span></span></button>
+            <span>{{ switchEnabled() ? '자동 갱신 사용' : '자동 갱신 중지' }}</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="showcase-block" id="showcase-status">
+      <header class="block-heading">
+        <span>04</span>
+        <div>
+          <h3>Badges & Status</h3>
+          <p>색상과 텍스트를 함께 사용해 상태를 전달합니다.</p>
+        </div>
+      </header>
+      <div class="demo-card status-showcase">
+        <app-status-badge label="Success" tone="success" />
+        <app-status-badge label="Warning" tone="warning" />
+        <app-status-badge label="Danger" tone="danger" />
+        <app-status-badge label="Info" tone="info" />
+        <app-status-badge label="Active" tone="success" />
+        <app-status-badge label="Inactive" tone="neutral" />
+        <app-status-badge label="Pending" tone="warning" />
+        <app-status-badge label="Processing" tone="info" />
+      </div>
+    </section>
+
+    <section class="showcase-block" id="showcase-cards">
+      <header class="block-heading">
+        <span>05</span>
+        <div>
+          <h3>Cards</h3>
+          <p>운영 정보의 성격에 맞는 Surface 패턴입니다.</p>
+        </div>
+      </header>
+      <div class="card-grid">
+        <article class="sample-card">
+          <h4>Basic Card</h4>
+          <p>관련 콘텐츠를 하나의 Surface로 묶는 기본 카드입니다.</p>
+          <button class="text-action" type="button">자세히 보기</button>
+        </article>
+        <article class="sample-card sample-card--kpi">
+          <div class="sample-card__top"><span>API Requests</span><app-icon name="usage" [size]="18" /></div>
+          <strong class="text-data">25,340</strong>
+          <small class="positive">+12.7% 이전 기간 대비</small>
+        </article>
+        <article class="sample-card sample-card--info">
+          <span class="sample-card__icon"><app-icon name="info" [size]="18" /></span>
+          <div><h4>Information Card</h4><p>Provider 비용은 회사가 지불하는 외부 원가입니다.</p></div>
+        </article>
+        <article class="sample-card sample-card--stat">
+          <span>Statistics Card</span>
+          <strong class="text-data">99.98%</strong>
+          <div class="mini-progress"><span style="width: 99.98%"></span></div>
+          <small>API Uptime</small>
+        </article>
+        <article class="sample-card sample-card--chart">
+          <div><h4>Chart Card</h4><span>Weekly requests</span></div>
+          <svg viewBox="0 0 180 48" aria-label="주간 요청량 증가 Sparkline">
+            <path d="M2 40 L28 35 L54 38 L80 25 L106 29 L132 16 L178 5" />
+          </svg>
+        </article>
+        <article class="sample-card sample-card--profile">
+          <span class="large-avatar">LK</span>
+          <div><h4>Luna Kim</h4><p>Administrator</p></div>
+          <app-status-badge label="Online" tone="success" />
+        </article>
+      </div>
+    </section>
+
+    <section class="showcase-block" id="showcase-tables">
+      <header class="block-heading">
+        <span>06</span>
+        <div>
+          <h3>Tables</h3>
+          <p>검색, 정렬, 선택, 페이지네이션과 데이터 상태를 검토합니다.</p>
+        </div>
+      </header>
+
+      <article class="table-demo">
+        <header class="table-demo__toolbar">
+          <label class="table-search">
+            <app-icon name="search" [size]="17" />
+            <input type="search" placeholder="Product 또는 담당자 검색" [value]="tableSearch()" (input)="updateSearch($event)" />
+          </label>
+          <div>
+            <span>{{ selectedRows().size }}개 선택</span>
+            <button class="ds-button ds-button--outline ds-button--small" type="button" (click)="simulateLoading()">
+              데이터 새로고침
+            </button>
+          </div>
+        </header>
+
+        <div class="table-demo__meta">
+          <span>총 {{ filteredRows().length }}개 결과</span>
+        </div>
+
+        <div class="table-wrap">
+          @if (tableLoading()) {
+            <div class="table-loading" aria-live="polite">
+              <span class="spinner"></span>
+              <p>데이터를 불러오는 중입니다.</p>
+            </div>
+          } @else {
+            <table class="showcase-table">
+              <thead>
+                <tr>
+                  <th class="check-cell"><input type="checkbox" aria-label="전체 행 선택" (change)="toggleAllRows($event)" /></th>
+                  <th>Product</th>
+                  <th>Owner</th>
+                  <th>Status</th>
+                  <th class="numeric">
+                    <button class="sort-button" type="button" (click)="toggleSort()">
+                      Requests
+                      <app-icon [name]="sortAscending() ? 'arrow-up' : 'arrow-down'" [size]="13" />
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of pagedRows(); track row.id) {
+                  <tr [class.is-selected]="selectedRows().has(row.id)">
+                    <td class="check-cell">
+                      <input type="checkbox" [checked]="selectedRows().has(row.id)" [attr.aria-label]="row.product + ' 선택'" (change)="toggleRow(row.id)" />
+                    </td>
+                    <td><strong>{{ row.product }}</strong></td>
+                    <td>{{ row.owner }}</td>
+                    <td><app-status-badge [label]="statusLabel(row.status)" [tone]="statusTone(row.status)" /></td>
+                    <td class="numeric text-data">{{ formatNumber(row.requests) }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5"><div class="inline-empty"><app-icon name="search" [size]="22" /><strong>검색 결과가 없습니다</strong><span>다른 검색어를 입력해 보세요.</span></div></td></tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+
+        <footer class="table-demo__footer">
+          <nav class="pagination" aria-label="테이블 페이지">
+            <button type="button" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
+              <app-icon name="collapse" [size]="15" />
+            </button>
+            @for (page of [1, 2]; track page) {
+              <button type="button" [class.is-active]="currentPage() === page" (click)="goToPage(page)">{{ page }}</button>
+            }
+            <button type="button" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
+              <app-icon name="chevron-right" [size]="15" />
+            </button>
+          </nav>
+        </footer>
+      </article>
+
+      <div class="demo-grid demo-grid--2 table-states">
+        <article class="demo-card">
+          <h4>Dense Table</h4>
+          <table class="mini-table mini-table--dense">
+            <thead><tr><th>Model</th><th class="numeric">Cost</th></tr></thead>
+            <tbody><tr><td>GPT-4.1</td><td class="numeric text-data">$133.60</td></tr><tr><td>Claude 3.7</td><td class="numeric text-data">$102.30</td></tr></tbody>
+          </table>
+        </article>
+        <article class="demo-card">
+          <h4>Empty State</h4>
+          <div class="inline-empty">
+            <app-icon name="projects" [size]="22" />
+            <strong>표시할 데이터가 없습니다</strong>
+            <span>필터 조건을 변경하거나 새 항목을 추가하세요.</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="showcase-block" id="showcase-charts">
+      <header class="block-heading">
+        <span>07</span>
+        <div>
+          <h3>Charts</h3>
+          <p>Chart.js 기반 데이터 시각화와 경량 지표 패턴입니다.</p>
+        </div>
+      </header>
+      <div class="chart-showcase-grid">
+        <article class="demo-card"><h4>Line Chart</h4><app-chart type="line" [data]="lineData" [options]="lineOptions" [height]="180" label="Line Chart 예시" /></article>
+        <article class="demo-card"><h4>Bar Chart</h4><app-chart type="bar" [data]="barData" [options]="barOptions" [height]="180" label="Bar Chart 예시" /></article>
+        <article class="demo-card"><h4>Stacked Bar Chart</h4><app-chart type="bar" [data]="stackedData" [options]="stackedOptions" [height]="180" label="Stacked Bar Chart 예시" /></article>
+        <article class="demo-card"><h4>Donut Chart</h4><app-chart type="doughnut" [data]="donutData" [options]="donutOptions" [height]="180" label="Donut Chart 예시" /></article>
+        <article class="demo-card"><h4>Area Chart</h4><app-chart type="line" [data]="areaData" [options]="lineOptions" [height]="180" label="Area Chart 예시" /></article>
+        <article class="demo-card chart-micro">
+          <h4>Progress & Sparkline</h4>
+          <div class="progress-demo"><div><span>Token Budget</span><b class="text-data">68%</b></div><div class="mini-progress"><span style="width: 68%"></span></div></div>
+          <div class="sparkline-demo"><span>7-day Requests</span><svg viewBox="0 0 160 40" aria-label="7일 요청량 Sparkline"><path d="M2 34 L25 31 L48 33 L71 21 L94 24 L117 13 L158 5" /></svg></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="showcase-block" id="showcase-navigation">
+      <header class="block-heading">
+        <span>08</span>
+        <div>
+          <h3>Navigation</h3>
+          <p>현재 위치와 계층, 단계 이동을 명확하게 표시합니다.</p>
+        </div>
+      </header>
+      <div class="demo-grid demo-grid--2">
+        <article class="demo-card">
+          <h4>Tabs</h4>
+          <div class="ds-tabs" role="tablist">
+            @for (tab of [{id: 'overview', label: 'Overview'}, {id: 'usage', label: 'Usage'}, {id: 'settings', label: 'Settings'}]; track tab.id) {
+              <button type="button" role="tab" [attr.aria-selected]="activeTab() === tab.id" [class.is-active]="activeTab() === tab.id" (click)="activeTab.set($any(tab.id))">{{ tab.label }}</button>
+            }
+          </div>
+          <div class="tab-panel">선택된 Tab: <strong>{{ activeTab() }}</strong></div>
+        </article>
+        <article class="demo-card">
+          <h4>Breadcrumb</h4>
+          <nav class="demo-breadcrumb" aria-label="예시 경로"><a href="#showcase-navigation">AMS</a><app-icon name="chevron-right" [size]="14" /><a href="#showcase-navigation">AI Operations</a><app-icon name="chevron-right" [size]="14" /><strong>Providers</strong></nav>
+        </article>
+        <article class="demo-card">
+          <h4>Sidebar Menu</h4>
+          <nav class="mini-sidebar">
+            <a href="#showcase-navigation" class="is-active"><app-icon name="overview" [size]="17" />Overview</a>
+            <a href="#showcase-navigation"><app-icon name="providers" [size]="17" />Providers</a>
+            <a href="#showcase-navigation"><app-icon name="settings" [size]="17" />Settings</a>
+          </nav>
+        </article>
+        <article class="demo-card">
+          <h4>Dropdown Menu</h4>
+          <div class="dropdown-demo">
+            <button class="ds-button ds-button--outline" type="button" [attr.aria-expanded]="dropdownOpen()" (click)="toggleDropdown()">Actions <app-icon name="chevron-down" [size]="14" /></button>
+            @if (dropdownOpen()) {
+              <div class="dropdown-menu"><button type="button" (click)="showToast('Edit를 선택했습니다.')">Edit</button><button type="button">Duplicate</button><button type="button" class="danger">Delete</button></div>
+            }
+          </div>
+        </article>
+        <article class="demo-card demo-card--full">
+          <h4>Stepper</h4>
+          <ol class="stepper">
+            @for (step of ['Provider 선택', 'API Key 입력', '연결 확인', '완료']; track step; let index = $index) {
+              <li [class.is-complete]="index + 1 < currentStep()" [class.is-current]="index + 1 === currentStep()">
+                <button type="button" (click)="currentStep.set(index + 1)"><span>{{ index + 1 }}</span>{{ step }}</button>
+              </li>
+            }
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <section class="showcase-block" id="showcase-feedback">
+      <header class="block-heading">
+        <span>09</span>
+        <div>
+          <h3>Feedback</h3>
+          <p>상태, 결과와 중요한 결정을 사용자에게 전달합니다.</p>
+        </div>
+      </header>
+      <div class="feedback-stack">
+        @if (alertVisible()) {
+          <div class="ds-alert ds-alert--info" role="alert"><app-icon name="info" [size]="18" /><div><strong>Information Alert</strong><p>Provider 가격 정보가 2026-11-15 기준으로 업데이트되었습니다.</p></div><button type="button" aria-label="알림 닫기" (click)="alertVisible.set(false)"><app-icon name="close" [size]="16" /></button></div>
+        }
+        <div class="ds-alert ds-alert--success"><app-icon name="health" [size]="18" /><div><strong>Success Alert</strong><p>Provider 연결 테스트가 성공했습니다.</p></div></div>
+        <div class="ds-alert ds-alert--warning"><app-icon name="bell" [size]="18" /><div><strong>Warning Alert</strong><p>Queue 처리 시간이 평소보다 길어지고 있습니다.</p></div></div>
+        <div class="ds-alert ds-alert--danger"><app-icon name="close" [size]="18" /><div><strong>Danger Alert</strong><p>API 요청 일부가 실패했습니다. 로그를 확인하세요.</p></div></div>
+      </div>
+
+      <div class="demo-grid demo-grid--2 feedback-actions">
+        <article class="demo-card">
+          <h4>Toast & Tooltip</h4>
+          <div class="demo-row">
+            <button class="ds-button ds-button--primary" type="button" (click)="showToast()">Toast 표시</button>
+            <span class="tooltip-demo" tabindex="0">Tooltip 대상<span role="tooltip">운영 데이터에 대한 보조 설명입니다.</span></span>
+          </div>
+        </article>
+        <article class="demo-card">
+          <h4>Modal & Confirmation</h4>
+          <div class="demo-row">
+            <button class="ds-button ds-button--outline" type="button" (click)="modalOpen.set(true)">Modal 열기</button>
+            <button class="ds-button ds-button--danger" type="button" (click)="confirmationOpen.set(true)">삭제 확인</button>
+          </div>
+        </article>
+        <article class="demo-card">
+          <h4>Loading Spinner</h4>
+          <div class="loading-demo"><span class="spinner"></span><span class="spinner spinner--small"></span><span>처리 중...</span></div>
+        </article>
+        <article class="demo-card">
+          <h4>Skeleton</h4>
+          <div class="skeleton-demo"><span class="skeleton skeleton--avatar"></span><div><span class="skeleton skeleton--line"></span><span class="skeleton skeleton--line skeleton--short"></span></div></div>
+        </article>
+      </div>
+
+      @if (toastVisible()) {
+        <div class="toast" role="status"><span class="toast__icon"><app-icon name="health" [size]="17" /></span><div><strong>완료</strong><p>{{ toastMessage() }}</p></div><button type="button" aria-label="Toast 닫기" (click)="toastVisible.set(false)"><app-icon name="close" [size]="15" /></button></div>
+      }
+
+      @if (modalOpen()) {
+        <div class="dialog-backdrop" role="presentation" (click)="modalOpen.set(false)">
+          <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="sample-modal-title" (click)="$event.stopPropagation()">
+            <header><div><h4 id="sample-modal-title">Provider 설정</h4><p>연결할 Provider의 기본 정보를 확인합니다.</p></div><button type="button" aria-label="Modal 닫기" (click)="modalOpen.set(false)"><app-icon name="close" [size]="18" /></button></header>
+            <div class="dialog__body"><label class="ds-field"><span>Provider Name</span><input class="ds-input" value="OpenAI" /></label><label class="ds-field"><span>Default Model</span><select class="ds-input"><option>GPT-4.1</option><option>GPT-4o</option></select></label></div>
+            <footer><button class="ds-button ds-button--ghost" type="button" (click)="modalOpen.set(false)">취소</button><button class="ds-button ds-button--primary" type="button" (click)="modalOpen.set(false); showToast()">저장</button></footer>
+          </section>
+        </div>
+      }
+
+      @if (confirmationOpen()) {
+        <div class="dialog-backdrop" role="presentation">
+          <section class="dialog dialog--confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+            <span class="dialog__danger-icon"><app-icon name="close" [size]="20" /></span>
+            <h4 id="confirm-title">정말 삭제하시겠습니까?</h4>
+            <p>삭제한 설정은 복구할 수 없습니다. 이 작업을 계속할까요?</p>
+            <footer><button class="ds-button ds-button--outline" type="button" (click)="confirmationOpen.set(false)">취소</button><button class="ds-button ds-button--danger" type="button" (click)="confirmAction()">삭제</button></footer>
+          </section>
+        </div>
+      }
+    </section>
+
+    <section class="showcase-block" id="showcase-additional">
+      <header class="block-heading">
+        <span>10</span>
+        <div>
+          <h3>Additional UI</h3>
+          <p>여러 화면에서 반복되는 보조 UI 패턴입니다.</p>
+        </div>
+      </header>
+      <div class="demo-grid demo-grid--2">
+        <article class="demo-card">
+          <h4>Avatar & Avatar Group</h4>
+          <div class="avatar-demo"><span class="large-avatar">LK</span><span class="large-avatar large-avatar--image">SY</span><div class="avatar-group"><span>KS</span><span>LD</span><span>PJ</span><span>+8</span></div></div>
+        </article>
+        <article class="demo-card">
+          <h4>Divider & Icons</h4>
+          <div class="icon-row"><app-icon name="overview" [size]="20" /><app-icon name="products" [size]="20" /><app-icon name="providers" [size]="20" /><app-icon name="health" [size]="20" /><button type="button" class="heart-button" [class.is-active]="iconLiked()" aria-label="아이콘 상태 전환" (click)="toggleIconState()">●</button></div>
+          <hr class="u-divider" />
+          <p class="text-caption">Divider는 관련 콘텐츠 그룹 사이에만 사용합니다.</p>
+        </article>
+        <article class="demo-card demo-card--full">
+          <h4>Accordion</h4>
+          <div class="accordion">
+            @for (item of [{title: 'Provider 비용은 어떻게 계산되나요?', body: '외부 Provider가 제공하는 청구 단위와 사용량을 기준으로 계산합니다.'}, {title: 'Token 데이터는 실시간인가요?', body: '이 Showcase의 값은 Sample Data이며 실제 API와 연결되지 않습니다.'}, {title: '권한은 어디에서 관리하나요?', body: 'Roles & Permissions 메뉴에서 관리할 예정입니다.'}]; track item.title; let index = $index) {
+              <div class="accordion__item">
+                <button type="button" [attr.aria-expanded]="accordionOpen() === index" (click)="accordionOpen.set(accordionOpen() === index ? null : index)"><span>{{ item.title }}</span><app-icon name="chevron-down" [size]="16" /></button>
+                @if (accordionOpen() === index) { <div class="accordion__content">{{ item.body }}</div> }
+              </div>
+            }
+          </div>
+        </article>
+        <article class="demo-card">
+          <h4>Search & Filter</h4>
+          <div class="compact-toolbar"><label><app-icon name="search" [size]="16" /><input placeholder="Search..." /></label><button type="button"><app-icon name="filter" [size]="16" />Filter</button></div>
+        </article>
+        <article class="demo-card">
+          <h4>Date Range Selector</h4>
+          <div class="compact-date"><app-icon name="calendar" [size]="17" /><input type="date" value="2026-11-01" /><span>–</span><input type="date" value="2026-11-15" /></div>
+        </article>
+      </div>
+    </section>
+
+    <app-ams-specialized-showcase />
+  </div>
+</section>

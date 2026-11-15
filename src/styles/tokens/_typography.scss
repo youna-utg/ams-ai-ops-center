@@ -1,0 +1,49 @@
+// AMS typography tokens
+// Korean-first system stack with tabular numeric support for operational data.
+
+:root {
+  --font-family-sans: Pretendard, 'Noto Sans KR', Inter, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-data: Inter, Pretendard, 'Noto Sans KR', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Font sizes */
+  --font-size-display: 32px;
+  --font-size-h1: 24px;
+  --font-size-h2: 20px;
+  --font-size-h3: 16px;
+  --font-size-h4: 14px;
+  --font-size-body-lg: 15px;
+  --font-size-body: 14px;
+  --font-size-body-sm: 13px;
+  --font-size-label: 13px;
+  --font-size-caption: 12px;
+  --font-size-numeric: 14px;
+
+  /* Font weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line heights */
+  --line-height-display: 1.25;
+  --line-height-h1: 1.35;
+  --line-height-h2: 1.4;
+  --line-height-h3: 1.45;
+  --line-height-h4: 1.45;
+  --line-height-body-lg: 1.6;
+  --line-height-body: 1.55;
+  --line-height-body-sm: 1.5;
+  --line-height-label: 1.4;
+  --line-height-caption: 1.45;
+  --line-height-numeric: 1.4;
+
+  /* Letter spacing and numeric features */
+  --letter-spacing-display: -0.025em;
+  --letter-spacing-heading: -0.015em;
+  --letter-spacing-body: 0;
+  --letter-spacing-label: 0.005em;
+  --letter-spacing-caption: 0.01em;
+  --font-feature-numeric: 'tnum' 1, 'lnum' 1, 'zero' 1;
+}

@@ -1,0 +1,76 @@
+<aside
+  class="sidebar"
+  [class.sidebar--collapsed]="collapsed()"
+  [class.sidebar--mobile-open]="mobileOpen()"
+  aria-label="기본 메뉴"
+>
+  <div class="sidebar__brand">
+    <a
+      class="brand"
+      routerLink="/overview"
+      aria-label="AMS AI Ops Center 홈"
+      (click)="navigationSelect.emit()"
+    >
+      <span class="brand__mark" aria-hidden="true">
+        <span class="brand__mark-dot"></span>
+      </span>
+      <span class="brand__copy">
+        <strong class="brand__name">AMS</strong>
+        <span class="brand__product">AI Ops Center</span>
+      </span>
+    </a>
+
+    <button
+      type="button"
+      class="sidebar__collapse"
+      [attr.aria-label]="collapsed() ? '사이드바 펼치기' : '사이드바 접기'"
+      [title]="collapsed() ? '사이드바 펼치기' : '사이드바 접기'"
+      (click)="collapseToggle.emit()"
+    >
+      <app-icon
+        name="collapse"
+        [size]="18"
+        [class.icon--flipped]="collapsed()"
+      />
+    </button>
+  </div>
+
+  <nav class="sidebar__nav" aria-label="메인 메뉴">
+    @for (group of groups; track group.label) {
+      <section class="nav-group" [attr.aria-labelledby]="'nav-' + $index">
+        <h2 class="nav-group__label" [id]="'nav-' + $index">
+          {{ group.label }}
+        </h2>
+
+        <ul class="nav-group__list">
+          @for (item of group.items; track item.path) {
+            <li>
+              <a
+                class="nav-item"
+                [routerLink]="item.path"
+                routerLinkActive="nav-item--active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                [attr.title]="collapsed() ? item.label : null"
+                (click)="navigationSelect.emit()"
+              >
+                <app-icon [name]="item.icon" [size]="19" />
+                <span class="nav-item__label">{{ item.label }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </nav>
+
+  <div class="sidebar__account">
+    <div class="account" [attr.title]="collapsed() ? 'Luna Kim — 관리자' : null">
+      <span class="account__avatar" aria-hidden="true">LK</span>
+      <span class="account__copy">
+        <strong>Luna Kim</strong>
+        <span>관리자</span>
+      </span>
+      <app-icon class="account__chevron" name="chevron-right" [size]="16" />
+    </div>
+  </div>
+</aside>

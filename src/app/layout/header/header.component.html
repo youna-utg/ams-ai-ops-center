@@ -1,0 +1,127 @@
+<header class="header">
+  <div class="header__context">
+    <button
+      type="button"
+      class="icon-button header__menu"
+      aria-label="메뉴 열기"
+      (click)="menuToggle.emit()"
+    >
+      <app-icon name="menu" [size]="20" />
+    </button>
+
+    <div class="breadcrumb" aria-label="현재 위치">
+      <span class="breadcrumb__root">AMS</span>
+      <app-icon name="chevron-right" [size]="14" />
+      <strong>{{ currentItem().label }}</strong>
+    </div>
+  </div>
+
+  <div class="header__actions">
+    <div class="search">
+      <app-icon class="search__icon" name="search" [size]="18" />
+      <label class="u-sr-only" for="global-search">메뉴 검색</label>
+      <input
+        id="global-search"
+        type="search"
+        autocomplete="off"
+        placeholder="검색"
+        [value]="searchQuery()"
+        (input)="updateSearch($event)"
+      />
+      <span class="search__shortcut" aria-hidden="true">Ctrl K</span>
+
+      @if (searchQuery()) {
+        <div class="search-results">
+          <div class="search-results__heading">메뉴</div>
+          @for (result of searchResults(); track result.path) {
+            <a
+              class="search-result"
+              [routerLink]="result.path"
+              (click)="closeMenus()"
+            >
+              <span class="search-result__icon">
+                <app-icon [name]="result.icon" [size]="17" />
+              </span>
+              <span>
+                <strong>{{ result.label }}</strong>
+                <small>{{ result.description }}</small>
+              </span>
+            </a>
+          } @empty {
+            <p class="search-results__empty">일치하는 메뉴가 없습니다.</p>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="header-menu">
+      <button
+        type="button"
+        class="icon-button notification-button"
+        aria-label="알림, 읽지 않은 항목 2개"
+        [attr.aria-expanded]="activeMenu() === 'notifications'"
+        (click)="toggleMenu('notifications')"
+      >
+        <app-icon name="bell" [size]="19" />
+        <span class="notification-button__dot" aria-hidden="true"></span>
+      </button>
+
+      @if (activeMenu() === 'notifications') {
+        <div class="popover popover--notifications">
+          <div class="popover__header">
+            <strong>Notifications</strong>
+            <span>읽지 않음 2</span>
+          </div>
+          <div class="notification">
+            <span class="notification__mark"></span>
+            <div>
+              <strong>Provider 사용량 리포트가 준비되었습니다</strong>
+              <p>월간 샘플 리포트 · 8분 전</p>
+            </div>
+          </div>
+          <div class="notification">
+            <span class="notification__mark"></span>
+            <div>
+              <strong>System Health 점검이 완료되었습니다</strong>
+              <p>모니터링 중인 서비스 정상 · 24분 전</p>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <span class="header__divider" aria-hidden="true"></span>
+
+    <div class="header-menu">
+      <button
+        type="button"
+        class="profile-button"
+        [attr.aria-expanded]="activeMenu() === 'profile'"
+        aria-label="프로필 메뉴 열기"
+        (click)="toggleMenu('profile')"
+      >
+        <span class="profile-button__avatar">LK</span>
+        <span class="profile-button__copy">
+          <strong>Luna Kim</strong>
+          <small>관리자</small>
+        </span>
+        <app-icon name="chevron-down" [size]="15" />
+      </button>
+
+      @if (activeMenu() === 'profile') {
+        <div class="popover popover--profile">
+          <div class="profile-summary">
+            <span class="profile-button__avatar">LK</span>
+            <span>
+              <strong>Luna Kim</strong>
+              <small>luna.kim&#64;company.com</small>
+            </span>
+          </div>
+          <div class="popover__separator"></div>
+          <a routerLink="/settings" (click)="closeMenus()">계정 설정</a>
+          <button type="button" disabled>로그아웃</button>
+        </div>
+      }
+    </div>
+  </div>
+</header>

@@ -1,0 +1,104 @@
+.page {
+  width: 100%;
+}
+
+.page__header {
+  margin-bottom: var(--space-8);
+}
+
+.page__eyebrow {
+  margin-bottom: var(--space-2);
+  color: var(--color-primary-700);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.page__title {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-h1);
+  color: var(--color-text-primary);
+  letter-spacing: -0.015em;
+  margin-bottom: var(--space-2);
+}
+
+.page__desc {
+  font-size: var(--font-size-body-lg);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 720px;
+}
+
+.placeholder {
+  display: flex;
+  min-height: 360px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: var(--space-12) var(--space-6);
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-medium);
+  text-align: center;
+}
+
+.placeholder__icon {
+  display: flex;
+  width: 52px;
+  height: 52px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: var(--space-5);
+  padding: 14px;
+  color: var(--color-primary-500);
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-100);
+  border-radius: var(--radius-lg);
+}
+
+.placeholder__icon span {
+  width: 5px;
+  background: currentColor;
+  border-radius: var(--radius-full);
+}
+
+.placeholder__icon span:nth-child(1) {
+  height: 10px;
+  opacity: 0.45;
+}
+
+.placeholder__icon span:nth-child(2) {
+  height: 20px;
+}
+
+.placeholder__icon span:nth-child(3) {
+  height: 15px;
+  opacity: 0.7;
+}
+
+.placeholder h2 {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-semibold);
+}
+
+.placeholder p {
+  max-width: 440px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body-sm);
+  line-height: 1.6;
+}
+
+@media (max-width: 767px) {
+  .page__header {
+    margin-bottom: var(--space-6);
+  }
+
+  .placeholder {
+    min-height: 300px;
+  }
+}

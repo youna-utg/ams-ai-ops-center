@@ -1,0 +1,50 @@
+// AMS shape, border, elevation, focus, and motion tokens
+
+:root {
+  /* Radius · semantic scale */
+  --radius-small: 6px;
+  --radius-medium: 8px;
+  --radius-large: 12px;
+  --radius-full: 999px;
+
+  /* Radius · compatibility and exceptional sizes */
+  --radius-xs: 4px;
+  --radius-sm: var(--radius-small);
+  --radius-md: var(--radius-medium);
+  --radius-lg: var(--radius-large);
+  --radius-xl: 16px;
+
+  /* Border */
+  --border-width: 1px;
+  --border-style: solid;
+  --border-default: var(--border-width) var(--border-style) var(--color-border);
+  --border-strong: var(--border-width) var(--border-style)
+    var(--color-border-strong);
+  --divider: var(--border-width) var(--border-style) var(--color-divider);
+
+  /* Elevation */
+  --shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-dropdown: 0 8px 24px rgba(15, 23, 42, 0.1);
+  --shadow-modal: 0 16px 40px rgba(15, 23, 42, 0.14);
+
+  /* Backward-compatible elevation aliases */
+  --shadow-xs: var(--shadow-subtle);
+  --shadow-sm: var(--shadow-card);
+  --shadow-md: var(--shadow-dropdown);
+  --shadow-lg: var(--shadow-modal);
+
+  /* Focus and state */
+  --focus-ring-width: 3px;
+  --focus-ring: 0 0 0 var(--focus-ring-width) var(--color-focus-ring);
+  --focus-outline: 2px solid var(--color-focus);
+  --focus-outline-offset: 2px;
+  --disabled-opacity: 0.48;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-slow: 240ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.2);
+}

@@ -1,0 +1,52 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.shell__main {
+  flex: 1;
+  display: flex;
+  width: 0;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.shell__content {
+  flex: 1;
+  padding: var(--page-padding);
+}
+
+.shell__content-inner {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.shell__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: none;
+  padding: 0;
+  background: var(--color-overlay);
+  border: 0;
+}
+
+@media (max-width: 1099px) {
+  .shell__content {
+    padding: var(--space-6);
+  }
+}
+
+@media (max-width: 900px) {
+  .shell__scrim {
+    display: block;
+  }
+}
+
+@media (max-width: 767px) {
+  .shell__content {
+    padding: var(--space-5) var(--space-4);
+  }
+}

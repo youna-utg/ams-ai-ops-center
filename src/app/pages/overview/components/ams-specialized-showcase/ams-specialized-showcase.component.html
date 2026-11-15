@@ -1,0 +1,355 @@
+<div class="ams-specialized">
+  <header class="specialized-heading">
+    <div>
+      <p>AMS Patterns</p>
+      <h3>AMS / AI Ops 특화 컴포넌트</h3>
+      <span>
+        AI 사용량, Provider 운영, 권한 및 시스템 상태에서 반복되는 전용
+        패턴입니다.
+      </span>
+    </div>
+    <span class="sample-label">Sample Data · Backend 미연동</span>
+  </header>
+
+  <section class="special-block" id="showcase-token-cost">
+    <header class="block-heading">
+      <span>11</span>
+      <div>
+        <h3>AI Token & Cost</h3>
+        <p>Token 사용 구조와 회사가 지불하는 Provider 원가를 함께 비교합니다.</p>
+      </div>
+    </header>
+
+    <div class="metric-grid">
+      <article class="metric-card metric-card--primary">
+        <span>Total Token Usage</span>
+        <strong class="data">13.75M</strong>
+        <small><b>+8.6%</b> 이전 기간 대비</small>
+        <div class="token-stack" aria-label="Input 78%, Output 22%">
+          <span style="width: 78%"></span>
+        </div>
+      </article>
+      <article class="metric-card">
+        <span>Input Token</span>
+        <strong class="data">10.72M</strong>
+        <small>전체 Token의 78%</small>
+      </article>
+      <article class="metric-card">
+        <span>Output Token</span>
+        <strong class="data">3.03M</strong>
+        <small>전체 Token의 22%</small>
+      </article>
+      <article class="metric-card metric-card--cost">
+        <span>Provider Cost</span>
+        <strong class="data">$329.50</strong>
+        <small>판매 금액 및 마진 제외</small>
+      </article>
+    </div>
+
+    <div class="special-grid special-grid--cost">
+      <article class="special-card">
+        <header class="card-heading">
+          <div><h4>Token Usage Breakdown</h4><p>Provider별 Token 구성</p></div>
+          <span class="data">13.75M</span>
+        </header>
+        <div class="breakdown-list">
+          @for (item of [
+            { name: 'OpenAI', value: '5.44M', percent: 40, color: 'primary' },
+            { name: 'Anthropic', value: '3.99M', percent: 29, color: 'secondary' },
+            { name: 'Google', value: '3.21M', percent: 23, color: 'success' },
+            { name: 'Azure AI', value: '1.02M', percent: 8, color: 'muted' }
+          ]; track item.name) {
+            <div class="breakdown-item">
+              <div><span>{{ item.name }}</span><b class="data">{{ item.value }}</b></div>
+              <div class="progress-track"><span [class]="'fill--' + item.color" [style.width.%]="item.percent"></span></div>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="special-card">
+        <header class="card-heading">
+          <div><h4>Cost Trend</h4><p>최근 7개월 Provider 원가</p></div>
+          <span class="cost-change">+3.6%</span>
+        </header>
+        <app-chart
+          type="line"
+          [data]="costTrendData"
+          [options]="costTrendOptions"
+          [height]="210"
+          label="최근 7개월 Provider 원가 추이"
+        />
+      </article>
+
+      <article class="special-card budget-card">
+        <header class="card-heading">
+          <div><h4>Budget Progress</h4><p>11월 Provider 예산</p></div>
+          <app-status-badge label="정상" tone="success" />
+        </header>
+        <div class="budget-values">
+          <strong class="data">$329.50</strong><span>/ $500.00</span>
+        </div>
+        <div class="progress-track progress-track--large" aria-label="예산 65.9% 사용">
+          <span class="fill--primary" style="width: 65.9%"></span>
+        </div>
+        <div class="budget-labels"><span>65.9% 사용</span><span class="data">$170.50 잔여</span></div>
+        <div class="comparison">
+          <div><span>이전 기간</span><b class="data">$318.10</b></div>
+          <app-icon name="chevron-right" [size]="16" />
+          <div><span>현재 기간</span><b class="data">$329.50</b></div>
+          <span class="comparison__delta">+$11.40</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="special-block" id="showcase-provider-model">
+    <header class="block-heading">
+      <span>12</span>
+      <div>
+        <h3>Provider & Model</h3>
+        <p>Provider 연결 상태와 Model 정보를 일관된 구조로 표시합니다.</p>
+      </div>
+    </header>
+
+    <div class="provider-grid">
+      @for (provider of [
+        { mark: 'OA', name: 'OpenAI', detail: '3 Models', status: 'Operational', label: '정상', model: 'GPT-4.1', context: '1M Context', usage: '9,670 requests' },
+        { mark: 'AN', name: 'Anthropic', detail: '2 Models', status: 'Operational', label: '정상', model: 'Claude 3.7 Sonnet', context: '200K Context', usage: '6,650 requests' },
+        { mark: 'GO', name: 'Google', detail: '2 Models', status: 'Degraded', label: '성능 저하', model: 'Gemini 2.5 Pro', context: '1M Context', usage: '5,330 requests' }
+      ]; track provider.name) {
+        <article class="provider-card">
+          <header>
+            <span class="provider-mark">{{ provider.mark }}</span>
+            <div><h4>{{ provider.name }}</h4><p>{{ provider.detail }}</p></div>
+            <app-status-badge [label]="provider.label" [tone]="statusTone(provider.status)" />
+          </header>
+          <div class="model-info">
+            <div><span>Default Model</span><b>{{ provider.model }}</b></div>
+            <div><span>Context</span><b class="data">{{ provider.context }}</b></div>
+          </div>
+          <footer>
+            <span><i></i> API Connected</span>
+            <b class="data">{{ provider.usage }}</b>
+          </footer>
+        </article>
+      }
+    </div>
+
+    <div class="special-grid special-grid--connection">
+      <article class="special-card connection-card">
+        <header class="card-heading">
+          <div><h4>API Connection Status</h4><p>OpenAI · Production</p></div>
+          <app-status-badge label="Connected" tone="success" />
+        </header>
+        <div class="connection-stats">
+          <div><span>Latency</span><b class="data">186ms</b></div>
+          <div><span>Last Check</span><b class="data">14:58:32</b></div>
+          <div><span>Success Rate</span><b class="data">99.72%</b></div>
+        </div>
+      </article>
+      <article class="special-card">
+        <header class="card-heading"><div><h4>API Key</h4><p>암호화된 연결 Credential</p></div></header>
+        <label class="key-field">
+          <span>{{ apiKeyVisible() ? 'sk-proj-ams-sample-7F2Q9L' : 'sk-proj-••••••••••••••••7F2Q' }}</span>
+          <button type="button" (click)="apiKeyVisible.set(!apiKeyVisible())">
+            {{ apiKeyVisible() ? '숨기기' : '표시' }}
+          </button>
+        </label>
+        <p class="field-note"><app-icon name="info" [size]="14" />Sample Key이며 실제 Credential이 아닙니다.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="special-block" id="showcase-provider-pricing">
+    <header class="block-heading">
+      <span>13</span>
+      <div>
+        <h3>Provider Pricing Table</h3>
+        <p>Token, Character, Image, Audio 등 다양한 과금 단위를 표현합니다.</p>
+      </div>
+    </header>
+
+    <article class="special-card pricing-card">
+      <div class="sample-notice">
+        <app-icon name="info" [size]="17" />
+        <div><b>Sample Data</b><span>아래 단가는 UI 검토용 예시이며 실제 Provider 가격이 아닙니다.</span></div>
+      </div>
+      <div class="table-scroll">
+        <table class="special-table pricing-table">
+          <thead>
+            <tr>
+              <th>Provider</th><th>Model</th><th>Billing Unit</th>
+              <th class="numeric">Input Price</th><th class="numeric">Output Price</th>
+              <th>Currency</th><th>Effective Date</th><th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of [
+              { provider: 'OpenAI', model: 'GPT-4.1', unit: '1M Tokens', input: '$2.00', output: '$8.00', currency: 'USD', date: '2026-11-01', status: 'Active' },
+              { provider: 'Anthropic', model: 'Claude 3.7 Sonnet', unit: '1M Tokens', input: '$2.80', output: '$13.50', currency: 'USD', date: '2026-11-01', status: 'Active' },
+              { provider: 'DeepL', model: 'API Pro', unit: '1M Characters', input: '$18.00', output: '—', currency: 'USD', date: '2026-10-15', status: 'Active' },
+              { provider: 'OpenAI', model: 'Image 1', unit: '1 Image', input: '—', output: '$0.04', currency: 'USD', date: '2026-11-01', status: 'Review' },
+              { provider: 'Azure AI', model: 'Speech', unit: '1 Audio Min', input: '$0.02', output: '$0.03', currency: 'USD', date: '2026-09-01', status: 'Active' }
+            ]; track row.provider + row.model) {
+              <tr>
+                <td><strong>{{ row.provider }}</strong></td><td>{{ row.model }}</td>
+                <td><span class="unit-badge">{{ row.unit }}</span></td>
+                <td class="numeric data">{{ row.input }}</td><td class="numeric data">{{ row.output }}</td>
+                <td>{{ row.currency }}</td><td class="data">{{ row.date }}</td>
+                <td><app-status-badge [label]="row.status === 'Active' ? '적용 중' : '검토 필요'" [tone]="row.status === 'Active' ? 'success' : 'warning'" /></td>
+                <td><button class="icon-action" type="button" [attr.aria-label]="row.model + ' 가격 작업'"><app-icon name="more" [size]="18" /></button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="special-block" id="showcase-permissions">
+    <header class="block-heading">
+      <span>14</span>
+      <div>
+        <h3>Permission Management</h3>
+        <p>계정별 권한 프리셋과 개별 권한을 설정하는 예시입니다.</p>
+      </div>
+    </header>
+
+    <div class="permission-layout">
+      <aside class="account-list" aria-label="Administrator List">
+        <header><h4>Administrators</h4><span>{{ accounts.length }}명</span></header>
+        @for (account of accounts; track account.id) {
+          <button
+            type="button"
+            [class.is-selected]="selectedAccountId() === account.id"
+            (click)="selectAccount(account)"
+          >
+            <span class="account-avatar">{{ account.initials }}</span>
+            <span><b>{{ account.name }}</b><small>{{ account.role }}</small></span>
+            <app-icon name="chevron-right" [size]="15" />
+          </button>
+        }
+      </aside>
+
+      <article class="permission-panel">
+        <header class="selected-account">
+          <span class="account-avatar account-avatar--large">{{ selectedAccount().initials }}</span>
+          <div><h4>{{ selectedAccount().name }}</h4><p>{{ selectedAccount().email }} · 최근 활동 {{ selectedAccount().lastActive }}</p></div>
+          <app-status-badge label="Active" tone="success" />
+        </header>
+
+        <div class="permission-toolbar">
+          <label>
+            <span>Permission Preset</span>
+            <select [value]="selectedPreset()" (change)="setPreset($event)">
+              <option>Super Admin</option><option>System Admin</option>
+              <option>Product Manager</option><option>Custom</option>
+            </select>
+          </label>
+          <div>
+            <span>{{ selectedPermissionCount() }} / {{ permissions.length }} 선택</span>
+            <button type="button" (click)="selectAllPermissions()">Select All</button>
+            <button type="button" (click)="clearPermissions()">Deselect All</button>
+          </div>
+        </div>
+
+        @if (selectedPreset() === 'Custom') {
+          <div class="custom-notice"><app-icon name="info" [size]="15" />Custom Permission State · 이 계정에 개별 권한이 적용됩니다.</div>
+        }
+
+        <div class="permission-groups">
+          @for (group of permissionGroups(); track group.group) {
+            <section>
+              <h5>{{ group.group }}</h5>
+              @for (permission of group.items; track permission.id) {
+                <label class="permission-item">
+                  <input
+                    type="checkbox"
+                    [checked]="hasPermission(permission.id)"
+                    (change)="togglePermission(permission.id)"
+                  />
+                  <span><b>{{ permission.label }}</b><small>{{ permission.description }}</small></span>
+                </label>
+              }
+            </section>
+          }
+        </div>
+        <p class="policy-note">예시 권한 항목이며 최종 권한 정책으로 확정되지 않았습니다.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="special-block" id="showcase-monitoring">
+    <header class="block-heading">
+      <span>15</span>
+      <div>
+        <h3>System Monitoring</h3>
+        <p>핵심 서비스 상태와 운영 지표를 빠르게 판단하는 공통 패턴입니다.</p>
+      </div>
+    </header>
+
+    <div class="health-overview">
+      <article class="overall-health">
+        <span class="health-orbit"><i></i></span>
+        <div><span>Overall Health</span><strong>All Systems Operational</strong><small>마지막 확인 2026-11-15 15:02</small></div>
+        <app-status-badge label="정상" tone="success" />
+      </article>
+      <div class="health-metrics">
+        <div><span>Error Rate</span><strong class="data">0.42%</strong><small>목표 &lt; 1.0%</small></div>
+        <div><span>Uptime</span><strong class="data">99.98%</strong><small>최근 30일</small></div>
+      </div>
+    </div>
+    <div class="service-grid">
+      @for (service of [
+        { name: 'Database', detail: '18ms response', status: 'Operational', label: '정상', value: '99.99%' },
+        { name: 'Redis', detail: 'Memory 61%', status: 'Operational', label: '정상', value: '4.2ms' },
+        { name: 'Queue', detail: '24 jobs waiting', status: 'Degraded', label: '성능 저하', value: '1.8s' },
+        { name: 'API', detail: '142ms response', status: 'Operational', label: '정상', value: '99.97%' }
+      ]; track service.name) {
+        <article class="service-card">
+          <div><span class="service-icon"><app-icon name="health" [size]="17" /></span><div><h4>{{ service.name }}</h4><p>{{ service.detail }}</p></div></div>
+          <strong class="data">{{ service.value }}</strong>
+          <app-status-badge [label]="service.label" [tone]="statusTone(service.status)" />
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="special-block" id="showcase-activity-logs">
+    <header class="block-heading">
+      <span>16</span>
+      <div>
+        <h3>Activity & Logs</h3>
+        <p>운영 이벤트의 유형, 결과, 사용자와 Severity를 함께 표시합니다.</p>
+      </div>
+    </header>
+
+    <article class="special-card activity-card">
+      <header class="activity-toolbar">
+        <div><h4>Recent Activity</h4><p>최근 AI Operations 이벤트</p></div>
+        <button type="button"><app-icon name="filter" [size]="15" />Severity Filter</button>
+      </header>
+      <div class="table-scroll">
+        <table class="special-table">
+          <thead><tr><th>Activity Type</th><th>Status</th><th>Timestamp</th><th>User</th><th>Product</th><th>Severity</th></tr></thead>
+          <tbody>
+            @for (log of [
+              { type: 'Provider 연결 테스트', status: 'Success', statusLabel: '완료', time: '2026-11-15 14:58:32', user: 'Luna Kim', product: 'AMS', severity: 'Info', tone: 'info' },
+              { type: '문서 분석 요청 실패', status: 'Failed', statusLabel: '실패', time: '2026-11-15 14:42:18', user: '박지민', product: 'DocUp', severity: 'Error', tone: 'danger' },
+              { type: '가격 정보 변경', status: 'Success', statusLabel: '완료', time: '2026-11-15 13:18:04', user: 'Luna Kim', product: 'AMS', severity: 'Warning', tone: 'warning' },
+              { type: '영상 자막 생성', status: 'Processing', statusLabel: '처리 중', time: '2026-11-15 12:56:41', user: '이도윤', product: 'TimeUp', severity: 'Info', tone: 'info' }
+            ]; track log.time) {
+              <tr>
+                <td><strong>{{ log.type }}</strong></td>
+                <td><app-status-badge [label]="log.statusLabel" [tone]="log.status === 'Success' ? 'success' : log.status === 'Failed' ? 'danger' : 'info'" /></td>
+                <td class="data">{{ log.time }}</td><td>{{ log.user }}</td><td>{{ log.product }}</td>
+                <td><span [class]="'severity severity--' + log.tone"><i></i>{{ log.severity }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+</div>

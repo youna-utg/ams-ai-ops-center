@@ -1,0 +1,16 @@
+.chart {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart {
+    scroll-behavior: auto;
+  }
+}

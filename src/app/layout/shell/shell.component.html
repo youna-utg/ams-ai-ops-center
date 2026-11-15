@@ -1,0 +1,27 @@
+<div class="shell">
+  <app-sidebar
+    [collapsed]="sidebarCollapsed()"
+    [mobileOpen]="mobileNavigationOpen()"
+    (collapseToggle)="toggleSidebar()"
+    (navigationSelect)="closeMobileNavigation()"
+  />
+
+  <div class="shell__main">
+    <app-header (menuToggle)="toggleMobileNavigation()" />
+
+    <main class="shell__content">
+      <div class="shell__content-inner">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
+
+  @if (mobileNavigationOpen()) {
+    <button
+      type="button"
+      class="shell__scrim"
+      aria-label="메뉴 닫기"
+      (click)="closeMobileNavigation()"
+    ></button>
+  }
+</div>
