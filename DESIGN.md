@@ -120,10 +120,11 @@ hardcoded color values in component styles.
   `--color-primary-800`   `#07569E`   Deep accent
   `--color-primary-900`   `#0A477D`   Deepest accent
 
-Use `#2F9AFF` for primary actions, active navigation, selected controls,
-links, focus accents, and the main chart series. Use pale tints for
-large selected surfaces. For small text on white, use a darker blue
-token when contrast requires it.
+Use `#2F9AFF` for primary actions, links, focus accents, and the main
+chart series. Use pale tints for large selected surfaces. For small text
+on white, use a darker blue token when contrast requires it. Sidebar
+selection uses `#F1F5F9` tinted with 5% `#2F9AFF`, so it stays pale and
+reads as blue-gray rather than a bright blue chip.
 
 ### Neutral palette
 
@@ -161,7 +162,9 @@ values. This keeps visual intent stable if the palette changes.
 
 -   **Primary action:** `--color-primary`, `--color-primary-hover`,
     `--color-primary-active`. Use for the highest-priority action,
-    selected navigation, focus, and the main data series.
+    focus, and the main data series. Sidebar selection uses
+    `--color-neutral-100` tinted with 5% `--color-primary`, with black
+    text rather than a solid primary fill.
 -   **Secondary action:** `--color-secondary`,
     `--color-secondary-hover`, `--color-secondary-active`. Use for
     neutral emphasized actions; do not compete with Primary.
@@ -200,10 +203,17 @@ existing components can migrate without visual regressions.
 
 ## 4. Typography
 
-Preferred font stack:
-`Pretendard, "Noto Sans KR", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+Latin text, English UI labels, and figures use Figtree. Hangul uses
+Pretendard Variable. Both are loaded, with Noto Sans KR and the system
+sans as fallbacks.
 
-Provide fallbacks; do not assume a remote font is available.
+`--font-family-sans` and `--font-family-data` share one stack:
+
+`Figtree, "Figtree Variable", "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+
+The browser picks Figtree for Latin glyphs and Pretendard for Hangul, so
+mixed sentences stay in one declaration. Figtree is loaded at weights
+400 through 700. Pretendard Variable covers the same weights.
 
   Style          Size     Weight   Line height Usage
   ------------ ------ ---------- ------------- --------------------------
@@ -223,11 +233,12 @@ Use tabular numerals for costs, tokens, percentages, counts, and dates.
 Keep units and precision consistent within a table or chart.
 
 Implementation uses size, weight, line-height, and letter-spacing CSS
-variables plus reusable `.text-*` classes. Numeric / Data uses
-`--font-family-data`, `font-variant-numeric: tabular-nums lining-nums
-slashed-zero`, and the `.text-numeric` / `.text-data` classes. This prevents
-column jitter and improves comparison of costs, token counts, percentages,
-dates, and durations.
+variables plus reusable `.text-*` classes. Numeric / Data uses the same
+Figtree family through `--font-family-data`, with
+`font-variant-numeric: tabular-nums lining-nums slashed-zero` and the
+`.text-numeric` / `.text-data` classes. This prevents column jitter and
+improves comparison of costs, token counts, percentages, dates, and
+durations.
 
 ## 5. Spacing, radius, borders, elevation
 
@@ -304,7 +315,7 @@ tokens.
 ### Desktop-first layout
 
 -   Persistent left sidebar, top header, main content.
--   Expanded sidebar: approximately 248px.
+-   Expanded sidebar: 260px.
 -   Collapsed sidebar: approximately 72px.
 -   Header: approximately 64px high.
 -   Main content padding: 28--32px.
@@ -315,11 +326,14 @@ tokens.
 
 -   White surface and subtle right border.
 -   Service identity at top.
--   Group labels in muted small text.
--   Consistent icon size, row height, and spacing.
--   Active item: pale blue background, blue text/icon, clear active
+-   Group labels in 12px semibold blue-gray text, without uppercase
+    styling.
+-   Menu items are 32px high, 14/20 Figtree, with 10px radius and 16px
+    icons.
+-   Active item: `--color-primary-700` text and icon at weight 500, on
+    `--color-neutral-100` tinted with 5% `--color-primary`. No side
     indicator.
--   Subtle neutral hover.
+-   Idle icons are gray. Hover is a 5% black wash, and pressed is 10%.
 -   Collapsed state supports tooltips.
 -   Account/profile area near bottom.
 -   Must support permission-filtered navigation in the future.
@@ -377,8 +391,8 @@ and groups configurable.
 -   Settings
 
 Only Dashboard is populated in the initial prototype. Other destinations
-should show a page title, short description, and neutral placeholder; do
-not invent detailed workflows.
+show the page title and the shared placeholder description, "해당 영역의
+기능은 아직 확정되지 않았습니다." Do not invent detailed workflows.
 
 ### Product identity
 
@@ -500,7 +514,8 @@ Icon-only buttons need accessible labels and tooltips where useful.
 -   Textarea
 -   Select
 -   Multi-select
--   Checkbox
+-   Checkbox. The checked and indeterminate marks are white on the
+    primary fill.
 -   Radio
 -   Switch
 -   Date picker
@@ -822,8 +837,8 @@ document to match approved implementation. 4. Keep shared components
 visually consistent. 5. Record significant changes in a short changelog.
 
 The goal is a coherent, extensible design system that can support the
-full AMS / AI Ops product as its information architecture and business
-requirements are finalized.
+Ops Center product as its information architecture and business
+requirements are finalized. AMS remains the internal system name.
 
 ## 20. Changelog
 
@@ -916,3 +931,42 @@ were retained to prevent regressions during incremental migration.
     Activity & Logs.
 -   Completed Hover, Focus, Active, Disabled, Loading, Error, and Success
     styling for the new interactive states without backend dependencies.
+
+### 2026-11-15 --- SideNav visual alignment
+
+-   Restyled the application sidebar to follow the Astryx SideNav specimen:
+    Figtree 14/20 menu type, 12/20 semibold section labels, 16/24 product
+    heading, 32px items, 10px radius, and 16px icons.
+-   Replaced the blue selection treatment with black text, a gray idle icon,
+    and neutral washes: hover 5%, selected 6% at weight 500, pressed 10%.
+-   Kept the existing navigation structure, collapse behavior, mobile drawer,
+    and keyboard focus outline. Expanded width is 260px.
+
+### 2026-11-15 --- Shared Latin type and blue-gray selection
+
+-   Moved Figtree from the sidebar into the shared type stack so English
+    labels, headings, and figures use one Latin face.
+-   Loaded Pretendard Variable for Hangul and kept it after Figtree, so
+    mixed Korean sentences resolve without a separate English style.
+-   Pointed numeric and data styles at the same family and retained
+    tabular figures.
+-   Recolored the selected sidebar item from a 6% black wash to an 8%
+    wash of the blue-gray secondary `#334155`, keeping the same lightness.
+-   Raised the blue in that selection to a 16% wash of `#2F9AFF` so the
+    active item reads as pale blue while the text stays black.
+-   Pulled that blue back toward gray by tinting `#F1F5F9` with 5%
+    `#2F9AFF`.
+
+### 2026-11-15 --- Ops Center naming
+
+-   Set the browser title and sidebar title to Ops Center. Kept AMS as
+    the small sidebar label and the breadcrumb root.
+-   Replaced placeholder page descriptions with one sentence: 해당 영역의
+    기능은 아직 확정되지 않았습니다.
+-   Colored the selected sidebar label and icon with
+    `--color-primary-700` so both read as blue on the pale selection wash.
+
+### 2026-11-15 --- Checkbox mark
+
+-   Replaced the native checkbox glyph, which rendered black on the
+    primary blue, with an explicit white check and indeterminate dash.

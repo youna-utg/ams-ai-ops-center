@@ -241,16 +241,12 @@
 }
 
 .profile-button__avatar {
-  display: grid;
+  display: block;
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  place-items: center;
-  color: var(--color-primary-700);
-  background: var(--color-primary-subtle-hover);
+  object-fit: cover;
   border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: var(--font-weight-semibold);
 }
 
 .profile-button__copy {

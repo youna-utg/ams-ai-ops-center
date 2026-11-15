@@ -8,15 +8,15 @@
     <a
       class="brand"
       routerLink="/overview"
-      aria-label="AMS AI Ops Center 홈"
+      aria-label="Ops Center 홈"
       (click)="navigationSelect.emit()"
     >
       <span class="brand__mark" aria-hidden="true">
         <span class="brand__mark-dot"></span>
       </span>
       <span class="brand__copy">
-        <strong class="brand__name">AMS</strong>
-        <span class="brand__product">AI Ops Center</span>
+        <span class="brand__product">AMS</span>
+        <strong class="brand__name">Ops Center</strong>
       </span>
     </a>
 
@@ -29,7 +29,7 @@
     >
       <app-icon
         name="collapse"
-        [size]="18"
+        [size]="16"
         [class.icon--flipped]="collapsed()"
       />
     </button>
@@ -53,7 +53,7 @@
                 [attr.title]="collapsed() ? item.label : null"
                 (click)="navigationSelect.emit()"
               >
-                <app-icon [name]="item.icon" [size]="19" />
+                <app-icon [name]="item.icon" [size]="16" />
                 <span class="nav-item__label">{{ item.label }}</span>
               </a>
             </li>
@@ -65,7 +65,7 @@
 
   <div class="sidebar__account">
     <div class="account" [attr.title]="collapsed() ? 'Luna Kim — 관리자' : null">
-      <span class="account__avatar" aria-hidden="true">LK</span>
+      <img class="account__avatar" src="brand/ug.png" alt="" />
       <span class="account__copy">
         <strong>Luna Kim</strong>
         <span>관리자</span>

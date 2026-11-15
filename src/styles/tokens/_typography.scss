@@ -1,11 +1,14 @@
 // AMS typography tokens
-// Korean-first system stack with tabular numeric support for operational data.
+// Figtree draws Latin text and figures. Pretendard draws Hangul.
+// Numeric styles add tabular figures on the same family.
+
+$ams-font-stack: Figtree, 'Figtree Variable', 'Pretendard Variable', Pretendard,
+  'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+  sans-serif;
 
 :root {
-  --font-family-sans: Pretendard, 'Noto Sans KR', Inter, -apple-system,
-    BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-family-data: Inter, Pretendard, 'Noto Sans KR', -apple-system,
-    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-sans: #{$ams-font-stack};
+  --font-family-data: #{$ams-font-stack};
 
   /* Font sizes */
   --font-size-display: 32px;

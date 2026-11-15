@@ -1,6 +1,6 @@
-# AMS / AI Ops Center
+# Ops Center
 
-Angular 19 design-system and UI publishing prototype for the AMS / AI Ops Center console.
+Angular 19 design-system and UI publishing prototype for the Ops Center console. AMS remains the internal system name.
 
 - **Stack:** Angular 19 · SCSS · CSS Variables · Chart.js · Light theme · Desktop-first
 - **Data:** Mock only (no backend)
