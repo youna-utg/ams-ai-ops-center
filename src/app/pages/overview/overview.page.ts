@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, HostListener, computed, signal } from '@angular/core';
 import { ChartData, ChartOptions, Plugin, TooltipItem } from 'chart.js';
 import {
   DateRangeKey,
@@ -130,8 +130,23 @@ export class OverviewPage {
   protected readonly appliedStatus = signal('all');
   protected readonly appliedProvider = signal('all');
   protected readonly productSearch = signal('');
+  protected readonly productStatusOpen = signal(false);
   protected readonly productSortOpen = signal(false);
   protected readonly productSort = signal<ProductSortKey>('name');
+  protected readonly productStatusOptions: Array<{
+    value: string;
+    label: string;
+  }> = [
+    { value: 'all', label: '전체 상태' },
+    { value: 'Operational', label: '정상' },
+    { value: 'Attention', label: '확인 필요' },
+    { value: 'Maintenance', label: '점검 중' },
+  ];
+  protected readonly statusFilterLabel = computed(
+    () =>
+      this.productStatusOptions.find((option) => option.value === this.appliedStatus())
+        ?.label ?? '전체 상태',
+  );
   protected readonly productSortOptions: Array<{
     key: ProductSortKey;
     label: string;
@@ -150,7 +165,15 @@ export class OverviewPage {
     health: true,
   });
 
-  protected readonly products = PRODUCTS;
+  protected readonly products = signal([...PRODUCTS]);
+  protected readonly productCreateOpen = signal(false);
+  protected readonly productCode = signal('');
+  protected readonly productName = signal('');
+  protected readonly productDescription = signal('');
+  protected readonly productRpm = signal(0);
+  protected readonly productRph = signal(0);
+  protected readonly productStatusDraft = signal<ProductStatus>('Operational');
+  protected readonly productPools = signal([{ id: 1, name: 'Credit Pool', amount: 0 }]);
   protected readonly providers = PROVIDER_USAGE;
   protected readonly activities = RECENT_ACTIVITIES;
   protected readonly systemHealth = SYSTEM_HEALTH;
@@ -182,7 +205,7 @@ export class OverviewPage {
     const status = this.appliedStatus();
     const query = this.productSearch().trim().toLowerCase();
 
-    return this.products
+    return this.products()
       .filter((product) => {
         const matchesStatus = status === 'all' || product.status === status;
         const matchesQuery =
@@ -295,8 +318,8 @@ export class OverviewPage {
         ],
         borderRadius: 10,
         borderSkipped: false,
-        maxBarThickness: 42,
-        categoryPercentage: 0.86,
+        maxBarThickness: 84,
+        categoryPercentage: 0.96,
         barPercentage: 0.92,
       },
     ],
@@ -306,6 +329,7 @@ export class OverviewPage {
     labels: COST_BY_PROVIDER.labels,
     datasets: [
       {
+        label: 'Provider Cost',
         data: COST_BY_PROVIDER.values,
         backgroundColor: [
           'var(--chart-series-primary)',
@@ -331,8 +355,8 @@ export class OverviewPage {
         gradientTokens: ['--chart-series-primary'],
         borderRadius: 10,
         borderSkipped: false,
-        maxBarThickness: 28,
-        categoryPercentage: 0.82,
+        maxBarThickness: 46,
+        categoryPercentage: 0.96,
         barPercentage: 0.92,
       },
     ],
@@ -506,11 +530,11 @@ export class OverviewPage {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = muted;
-        ctx.font = `500 10px ${font}`;
-        ctx.fillText('Total Cost', x, y - 10);
+        ctx.font = `500 13px ${font}`;
+        ctx.fillText('Total Cost', x, y - 14);
         ctx.fillStyle = ink;
-        ctx.font = `700 16px ${font}`;
-        ctx.fillText(this.formatCurrency(this.totalProviderCost), x, y + 9);
+        ctx.font = `700 22px ${font}`;
+        ctx.fillText(this.formatCurrency(this.totalProviderCost), x, y + 12);
         ctx.restore();
       },
     },
@@ -519,20 +543,20 @@ export class OverviewPage {
   protected readonly doughnutOptions: ChartOptions<'doughnut'> = {
     responsive: true,
     maintainAspectRatio: false,
-    cutout: '68%',
+    cutout: '58%',
     plugins: {
       legend: {
         position: 'right',
         labels: {
           usePointStyle: true,
           pointStyle: 'circle',
-          boxWidth: 7,
-          boxHeight: 7,
-          padding: 14,
+          boxWidth: 8,
+          boxHeight: 8,
+          padding: 16,
           color: 'var(--color-text-secondary)',
           font: {
             family: 'var(--font-family-sans)',
-            size: 11,
+            size: 13,
           },
         },
       },
@@ -615,12 +639,104 @@ export class OverviewPage {
     this.pendingStatus.set((event.target as HTMLSelectElement).value);
   }
 
+  protected setAppliedStatus(value: string): void {
+    this.pendingStatus.set(value);
+    this.appliedStatus.set(value);
+    this.productStatusOpen.set(false);
+  }
+
+  protected toggleProductStatus(): void {
+    this.productSortOpen.set(false);
+    this.productStatusOpen.update((open) => !open);
+  }
+
+  protected toggleProductSort(): void {
+    this.productStatusOpen.set(false);
+    this.productSortOpen.update((open) => !open);
+  }
+
   protected setPendingProvider(event: Event): void {
     this.pendingProvider.set((event.target as HTMLSelectElement).value);
   }
 
   protected updateProductSearch(event: Event): void {
-    this.productSearch.set((event.target as HTMLInputElement).value);
+    const target = event.target as HTMLInputElement;
+    this.productSearch.set(target.value);
+  }
+
+  protected openProductCreate(): void {
+    this.productCode.set('');
+    this.productName.set('');
+    this.productDescription.set('');
+    this.productRpm.set(0);
+    this.productRph.set(0);
+    this.productStatusDraft.set('Operational');
+    this.productPools.set([{ id: 1, name: 'Credit Pool', amount: 0 }]);
+    this.productCreateOpen.set(true);
+  }
+
+  protected addProductPool(): void {
+    this.productPools.update((pools) => [
+      ...pools,
+      { id: Math.max(...pools.map((pool) => pool.id)) + 1, name: 'Credit Pool', amount: 0 },
+    ]);
+  }
+
+  protected updateProductPool(id: number, key: 'name' | 'amount', value: string): void {
+    this.productPools.update((pools) =>
+      pools.map((pool) =>
+        pool.id === id
+          ? { ...pool, [key]: key === 'amount' ? Number(value) || 0 : value }
+          : pool,
+      ),
+    );
+  }
+
+  protected fieldValue(event: Event): string {
+    return (event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
+  }
+
+  protected fieldNumber(event: Event): number {
+    return Number(this.fieldValue(event)) || 0;
+  }
+
+  protected setProductStatusDraft(event: Event): void {
+    const value = this.fieldValue(event);
+    this.productStatusDraft.set(
+      value === 'Attention' || value === 'Maintenance' ? value : 'Operational',
+    );
+  }
+
+  protected saveProductCreate(): void {
+    const next = this.products().length + 1;
+    const name = this.productName().trim();
+    const code = this.productCode().trim();
+    const label = name || code || `New Product ${next}`;
+    const mark = label.replace(/[^A-Za-z0-9가-힣]/g, '').slice(0, 2).toUpperCase() || 'NP';
+    const domain = code
+      ? `${code.toLowerCase().replace(/\s+/g, '-')}.ops.center`
+      : 'new.ops.center';
+    this.products.update((items) => [
+      {
+        product: label,
+        domain,
+        mark,
+        status: this.productStatusDraft(),
+        activeUsers: 0,
+        apiRequests: this.productRpm(),
+        tokenUsage: this.productRph(),
+        providerCost: 0,
+      },
+      ...items,
+    ]);
+    this.productCreateOpen.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  protected closeProductCreate(): void {
+    this.productCreateOpen.set(false);
+    this.productStatusOpen.set(false);
+    this.productSortOpen.set(false);
   }
 
   protected setProductSort(key: ProductSortKey): void {

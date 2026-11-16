@@ -70,6 +70,13 @@
   line-height: var(--line-height-caption);
 }
 
+.text-micro {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-caption);
+  line-height: 1.4;
+}
+
 .text-numeric,
 .text-data {
   font-family: var(--font-family-data);

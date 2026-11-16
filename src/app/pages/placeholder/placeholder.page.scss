@@ -11,7 +11,7 @@
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-h1);
   color: var(--color-text-primary);
-  letter-spacing: -0.015em;
+  letter-spacing: var(--letter-spacing-heading);
   margin-bottom: var(--space-2);
 }
 
@@ -30,8 +30,8 @@
   flex-direction: column;
   padding: var(--space-12) var(--space-6);
   background: var(--color-surface);
-  border: var(--border-default);
-  border-radius: var(--radius-medium);
+  border: 0;
+  border-radius: var(--radius-large);
   text-align: center;
 }
 

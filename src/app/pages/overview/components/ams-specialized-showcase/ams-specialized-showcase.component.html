@@ -251,8 +251,8 @@
           </label>
           <div>
             <span>{{ selectedPermissionCount() }} / {{ permissions.length }} 선택</span>
-            <button type="button" (click)="selectAllPermissions()">Select All</button>
-            <button type="button" (click)="clearPermissions()">Deselect All</button>
+            <button type="button" (click)="selectAllPermissions()">전체 선택</button>
+            <button type="button" (click)="clearPermissions()">선택 해제</button>
           </div>
         </div>
 
@@ -336,7 +336,7 @@
     <article class="special-card activity-card">
       <header class="activity-toolbar">
         <div><h4>Recent Activity</h4><p>최근 AI Operations 이벤트</p></div>
-        <button type="button" [class.is-active]="severityFilter() !== 'All'" (click)="cycleSeverityFilter()"><app-icon name="filter" [size]="15" />Severity · {{ severityFilter() }}</button>
+        <button type="button" [class.is-active]="severityFilter() !== 'All'" (click)="cycleSeverityFilter()"><app-icon name="filter" [size]="15" />심각도 · {{ severityLabel() }}</button>
       </header>
       <div class="table-scroll">
         <table class="special-table">

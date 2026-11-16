@@ -19,7 +19,10 @@ export type UiIcon =
   | 'arrow-down'
   | 'sort'
   | 'more'
-  | 'info';
+  | 'info'
+  | 'eye'
+  | 'eye-off'
+  | 'plus';
 
 @Component({
   selector: 'app-icon',

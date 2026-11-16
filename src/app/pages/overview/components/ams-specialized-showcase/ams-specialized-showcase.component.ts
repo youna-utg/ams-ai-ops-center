@@ -277,6 +277,15 @@ export class AmsSpecializedShowcaseComponent implements OnDestroy {
     this.pricingActionMessage.set(`${model} 가격 편집 화면을 준비했습니다.`);
   }
 
+  protected severityLabel(): string {
+    return {
+      All: '전체',
+      Info: '정보',
+      Warning: '경고',
+      Error: '오류',
+    }[this.severityFilter()];
+  }
+
   protected cycleSeverityFilter(): void {
     const filters: Array<'All' | 'Info' | 'Warning' | 'Error'> = [
       'All',

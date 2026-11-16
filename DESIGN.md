@@ -1,7 +1,7 @@
 # AMS / AI Ops Center --- Design System
 
-**Version:** 0.1\
-**Status:** Initial design baseline\
+**Version:** 0.2\
+**Status:** Aligned with the published Dashboard and Component Showcase\
 **Implementation target:** Angular 19 · Light theme · Desktop-first
 responsive web\
 **Purpose:** High-fidelity design-system and UI-publishing prototype;
@@ -121,27 +121,27 @@ hardcoded color values in component styles.
   `--color-primary-900`   `#0A477D`   Deepest accent
 
 Use `#2F9AFF` for primary actions, links, focus accents, and the main
-chart series. Use pale tints for large selected surfaces. For small text
-on white, use a darker blue token when contrast requires it. Sidebar
-selection uses `#F1F5F9` tinted with 5% `#2F9AFF`, so it stays pale and
-reads as blue-gray rather than a bright blue chip.
+chart series. Use pale tints for large selected surfaces on light
+content. For small text on white, use a darker blue token when contrast
+requires it. The sidebar is a dark navigation surface; its selected item
+uses an 18% wash of `#2F9AFF` with `--color-primary-400` text and icon.
 
 ### Neutral palette
 
   Token                   Value
   ----------------------- -----------
   `--color-neutral-0`     `#FFFFFF`
-  `--color-neutral-25`    `#FCFDFE`
-  `--color-neutral-50`    `#F8FAFC`
-  `--color-neutral-100`   `#F1F5F9`
-  `--color-neutral-200`   `#E2E8F0`
-  `--color-neutral-300`   `#CBD5E1`
-  `--color-neutral-400`   `#94A3B8`
-  `--color-neutral-500`   `#64748B`
-  `--color-neutral-600`   `#475569`
-  `--color-neutral-700`   `#334155`
-  `--color-neutral-800`   `#1E293B`
-  `--color-neutral-900`   `#0F172A`
+  `--color-neutral-25`    `#FDFDFD`
+  `--color-neutral-50`    `#F7F8FA`
+  `--color-neutral-100`   `#F1F2F4`
+  `--color-neutral-200`   `#E9EBEF`
+  `--color-neutral-300`   `#D8DCE2`
+  `--color-neutral-400`   `#A6ABB4`
+  `--color-neutral-500`   `#727883`
+  `--color-neutral-600`   `#555B66`
+  `--color-neutral-700`   `#383D46`
+  `--color-neutral-800`   `#242830`
+  `--color-neutral-900`   `#15181E`
 
 ### Semantic palette
 
@@ -188,14 +188,32 @@ Current canonical values:
 -   `--color-primary: #2F9AFF`
 -   `--color-primary-hover: #1684EB`
 -   `--color-primary-active: #086BC7`
--   `--color-secondary: #334155`
--   `--color-background: #F8FAFC`
+-   `--color-secondary: #383D46` (`--color-neutral-700`)
+-   `--color-background: #F8F8F8`
 -   `--color-surface: #FFFFFF`
--   `--color-surface-subtle: #F8FAFC`
--   `--color-border: #E2E8F0`
--   `--color-text-primary: #0F172A`
--   `--color-text-secondary: #475569`
--   `--color-text-muted: #64748B`
+-   `--color-surface-subtle: #F7F8FA`
+-   `--color-surface-sunken: #F7F8FA` (table header bands)
+-   `--color-border: #E9EBEF`
+-   `--color-text-primary: #15181E`
+-   `--color-text-secondary: #555B66`
+-   `--color-text-muted: #727883`
+
+Chart series stay on their own tokens so data colors do not collide with
+status colors:
+
+-   Primary `#2F9AFF`, secondary `#38BDF8`, tertiary `#818CF8`, quaternary
+    `#2DD4BF`, muted `#D8DCE2`.
+-   Tooltip surface `#15181E`. Grid lines use 6% of `#15181E`.
+
+Sidebar tokens live beside the light palette. Do not reuse light-surface
+tokens for the navigation column.
+
+-   `--color-sidebar: #171A20`
+-   `--color-sidebar-ink: #F4F6F8`
+-   `--color-sidebar-label: #8B919C`
+-   `--color-sidebar-active: #4DADFF`
+-   Selected wash: 18% `#2F9AFF`. Hover wash: 6% white. Pressed wash: 10%
+    white.
 
 Legacy aliases such as `--color-bg-app`, `--color-bg-surface`, and
 `--color-border-default` remain temporarily mapped to canonical tokens so
@@ -217,17 +235,25 @@ mixed sentences stay in one declaration. Figtree is loaded at weights
 
   Style          Size     Weight   Line height Usage
   ------------ ------ ---------- ------------- --------------------------
-  Display        32px        700          1.25 Rare high-level emphasis
+  KPI            32px        700          1.15 Dashboard and gauge values
+  Stat large     28px        700           1.1 Featured showcase metrics
+  Stat           22px        700           1.1 Secondary metrics
+  Brand          18px        800             1 Sidebar product name
   H1             24px        700          1.35 Page title
   H2             20px        700           1.4 Section title
   H3             16px        600          1.45 Card / subsection title
   H4             14px        600          1.45 Minor heading
   Body large     15px        400           1.6 Intro copy
-  Body           14px        400          1.55 Main UI text
+  Body           14px        400          1.55 Main UI text and menu items
   Body small     13px        400           1.5 Supporting text
   Label          13px   500--600           1.4 Form / data label
-  Caption        12px        400          1.45 Metadata
+  Caption        12px        400          1.45 Metadata and nav group labels
+  Micro          11px        500           1.4 Badges, table heads, hints
   Numeric        14px   500--600           1.4 Metrics / table values
+
+Do not introduce 9px or 10px text. Micro is the smallest size. Table
+column headers use Micro, semibold, uppercase, with slight tracking.
+Navigation group labels stay sentence case.
 
 Use tabular numerals for costs, tokens, percentages, counts, and dates.
 Keep units and precision consistent within a table or chart.
@@ -257,35 +283,42 @@ and 10px vertical.
 ### Radius
 
   Token                  Value Usage
-  -------------------- ------- -------------------------
-  `--radius-small`         6px Inputs / buttons
-  `--radius-medium`        8px Cards / menus
-  `--radius-large`        12px Large panels / dialogs
-  `--radius-full`        999px Pills / avatars
+  -------------------- ------- ---------------------------------
+  `--radius-xs`            4px Checkboxes and tight marks
+  `--radius-small`         6px Inputs, buttons, menus items
+  `--radius-medium`       12px Menus, popovers, inset panels
+  `--radius-large`        16px Cards, dialogs, page panels
+  `--radius-full`        999px Pills, avatars, filter chips
 
-Most cards should use 8px and controls 6px. Avoid making every control
-pill-shaped. Compatibility aliases `--radius-sm`, `--radius-md`, and
-`--radius-lg` map to the semantic tokens; `--radius-xs: 4px` and
-`--radius-xl: 16px` remain available only for compact or exceptional cases.
+Content cards and page panels use 16px. Fields and rectangular buttons
+use 6px. Search fields, date-range triggers, and toolbar chips are pills.
+Do not make every control a pill. Compatibility aliases `--radius-sm`,
+`--radius-md`, and `--radius-lg` map to Small, Medium, and Large.
 
 ### Borders and shadows
 
--   Default border: 1px solid `--color-border-default`.
--   Use subtle borders to define cards and table boundaries.
--   Cards generally use white surfaces and borders rather than strong
-    shadows.
--   Reserve elevation for menus, popovers, and dialogs.
--   Avoid unnecessary nested card borders.
+-   Default border: 1px solid `--color-border`.
+-   Use that border on inputs, popovers, alerts, and status badges.
+-   Cards are white and borderless. The `#F8F8F8` canvas separates them.
+    Table regions use dividers and a sunken header, not an outer card
+    border.
+-   Reserve elevation for menus, popovers, dialogs, and the mobile drawer.
+-   Do not nest a bordered card inside another card.
 
-Elevation tokens:
+Elevation tokens, tinted with the current ink `#15181E`:
 
--   `--shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.04)` for small controls.
--   `--shadow-card: 0 2px 8px rgba(15, 23, 42, 0.06)` for cards only when a
-    border is insufficient.
--   `--shadow-dropdown: 0 8px 24px rgba(15, 23, 42, 0.10)` for dropdowns,
+-   `--shadow-subtle: 0 1px 3px rgb(21 24 30 / 3.5%)` for small controls.
+-   `--shadow-card: 0 4px 14px rgb(21 24 30 / 4.5%)` when a white card needs
+    more separation than the canvas already gives.
+-   `--shadow-dropdown: 0 10px 28px rgb(21 24 30 / 9%)` for dropdowns,
     menus, and popovers.
--   `--shadow-modal: 0 16px 40px rgba(15, 23, 42, 0.14)` for modals and
-    mobile navigation drawers.
+-   `--shadow-modal: 0 20px 48px rgb(21 24 30 / 14%)` for modals and the
+    mobile navigation drawer.
+
+Dashboard and showcase cards are white, borderless, and use Large radius.
+They separate from `#F8F8F8` by surface contrast. Keep a 1px border on
+inputs, popovers, alerts, and status badges. Do not nest a bordered card
+inside another card.
 
 Legacy `--shadow-xs` through `--shadow-lg` aliases map to these semantic
 tokens.
@@ -324,18 +357,19 @@ tokens.
 
 ### Sidebar
 
--   White surface and subtle right border.
--   Service identity at top.
--   Group labels in 12px semibold blue-gray text, without uppercase
-    styling.
--   Menu items are 32px high, 14/20 Figtree, with 10px radius and 16px
-    icons.
--   Active item: `--color-primary-700` text and icon at weight 500, on
-    `--color-neutral-100` tinted with 5% `--color-primary`. No side
-    indicator.
--   Idle icons are gray. Hover is a 5% black wash, and pressed is 10%.
--   Collapsed state supports tooltips.
--   Account/profile area near bottom.
+-   Dark surface `#171A20`, full viewport height, 1px translucent divider.
+-   Service identity at top: Ops Center wordmark at 18px extrabold, with
+    AMS remaining the small product label where the breadcrumb needs it.
+-   Group labels are 12px semibold `#8B919C`, sentence case.
+-   Menu items are 32px high, 14/20, 10px radius, 16px icons.
+-   Idle label `#F4F6F8`. Idle icon `#A6ABB4`.
+-   Active item: `#4DADFF` text and icon at weight 500, on an 18% primary
+    wash. No side indicator.
+-   Hover is a 6% white wash. Pressed is 10% white.
+-   Keyboard focus is a 2px white outline at 72% opacity.
+-   Expanded width is 260px. From 1100px down to 901px the sidebar stays
+    visible but collapses to 72px and hides labels. At 900px and below it
+    becomes an off-canvas drawer.
 -   Must support permission-filtered navigation in the future.
 
 ### Header
@@ -501,10 +535,23 @@ system.
 ### Buttons
 
 Variants: Primary, Secondary, Outline, Ghost, Danger, Icon-only.\
-Sizes: Small, Medium, Large.\
+Sizes use one height scale:
+
+-   Small `--control-height-sm`: 32px
+-   Medium `--control-height-md`: 36px
+-   Large `--control-height-lg`: 40px
+
+Medium is the default for buttons, text inputs, selects, and toolbar
+chips. Rectangular buttons use `--radius-small`. Filter, search, and
+date-range triggers use `--radius-full`. Primary is `#2F9AFF` with white
+text. Secondary is neutral-700. Danger uses the danger token, and its
+hover moves to the darker danger text color.
+
 States: Default, Hover, Focus-visible, Active, Disabled, Loading.
 
-Icon-only buttons need accessible labels and tooltips where useful.
+Icon-only buttons need accessible labels. Keyboard focus uses the shared
+2px primary outline, or the 3px focus ring on fields. Do not remove the
+focus ring to make a control look quieter.
 
 ### Form controls
 
@@ -532,6 +579,12 @@ Processing. Keep status understandable without color.
 ### Cards
 
 Basic, KPI, Statistic, Information, Chart, Product, Provider.
+
+Implemented card surface: white, no border, `--radius-large` (16px), and
+20px padding on standard panels (`--space-5`). KPI cards use 16px padding.
+Do not add a second border or shadow unless the card is a menu, dialog, or
+a semantic alert. Nested metrics inside a card use `--color-surface-subtle`
+with `--radius-medium`, not another full card.
 
 ### Enterprise tables
 
@@ -723,16 +776,30 @@ examples reuse the shared Chart.js wrapper.
 
 ## 14. Responsive behavior
 
-Desktop is primary. Review at: - 1440px --- primary target. - 1280px ---
-desktop. - 1024px --- compact desktop / tablet landscape. - 768px ---
-tablet. - 390px --- mobile.
+Desktop is primary. Review at 1440px, 1280px, 1024px, 768px, and 390px.
+The layout keys off the viewport, with the sidebar width included.
 
-Guidelines: - Preserve desktop information hierarchy. - Collapse sidebar
-at narrower widths; use a drawer on mobile. - Reflow KPI and chart
-grids. - Allow wide tables to scroll horizontally rather than crushing
-columns. - Keep page actions accessible. - Prevent page-level horizontal
-overflow. - Prioritize desktop quality over mobile polish for this
-internal operations console.
+Implemented breakpoints:
+
+-   **1440px and 1280px.** Sidebar stays expanded at 260px. KPI cards use
+    `auto-fit` with a 240px minimum, so values such as currency do not
+    collapse into a six-column row. Usage charts stay side by side until
+    1199px. Cost charts become two columns at 1399px, and the third chart
+    spans the row.
+-   **1024px.** Sidebar collapses to the 72px icon rail (1100px and
+    below). Page padding tightens to 24px. Usage, gauge, and the activity
+    row stack to one column.
+-   **768px.** Sidebar is already a drawer (900px and below). Page actions
+    wrap. KPI cards fall to one or two columns from the 240px minimum.
+    Chart and cost grids become a single column. Table toolbars stack, and
+    wide tables scroll inside their own containers.
+-   **390px.** Page padding is 20px by 16px. Popovers pin to the viewport
+    edges. Header search collapses to an icon until focused. No page-level
+    horizontal overflow.
+
+Guidelines: - Preserve the dashboard hierarchy. - Keep wide tables
+scrollable instead of crushing columns. - Keep page actions reachable. -
+Prioritize desktop quality for this internal console.
 
 ## 15. Accessibility
 
@@ -785,7 +852,45 @@ Use predictable names across code, documentation, and the Showcase: -
 `Chart / Line` - `Card / KPI` - `Permission / Checkbox Group` -
 `Pricing / Provider Table`
 
-## 18. Design quality checklist
+## 18. Component usage rules
+
+Use the shared tokens and the existing Angular pieces. Do not restyle one
+screen with a local palette.
+
+-   **Color.** Components read semantic aliases (`--color-primary`,
+    `--color-surface`, `--color-text-secondary`, status tokens). Primitive
+    ramps and sidebar tokens stay in the token files.
+-   **Type.** Use the scale in Section 4. KPI values use `--font-size-kpi`.
+    Metadata uses Caption or Micro. Numbers that are compared use
+    `.text-numeric` / `.text-data` and tabular figures.
+-   **Space.** Use `--space-*`. Page padding is `--page-padding` (28px) and
+    steps down at 1099px and 767px. Section gap on the dashboard is 32px.
+-   **Radius and elevation.** Cards and showcase blocks use Large. Fields
+    and rectangular buttons use Small. Pills are only for search, filters,
+    chips, badges, and avatars. Shadows are for overlays, not for every
+    card.
+-   **Buttons.** One of Primary, Secondary, Outline, Ghost, or Danger, at
+    32 / 36 / 40px. One primary action per local group.
+-   **Forms.** Every field has a visible label. Errors sit under the field
+    in danger text. Focus always shows the ring, including error and
+    success.
+-   **Tables.** Names align left. Comparable numbers align right. Headers
+    use the sunken surface, Micro uppercase. Rows hover with
+    `--color-hover`. Selected rows may use the primary subtle fill. Wide
+    tables scroll inside `.table-scroll`.
+-   **Charts.** Go through `ChartComponent`. Pass token `var(...)` colors.
+    Primary series is `#2F9AFF`. Pair color with a legend or label.
+-   **Status.** Use `app-status-badge`. Color is never the only signal.
+-   **Feedback.** Alerts, toasts, dialogs, and empty states use the same
+    status and surface tokens. Dialogs have a title, description, and an
+    explicit dismiss control.
+-   **AMS patterns.** Token, cost, provider, pricing, permission,
+    monitoring, and activity examples stay in the showcase and consume the
+    same tokens. Sample credentials and prices stay fictional.
+-   **Structure.** Pages compose layout and shared components. Mock data
+    stays in `src/app/data/mocks`. Do not add a second component library.
+
+## 19. Design quality checklist
 
 ### Visual consistency
 
@@ -826,7 +931,7 @@ Use predictable names across code, documentation, and the Showcase: -
 -   Permission details remain provisional.
 -   No production backend integration is implied.
 
-## 19. Document evolution
+## 20. Document evolution
 
 This is the initial design baseline, not an immutable specification.
 
@@ -840,7 +945,22 @@ The goal is a coherent, extensible design system that can support the
 Ops Center product as its information architecture and business
 requirements are finalized. AMS remains the internal system name.
 
-## 20. Changelog
+## 21. Changelog
+
+### 2026-11-16 --- Design audit alignment
+
+-   Recorded the implemented neutral ramp, `#F8F8F8` canvas, 12/16px radius
+    scale, and current elevation values so the document matches the UI.
+-   Documented the dark sidebar, borderless 16px cards, pill filters, and
+    the 32/36/40px control scale.
+-   Added Micro (11px) as the smallest text size and removed 9px and 10px
+    type from the interface.
+-   Kept KPI cards on a 240px minimum so currency and labels stay readable
+    at 1440px and 1280px instead of collapsing into six narrow columns.
+-   Restored keyboard focus rings on fields, including error and success,
+    and pointed chart tooltip, grid, and muted series at the current ink.
+-   Added component usage rules for color, type, tables, charts, and AMS
+    patterns.
 
 ### 2026-11-15 --- Token implementation alignment
 

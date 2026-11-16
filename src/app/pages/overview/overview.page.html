@@ -45,7 +45,7 @@
           (click)="togglePopover('filter')"
         >
           <app-icon name="filter" [size]="17" />
-          <span>Filter</span>
+          <span>필터</span>
           @if (activeFilterCount() > 0) {
             <span class="action-button__count">{{ activeFilterCount() }}</span>
           }
@@ -61,7 +61,7 @@
             </div>
 
             <label class="field">
-              <span>Product Status</span>
+              <span>제품 상태</span>
               <select
                 [value]="pendingStatus()"
                 (change)="setPendingStatus($event)"
@@ -108,7 +108,7 @@
           (click)="togglePopover('customize')"
         >
           <app-icon name="sliders" [size]="17" />
-          <span>Customize</span>
+          <span>구성</span>
         </button>
 
         @if (activePopover() === 'customize') {
@@ -125,7 +125,7 @@
                 [checked]="isSectionVisible('usage')"
                 (change)="toggleSection('usage')"
               />
-              <span>Usage Analytics</span>
+              <span>API 및 AI 사용량</span>
             </label>
             <label class="check-row">
               <input
@@ -133,7 +133,7 @@
                 [checked]="isSectionVisible('cost')"
                 (change)="toggleSection('cost')"
               />
-              <span>Cost Analytics</span>
+              <span>Provider 원가 분석</span>
             </label>
             <label class="check-row">
               <input
@@ -141,7 +141,7 @@
                 [checked]="isSectionVisible('products')"
                 (change)="toggleSection('products')"
               />
-              <span>Product Overview</span>
+              <span>Product 운영 현황</span>
             </label>
             <label class="check-row">
               <input
@@ -149,7 +149,7 @@
                 [checked]="isSectionVisible('providers')"
                 (change)="toggleSection('providers')"
               />
-              <span>Provider Usage</span>
+              <span>Provider 사용량</span>
             </label>
             <label class="check-row">
               <input
@@ -157,7 +157,7 @@
                 [checked]="isSectionVisible('activities')"
                 (change)="toggleSection('activities')"
               />
-              <span>Recent Activities</span>
+              <span>최근 활동</span>
             </label>
             <label class="check-row">
               <input
@@ -165,7 +165,7 @@
                 [checked]="isSectionVisible('health')"
                 (change)="toggleSection('health')"
               />
-              <span>System Health</span>
+              <span>시스템 상태</span>
             </label>
           </div>
         }
@@ -173,19 +173,7 @@
     </div>
   </header>
 
-  <div class="sample-notice" role="note">
-    <span class="sample-notice__dot"></span>
-    <strong>Sample Data</strong>
-    <span>화면 검토를 위한 가상 운영 데이터입니다.</span>
-  </div>
-
-  <section class="dashboard-section dashboard-section--kpi" aria-labelledby="kpi-title">
-    <div class="section-heading section-heading--compact">
-      <div>
-        <h2 id="kpi-title">운영 핵심 지표</h2>
-      </div>
-    </div>
-
+  <section class="dashboard-section dashboard-section--kpi">
     <div class="kpi-grid">
       <article class="kpi-card kpi-card--requests">
         <div class="kpi-card__copy">
@@ -210,7 +198,7 @@
         <div class="kpi-card__copy">
           <p class="kpi-card__label">Total Products</p>
           <div class="kpi-card__metric">
-            <strong class="kpi-card__value text-data">{{ products.length }}</strong>
+            <strong class="kpi-card__value text-data">{{ products().length }}</strong>
             <span class="trend trend--up">
               <app-icon name="arrow-up" [size]="11" />
               1
@@ -530,8 +518,33 @@
               <button
                 type="button"
                 class="toolbar-chip"
+                [attr.aria-expanded]="productStatusOpen()"
+                (click)="toggleProductStatus()"
+              >
+                {{ statusFilterLabel() }}
+                <app-icon name="chevron-down" [size]="14" />
+              </button>
+              @if (productStatusOpen()) {
+                <div class="table-sort__menu" role="menu">
+                  @for (option of productStatusOptions; track option.value) {
+                    <button
+                      type="button"
+                      role="menuitem"
+                      [class.is-active]="appliedStatus() === option.value"
+                      (click)="setAppliedStatus(option.value)"
+                    >
+                      {{ option.label }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            <div class="table-sort">
+              <button
+                type="button"
+                class="toolbar-chip"
                 [attr.aria-expanded]="productSortOpen()"
-                (click)="productSortOpen.set(!productSortOpen())"
+                (click)="toggleProductSort()"
               >
                 <app-icon name="sort" [size]="15" />
                 정렬
@@ -552,6 +565,10 @@
                 </div>
               }
             </div>
+            <button class="button button--primary" type="button" (click)="openProductCreate()">
+              Product 추가
+              <app-icon name="plus" [size]="15" />
+            </button>
           </div>
         </header>
         <div class="table-scroll">
@@ -733,4 +750,72 @@
   }
 
   <app-component-showcase />
+
+  @if (productCreateOpen()) {
+    <div class="dialog-backdrop" role="presentation" (click)="productCreateOpen.set(false)">
+      <section class="dialog dialog--detail" role="dialog" aria-modal="true" aria-labelledby="product-create-title" (click)="$event.stopPropagation()">
+        <header>
+          <div>
+            <span class="dialog__eyebrow">Product</span>
+            <h4 id="product-create-title">Product 추가</h4>
+            <p>코드, 호출 한도, 월간 쿼터를 설정합니다.</p>
+          </div>
+          <button type="button" aria-label="Modal 닫기" (click)="productCreateOpen.set(false)">
+            <app-icon name="close" [size]="18" />
+          </button>
+        </header>
+        <div class="dialog__scroll">
+          <div class="dialog__body">
+            <div class="dialog-form-grid">
+              <label class="ds-field">
+                <span>Code</span>
+                <input class="ds-input" [value]="productCode()" (input)="productCode.set(fieldValue($event))" />
+              </label>
+              <label class="ds-field">
+                <span>Name</span>
+                <input class="ds-input" [value]="productName()" (input)="productName.set(fieldValue($event))" />
+              </label>
+              <label class="ds-field ds-field--span-2">
+                <span>Description</span>
+                <textarea class="ds-input ds-textarea" [value]="productDescription()" (input)="productDescription.set(fieldValue($event))"></textarea>
+              </label>
+              <label class="ds-field">
+                <span>Rate Limit (RPM)</span>
+                <input class="ds-input" type="number" min="0" [value]="productRpm()" (input)="productRpm.set(fieldNumber($event))" />
+              </label>
+              <label class="ds-field">
+                <span>Rate Limit (RPH)</span>
+                <input class="ds-input" type="number" min="0" [value]="productRph()" (input)="productRph.set(fieldNumber($event))" />
+              </label>
+              <label class="ds-field ds-field--span-2">
+                <span>Status</span>
+                <select class="ds-input" [value]="productStatusDraft()" (change)="setProductStatusDraft($event)">
+                  <option value="Operational">정상</option>
+                  <option value="Attention">확인 필요</option>
+                  <option value="Maintenance">점검 중</option>
+                </select>
+              </label>
+            </div>
+            <section class="quota-block">
+              <span>Monthly quota</span>
+              @for (pool of productPools(); track pool.id) {
+                <div class="quota-row">
+                  <input class="ds-input" [value]="pool.name" (input)="updateProductPool(pool.id, 'name', fieldValue($event))" />
+                  <input class="ds-input" type="number" min="0" [value]="pool.amount" (input)="updateProductPool(pool.id, 'amount', fieldValue($event))" />
+                </div>
+              }
+              <button class="quota-add" type="button" (click)="addProductPool()">
+                <app-icon name="plus" [size]="14" />
+                Credit Pool
+              </button>
+            </section>
+          </div>
+        </div>
+        <footer>
+          <button class="button button--ghost" type="button" (click)="productCreateOpen.set(false)">취소</button>
+          <button class="button button--primary" type="button" (click)="saveProductCreate()">저장</button>
+        </footer>
+      </section>
+    </div>
+  }
 </section>

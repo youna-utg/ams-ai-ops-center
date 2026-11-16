@@ -21,6 +21,7 @@
   --border-strong: var(--border-width) var(--border-style)
     var(--color-border-strong);
   --divider: var(--border-width) var(--border-style) var(--color-divider);
+  --table-row-line: var(--border-width) var(--border-style) var(--color-table-row);
 
   /* Elevation */
   --shadow-subtle: 0 1px 3px rgba(21, 24, 30, 0.035);
@@ -37,6 +38,8 @@
   /* Focus and state */
   --focus-ring-width: 3px;
   --focus-ring: 0 0 0 var(--focus-ring-width) var(--color-focus-ring);
+  --focus-ring-danger: 0 0 0 var(--focus-ring-width) rgb(220 76 76 / 24%);
+  --focus-ring-success: 0 0 0 var(--focus-ring-width) rgb(22 163 106 / 24%);
   --focus-outline: 2px solid var(--color-focus);
   --focus-outline-offset: 2px;
   --disabled-opacity: 0.48;

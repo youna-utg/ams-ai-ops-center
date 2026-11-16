@@ -17,7 +17,7 @@
   /* Primitive · Neutral */
   --color-neutral-0: #ffffff;
   --color-neutral-25: #fdfdfd;
-  --color-neutral-50: #f7f8fa;
+  --color-neutral-50: #f9f9fb;
   --color-neutral-100: #f1f2f4;
   --color-neutral-200: #e9ebef;
   --color-neutral-300: #d8dce2;
@@ -43,18 +43,34 @@
   --color-on-secondary: var(--color-neutral-0);
 
   /* Surfaces */
-  --color-background: #f8f8f8;
+  --color-background: #f9f9fb;
   --color-surface: var(--color-neutral-0);
-  --color-surface-subtle: #f7f8fa;
+  --color-surface-subtle: var(--color-background);
+  --color-surface-sunken: var(--color-neutral-50);
   --color-surface-raised: var(--color-neutral-0);
   --color-surface-overlay: var(--color-neutral-0);
-  --color-overlay: rgba(15, 23, 42, 0.38);
+  --color-overlay: rgb(21 24 30 / 38%);
+
+  /* Dark navigation */
+  --color-sidebar: #171a20;
+  --color-sidebar-ink: #f4f6f8;
+  --color-sidebar-icon: var(--color-neutral-400);
+  --color-sidebar-label: #8b919c;
+  --color-sidebar-control: #2c313a;
+  --color-sidebar-control-ink: #d5d8de;
+  --color-sidebar-hover: rgb(255 255 255 / 6%);
+  --color-sidebar-selected: rgb(47 154 255 / 18%);
+  --color-sidebar-pressed: rgb(255 255 255 / 10%);
+  --color-sidebar-line: rgb(255 255 255 / 8%);
+  --color-sidebar-active: var(--color-primary-400);
+  --color-sidebar-focus: rgb(255 255 255 / 72%);
 
   /* Border and divider */
   --color-border: var(--color-neutral-200);
   --color-border-strong: var(--color-neutral-300);
   --color-border-interactive: var(--color-neutral-300);
   --color-divider: var(--color-neutral-200);
+  --color-table-row: #eef0f3;
 
   /* Text */
   --color-text-primary: var(--color-neutral-900);
@@ -101,12 +117,12 @@
   --chart-series-secondary: #38bdf8;
   --chart-series-success: #818cf8;
   --chart-series-warning: #2dd4bf;
-  --chart-series-muted: #cbd5e1;
+  --chart-series-muted: #d8dce2;
   --chart-fill-primary: rgba(47, 154, 255, 0.12);
   --chart-fill-secondary: rgba(56, 189, 248, 0.16);
   --chart-fill-success: rgba(129, 140, 248, 0.16);
   --chart-grid: rgba(21, 24, 30, 0.06);
-  --chart-tooltip-bg: #0f172a;
+  --chart-tooltip-bg: #15181e;
 
   /* Backward-compatible aliases */
   --color-bg-app: var(--color-background);

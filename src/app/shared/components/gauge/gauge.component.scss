@@ -17,7 +17,7 @@
 .gauge__readout {
   position: absolute;
   right: 0;
-  bottom: 4px;
+  bottom: 18%;
   left: 0;
   text-align: center;
 }
@@ -25,7 +25,7 @@
 .gauge__readout strong {
   display: block;
   color: var(--color-text-primary);
-  font-size: 32px;
+  font-size: var(--font-size-kpi);
   font-weight: var(--font-weight-bold);
   letter-spacing: -0.04em;
   line-height: 1;

@@ -50,8 +50,8 @@
 
 .icon-button {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
   padding: 0;
   place-items: center;
   color: var(--color-text-secondary);
@@ -63,7 +63,7 @@
 
 .icon-button:hover {
   color: var(--color-text-primary);
-  background: var(--color-hover);
+  background: #fcfcfd;
 }
 
 .header__menu {
@@ -77,7 +77,7 @@
 
 .search input {
   width: 100%;
-  height: 36px;
+  height: var(--control-height-md);
   padding: 0 56px 0 40px;
   color: var(--color-text-primary);
   background: var(--color-surface-subtle);
@@ -128,7 +128,7 @@
   background: var(--color-surface);
   border: 0;
   border-radius: var(--radius-xs);
-  font-size: 10px;
+  font-size: var(--font-size-micro);
   line-height: 17px;
   pointer-events: none;
   transform: translateY(-50%);
@@ -149,7 +149,7 @@
 .search-results__heading {
   padding: 6px var(--space-2) var(--space-2);
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-micro);
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -193,7 +193,7 @@
 .search-result small {
   overflow: hidden;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-micro);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -211,6 +211,10 @@
 
 .notification-button {
   position: relative;
+}
+
+.notification-button:hover {
+  background: #fcfcfd;
 }
 
 .notification-button__dot {
@@ -245,7 +249,7 @@
 }
 
 .profile-button:hover {
-  background: var(--color-hover);
+  background: #fcfcfd;
 }
 
 .profile-button__avatar {
@@ -273,7 +277,7 @@
 
 .profile-button__copy small {
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-micro);
   line-height: 1.35;
 }
 
@@ -306,7 +310,7 @@
   background: var(--color-primary-50);
   border-radius: var(--radius-full);
   padding: 2px 7px;
-  font-size: 10px;
+  font-size: var(--font-size-micro);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -336,7 +340,7 @@
 
 .notification p {
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-micro);
 }
 
 .popover--profile {
@@ -365,7 +369,7 @@
 .profile-summary small {
   overflow: hidden;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-micro);
   text-overflow: ellipsis;
 }
 
@@ -453,7 +457,8 @@
     display: none;
   }
 
-  .search input:focus {
+  .search input:focus,
+  .search input:focus-visible {
     position: fixed;
     top: 14px;
     right: 104px;

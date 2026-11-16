@@ -32,7 +32,7 @@
 .specialized-heading p {
   margin-bottom: var(--space-1);
   color: var(--color-primary-active);
-  font-size: 10px;
+  font-size: var(--font-size-micro);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -177,7 +177,7 @@
 .metric-card strong {
   margin: var(--space-2) 0 var(--space-1);
   color: var(--color-text-primary);
-  font-size: 26px;
+  font-size: var(--font-size-stat-lg);
   line-height: 1.2;
 }
 
@@ -326,7 +326,7 @@
 
 .budget-values strong {
   color: var(--color-text-primary);
-  font-size: 28px;
+  font-size: var(--font-size-stat-lg);
 }
 
 .budget-labels {
@@ -556,7 +556,7 @@
   height: 48px;
   padding: 0 var(--space-3);
   color: var(--color-text-secondary);
-  border-bottom: var(--divider);
+  border-bottom: var(--table-row-line);
   font-size: var(--font-size-body-sm);
   text-align: left;
   white-space: nowrap;
@@ -568,7 +568,7 @@
   background: var(--color-surface-subtle);
   background-clip: padding-box;
   border-bottom: 8px solid transparent;
-  font-size: 10px;
+  font-size: var(--font-size-micro);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -584,8 +584,12 @@
   border-bottom-right-radius: calc(var(--radius-medium) + 8px);
 }
 
+.special-table tbody tr {
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
 .special-table tbody tr:hover {
-  background: var(--color-hover);
+  background: #fcfcfd;
 }
 
 .special-table td strong {
@@ -622,8 +626,8 @@
 
 .icon-action {
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
   place-items: center;
   color: var(--color-text-muted);
   border-radius: var(--radius-small);
@@ -631,7 +635,7 @@
 
 .icon-action:hover {
   color: var(--color-text-primary);
-  background: var(--color-hover);
+  background: #fcfcfd;
 }
 
 .inline-success {
@@ -713,7 +717,7 @@
   width: 32px;
   height: 32px;
   border-radius: var(--radius-full);
-  font-size: 10px;
+  font-size: var(--font-size-micro);
 }
 
 .account-avatar--large {
@@ -844,7 +848,7 @@
 
 .permission-item small {
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-micro);
   line-height: 1.4;
 }
 
@@ -977,7 +981,7 @@
 .health-metrics strong {
   margin: var(--space-1) 0;
   color: var(--color-text-primary);
-  font-size: 22px;
+  font-size: var(--font-size-stat);
 }
 
 .health-metrics small {
@@ -1041,7 +1045,7 @@
 
 .activity-toolbar button {
   display: inline-flex;
-  height: 34px;
+  height: var(--control-height-md);
   align-items: center;
   gap: var(--space-2);
   padding: 0 14px;
@@ -1093,16 +1097,6 @@
 button:focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);
-}
-
-input:focus,
-input:focus-visible,
-textarea:focus,
-textarea:focus-visible,
-select:focus,
-select:focus-visible {
-  outline: none;
-  box-shadow: none;
 }
 
 @keyframes spin {

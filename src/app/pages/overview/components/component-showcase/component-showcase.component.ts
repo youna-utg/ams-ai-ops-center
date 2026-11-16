@@ -22,12 +22,27 @@ interface ShowcaseTableRow {
 
 type ShowcaseTab = 'overview' | 'usage' | 'settings';
 
+interface ActionCodeRow {
+  id: number;
+  code: string;
+  name: string;
+  target: string;
+  status: 'Active' | 'Pending' | 'Inactive';
+}
+
 const TABLE_ROWS: ShowcaseTableRow[] = [
   { id: 1, product: 'ChangeUp', owner: '김서연', status: 'Active', requests: 8440 },
   { id: 2, product: 'TimeUp', owner: '이도윤', status: 'Active', requests: 6700 },
   { id: 3, product: 'DeckUp', owner: '박지민', status: 'Pending', requests: 2520 },
   { id: 4, product: 'DocUp', owner: '최유진', status: 'Active', requests: 5610 },
   { id: 5, product: 'MatchUp', owner: '정하준', status: 'Inactive', requests: 2070 },
+];
+
+const ACTION_CODES: ActionCodeRow[] = [
+  { id: 1, code: 'ACT-014', name: 'Product 생성', target: 'Product', status: 'Active' },
+  { id: 2, code: 'ACT-021', name: '사용자 초대', target: 'Product User', status: 'Active' },
+  { id: 3, code: 'ACT-033', name: 'Provider 연결', target: 'Provider', status: 'Pending' },
+  { id: 4, code: 'ACT-040', name: '가격 변경', target: 'Pricing', status: 'Inactive' },
 ];
 
 @Component({
@@ -74,12 +89,32 @@ export class ComponentShowcaseComponent implements OnDestroy {
   protected readonly confirmationOpen = signal(false);
   protected readonly toastVisible = signal(false);
   protected readonly toastMessage = signal('설정이 저장되었습니다.');
-  protected readonly alertVisible = signal(true);
-  protected readonly tableLoading = signal(false);
+  protected readonly visibleAlerts = signal({ info: true, success: true, warning: true, danger: true });
   protected readonly tableSearch = signal('');
-  protected readonly tableFilterOpen = signal(false);
   protected readonly tableStatusFilter = signal<'All' | ShowcaseTableRow['status']>('All');
   protected readonly tableOwnerFilter = signal('All');
+  protected readonly tableStatusOpen = signal(false);
+  protected readonly tableOwnerOpen = signal(false);
+  protected readonly actionTargetOpen = signal(false);
+  protected readonly actionStatusOpen = signal(false);
+  protected readonly tableStatusOptions: Array<{
+    value: 'All' | ShowcaseTableRow['status'];
+    label: string;
+  }> = [
+    { value: 'All', label: '전체 상태' },
+    { value: 'Active', label: '활성' },
+    { value: 'Pending', label: '대기' },
+    { value: 'Inactive', label: '비활성' },
+  ];
+  protected readonly actionStatusOptions: Array<{
+    value: 'All' | ActionCodeRow['status'];
+    label: string;
+  }> = [
+    { value: 'All', label: '모든 상태' },
+    { value: 'Active', label: '활성' },
+    { value: 'Pending', label: '대기' },
+    { value: 'Inactive', label: '비활성' },
+  ];
   protected readonly sortAscending = signal(false);
   protected readonly selectedRows = signal<Set<number>>(new Set([1]));
   protected readonly selectedDetailRow = signal<ShowcaseTableRow>(TABLE_ROWS[0]);
@@ -92,17 +127,33 @@ export class ComponentShowcaseComponent implements OnDestroy {
   protected readonly formSearch = signal('');
   protected readonly compactSearch = signal('');
   protected readonly compactFilterActive = signal(false);
+  protected readonly tableRows = signal<ShowcaseTableRow[]>([...TABLE_ROWS]);
+  protected readonly actionCodes = signal<ActionCodeRow[]>([...ACTION_CODES]);
+  protected readonly actionSearch = signal('');
+  protected readonly actionTargetFilter = signal('All');
+  protected readonly actionStatusFilter = signal<'All' | ActionCodeRow['status']>('All');
+  protected readonly createKind = signal<'product' | 'action' | null>(null);
+  protected readonly draftCode = signal('');
+  protected readonly draftName = signal('');
+  protected readonly draftDescription = signal('');
+  protected readonly draftRpm = signal(0);
+  protected readonly draftRph = signal(0);
+  protected readonly draftStatus = signal<'Active' | 'Pending' | 'Inactive'>('Active');
+  protected readonly draftTarget = signal('Product');
+  protected readonly creditPools = signal([{ id: 1, name: 'Credit Pool', amount: 0 }]);
+  protected readonly dialogScrolling = signal(false);
+  protected readonly dialogThumb = signal({ top: 12, height: 0 });
   protected readonly startDate = signal('2026-11-01');
   protected readonly endDate = signal('2026-11-15');
 
   private toastTimer?: number;
-  private loadingTimer?: number;
   private buttonTimer?: number;
   private modalTimer?: number;
+  private dialogScrollTimer?: number;
 
   protected readonly filteredRows = computed(() => {
     const query = this.tableSearch().trim().toLowerCase();
-    const filtered = TABLE_ROWS.filter((row) => {
+    const filtered = this.tableRows().filter((row) => {
       const matchesQuery = query
         ? `${row.product} ${row.owner} ${row.status}`
             .toLowerCase()
@@ -147,14 +198,52 @@ export class ComponentShowcaseComponent implements OnDestroy {
       !this.allRowsSelected() &&
       this.filteredRows().some((row) => this.selectedRows().has(row.id)),
   );
-  protected readonly activeFilterCount = computed(
+  protected readonly tableOwners = computed(() => [
+    ...new Set(this.tableRows().map((row) => row.owner)),
+  ]);
+  protected readonly tableOwnerOptions = computed(() => [
+    { value: 'All', label: '전체 담당자' },
+    ...this.tableOwners().map((owner) => ({ value: owner, label: owner })),
+  ]);
+  protected readonly tableStatusLabel = computed(
     () =>
-      Number(this.tableStatusFilter() !== 'All') +
-      Number(this.tableOwnerFilter() !== 'All'),
+      this.tableStatusOptions.find((option) => option.value === this.tableStatusFilter())
+        ?.label ?? '전체 상태',
   );
-  protected readonly tableOwners = [
-    ...new Set(TABLE_ROWS.map((row) => row.owner)),
-  ];
+  protected readonly tableOwnerLabel = computed(
+    () =>
+      this.tableOwnerOptions().find((option) => option.value === this.tableOwnerFilter())
+        ?.label ?? '전체 담당자',
+  );
+  protected readonly actionTargets = computed(() => [
+    ...new Set(this.actionCodes().map((row) => row.target)),
+  ]);
+  protected readonly actionTargetOptions = computed(() => [
+    { value: 'All', label: '모든 대상' },
+    ...this.actionTargets().map((target) => ({ value: target, label: target })),
+  ]);
+  protected readonly actionTargetLabel = computed(
+    () =>
+      this.actionTargetOptions().find((option) => option.value === this.actionTargetFilter())
+        ?.label ?? '모든 대상',
+  );
+  protected readonly actionStatusLabel = computed(
+    () =>
+      this.actionStatusOptions.find((option) => option.value === this.actionStatusFilter())
+        ?.label ?? '모든 상태',
+  );
+  protected readonly filteredActionCodes = computed(() => {
+    const query = this.actionSearch().trim().toLowerCase();
+    return this.actionCodes().filter((row) => {
+      const matchesQuery =
+        !query || `${row.code} ${row.name}`.toLowerCase().includes(query);
+      const matchesTarget =
+        this.actionTargetFilter() === 'All' || row.target === this.actionTargetFilter();
+      const matchesStatus =
+        this.actionStatusFilter() === 'All' || row.status === this.actionStatusFilter();
+      return matchesQuery && matchesTarget && matchesStatus;
+    });
+  });
   protected readonly endpointValid = computed(() => {
     try {
       const url = new URL(this.endpointValue());
@@ -213,8 +302,8 @@ export class ComponentShowcaseComponent implements OnDestroy {
         gradientTokens: ['--chart-series-primary'],
         borderRadius: 10,
         borderSkipped: false,
-        maxBarThickness: 42,
-        categoryPercentage: 0.86,
+        maxBarThickness: 84,
+        categoryPercentage: 0.96,
         barPercentage: 0.92,
       },
     ],
@@ -229,9 +318,9 @@ export class ComponentShowcaseComponent implements OnDestroy {
         backgroundColor: '#2f9aff',
         gradientTokens: ['--chart-series-primary'],
         borderRadius: 8,
-        maxBarThickness: 36,
-        categoryPercentage: 0.84,
-        barPercentage: 0.9,
+        maxBarThickness: 64,
+        categoryPercentage: 0.96,
+        barPercentage: 0.92,
       },
       {
         label: 'Output',
@@ -239,9 +328,9 @@ export class ComponentShowcaseComponent implements OnDestroy {
         backgroundColor: '#38bdf8',
         gradientTokens: ['--chart-series-secondary'],
         borderRadius: 8,
-        maxBarThickness: 36,
-        categoryPercentage: 0.84,
-        barPercentage: 0.9,
+        maxBarThickness: 64,
+        categoryPercentage: 0.96,
+        barPercentage: 0.92,
       },
     ],
   } as unknown as ChartData<'bar'>;
@@ -363,7 +452,7 @@ export class ComponentShowcaseComponent implements OnDestroy {
   protected readonly donutOptions: ChartOptions<'doughnut'> = {
     responsive: true,
     maintainAspectRatio: false,
-    cutout: '66%',
+    cutout: '56%',
     plugins: {
       legend: {
         position: 'bottom',
@@ -387,14 +476,14 @@ export class ComponentShowcaseComponent implements OnDestroy {
     if (this.toastTimer) {
       window.clearTimeout(this.toastTimer);
     }
-    if (this.loadingTimer) {
-      window.clearTimeout(this.loadingTimer);
-    }
     if (this.buttonTimer) {
       window.clearTimeout(this.buttonTimer);
     }
     if (this.modalTimer) {
       window.clearTimeout(this.modalTimer);
+    }
+    if (this.dialogScrollTimer) {
+      window.clearTimeout(this.dialogScrollTimer);
     }
   }
 
@@ -402,9 +491,10 @@ export class ComponentShowcaseComponent implements OnDestroy {
   protected closeOverlays(): void {
     this.dropdownOpen.set(false);
     this.multiSelectOpen.set(false);
-    this.tableFilterOpen.set(false);
     this.modalOpen.set(false);
+    this.createKind.set(null);
     this.confirmationOpen.set(false);
+    this.closeTableMenus();
   }
 
   protected toggleModel(model: string): void {
@@ -440,29 +530,183 @@ export class ComponentShowcaseComponent implements OnDestroy {
     this.currentPage.set(1);
   }
 
-  protected updateStatusFilter(event: Event): void {
-    this.tableStatusFilter.set(
-      (event.target as HTMLSelectElement).value as
-        | 'All'
-        | ShowcaseTableRow['status'],
+  protected setTableStatus(value: 'All' | ShowcaseTableRow['status']): void {
+    this.tableStatusFilter.set(value);
+    this.currentPage.set(1);
+    this.closeTableMenus();
+  }
+
+  protected setTableOwner(value: string): void {
+    this.tableOwnerFilter.set(value);
+    this.currentPage.set(1);
+    this.closeTableMenus();
+  }
+
+  protected setActionTarget(value: string): void {
+    this.actionTargetFilter.set(value);
+    this.closeTableMenus();
+  }
+
+  protected setActionStatus(value: 'All' | ActionCodeRow['status']): void {
+    this.actionStatusFilter.set(value);
+    this.closeTableMenus();
+  }
+
+  protected toggleTableStatus(): void {
+    const next = !this.tableStatusOpen();
+    this.closeTableMenus();
+    this.tableStatusOpen.set(next);
+  }
+
+  protected toggleTableOwner(): void {
+    const next = !this.tableOwnerOpen();
+    this.closeTableMenus();
+    this.tableOwnerOpen.set(next);
+  }
+
+  protected toggleActionTarget(): void {
+    const next = !this.actionTargetOpen();
+    this.closeTableMenus();
+    this.actionTargetOpen.set(next);
+  }
+
+  protected toggleActionStatus(): void {
+    const next = !this.actionStatusOpen();
+    this.closeTableMenus();
+    this.actionStatusOpen.set(next);
+  }
+
+  private closeTableMenus(): void {
+    this.tableStatusOpen.set(false);
+    this.tableOwnerOpen.set(false);
+    this.actionTargetOpen.set(false);
+    this.actionStatusOpen.set(false);
+  }
+
+  protected updateActionSearch(event: Event): void {
+    this.actionSearch.set((event.target as HTMLInputElement).value);
+  }
+
+  protected addShowcaseProduct(): void {
+    this.resetDraft();
+    this.createKind.set('product');
+  }
+
+  protected addActionCode(): void {
+    this.resetDraft();
+    this.draftTarget.set('Product');
+    this.createKind.set('action');
+  }
+
+  protected inputValue(event: Event): string {
+    return (event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
+  }
+
+  protected inputNumber(event: Event): number {
+    return Number(this.inputValue(event)) || 0;
+  }
+
+  protected statusValue(event: Event): 'Active' | 'Pending' | 'Inactive' {
+    const value = this.inputValue(event);
+    return value === 'Pending' || value === 'Inactive' ? value : 'Active';
+  }
+
+  protected addCreditPool(): void {
+    this.creditPools.update((pools) => [
+      ...pools,
+      { id: Math.max(...pools.map((pool) => pool.id)) + 1, name: 'Credit Pool', amount: 0 },
+    ]);
+  }
+
+  protected updateCreditPool(id: number, key: 'name' | 'amount', value: string): void {
+    this.creditPools.update((pools) =>
+      pools.map((pool) =>
+        pool.id === id
+          ? { ...pool, [key]: key === 'amount' ? Number(value) || 0 : value }
+          : pool,
+      ),
     );
-    this.currentPage.set(1);
   }
 
-  protected updateOwnerFilter(event: Event): void {
-    this.tableOwnerFilter.set((event.target as HTMLSelectElement).value);
-    this.currentPage.set(1);
+  protected saveCreateModal(): void {
+    const name = this.draftName().trim();
+    const code = this.draftCode().trim();
+    if (this.createKind() === 'product') {
+      const rows = this.tableRows();
+      const nextId = Math.max(...rows.map((row) => row.id)) + 1;
+      this.tableRows.update((items) => [
+        {
+          id: nextId,
+          product: name || code || `New Product ${nextId}`,
+          owner: '김서연',
+          status: this.draftStatus(),
+          requests: this.draftRpm(),
+        },
+        ...items,
+      ]);
+      this.currentPage.set(1);
+      this.showToast('Product를 추가했습니다.');
+    }
+
+    if (this.createKind() === 'action') {
+      const rows = this.actionCodes();
+      const nextId = Math.max(...rows.map((row) => row.id)) + 1;
+      this.actionCodes.update((items) => [
+        {
+          id: nextId,
+          code: code || `ACT-${String(40 + nextId * 3).padStart(3, '0')}`,
+          name: name || '새 액션 코드',
+          target: this.draftTarget(),
+          status: this.draftStatus(),
+        },
+        ...items,
+      ]);
+      this.showToast('액션 코드를 추가했습니다.');
+    }
+
+    this.createKind.set(null);
   }
 
-  protected clearTableFilters(): void {
-    this.tableStatusFilter.set('All');
-    this.tableOwnerFilter.set('All');
-    this.currentPage.set(1);
+  private resetDraft(): void {
+    this.draftCode.set('');
+    this.draftName.set('');
+    this.draftDescription.set('');
+    this.draftRpm.set(0);
+    this.draftRph.set(0);
+    this.draftStatus.set('Active');
+    this.draftTarget.set('Product');
+    this.creditPools.set([{ id: 1, name: 'Credit Pool', amount: 0 }]);
   }
 
   protected openDetailModal(row: ShowcaseTableRow): void {
     this.selectedDetailRow.set(row);
     this.modalOpen.set(true);
+  }
+
+  protected onDialogScroll(event: Event): void {
+    const element = event.currentTarget as HTMLElement;
+    const overflow = element.scrollHeight - element.clientHeight;
+    if (overflow <= 1) {
+      this.dialogScrolling.set(false);
+      this.dialogThumb.set({ top: 12, height: 0 });
+      return;
+    }
+
+    const inset = 12;
+    const track = element.clientHeight - inset * 2;
+    const height = Math.max(32, (element.clientHeight / element.scrollHeight) * track);
+    const top =
+      element.offsetTop +
+      inset +
+      (element.scrollTop / overflow) * (track - height);
+    this.dialogThumb.set({ top, height });
+    this.dialogScrolling.set(true);
+    if (this.dialogScrollTimer) {
+      window.clearTimeout(this.dialogScrollTimer);
+    }
+    this.dialogScrollTimer = window.setTimeout(() => {
+      this.dialogScrolling.set(false);
+    }, 700);
   }
 
   protected toggleSort(): void {
@@ -518,14 +762,6 @@ export class ComponentShowcaseComponent implements OnDestroy {
     this.currentPage.set(Math.min(Math.max(page, 1), this.totalPages()));
   }
 
-  protected simulateLoading(): void {
-    this.tableLoading.set(true);
-    if (this.loadingTimer) {
-      window.clearTimeout(this.loadingTimer);
-    }
-    this.loadingTimer = window.setTimeout(() => this.tableLoading.set(false), 1200);
-  }
-
   protected simulateButtonLoading(): void {
     if (this.buttonLoading()) {
       return;
@@ -554,7 +790,7 @@ export class ComponentShowcaseComponent implements OnDestroy {
 
   protected chooseDropdownAction(action: string): void {
     this.dropdownOpen.set(false);
-    action === 'Delete'
+    action === '삭제'
       ? this.confirmationOpen.set(true)
       : this.showToast(`${action} 작업을 실행했습니다.`);
   }
@@ -572,6 +808,10 @@ export class ComponentShowcaseComponent implements OnDestroy {
 
     event.preventDefault();
     this.activeTab.set(tabs[next]);
+  }
+
+  protected dismissAlert(kind: 'info' | 'success' | 'warning' | 'danger'): void {
+    this.visibleAlerts.update((alerts) => ({ ...alerts, [kind]: false }));
   }
 
   protected showToast(message = '설정이 저장되었습니다.'): void {

@@ -38,15 +38,70 @@ function withAlpha(color: string, alpha: number): string {
   return color;
 }
 
-function lighter(color: string, amount: number): string {
+function rgbToHsl(red: number, green: number, blue: number): [number, number, number] {
+  const r = red / 255;
+  const g = green / 255;
+  const b = blue / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const lightness = (max + min) / 2;
+  if (max === min) {
+    return [0, 0, lightness];
+  }
+
+  const delta = max - min;
+  const saturation =
+    lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+  const hue =
+    max === r
+      ? (g - b) / delta + (g < b ? 6 : 0)
+      : max === g
+        ? (b - r) / delta + 2
+        : (r - g) / delta + 4;
+  return [hue / 6, saturation, lightness];
+}
+
+function hslToRgb(hue: number, saturation: number, lightness: number): [number, number, number] {
+  if (saturation === 0) {
+    const gray = Math.round(lightness * 255);
+    return [gray, gray, gray];
+  }
+
+  const channel = (offset: number) => {
+    const sector = (offset + hue) % 1;
+    const q =
+      lightness < 0.5
+        ? lightness * (1 + saturation)
+        : lightness + saturation - lightness * saturation;
+    const p = 2 * lightness - q;
+    const value =
+      sector < 1 / 6
+        ? p + (q - p) * 6 * sector
+        : sector < 1 / 2
+          ? q
+          : sector < 2 / 3
+            ? p + (q - p) * (2 / 3 - sector) * 6
+            : p;
+    return Math.round(value * 255);
+  };
+
+  return [channel(1 / 3), channel(0), channel(2 / 3)];
+}
+
+function softer(color: string): string {
   const channels = channelsOf(color);
   if (!channels) {
     return color;
   }
 
-  const mix = (channel: number) =>
-    Math.round(channel + (255 - channel) * amount);
-  return `rgb(${mix(channels[0])}, ${mix(channels[1])}, ${mix(channels[2])})`;
+  const [hue, saturation, lightness] = rgbToHsl(
+    channels[0],
+    channels[1],
+    channels[2],
+  );
+  const next = Math.min(0.9, lightness + (0.92 - lightness) * 0.42);
+  const [red, green, blue] = hslToRgb(hue, saturation, next);
+  return `rgb(${red}, ${green}, ${blue})`;
 }
 
 export function areaFade(token: string, fallback: string) {
@@ -114,7 +169,7 @@ export const barGradientPlugin: Plugin = {
       const endY = horizontal ? bar.y : Math.max(bar.y, bar.base);
       const gradient = chart.ctx.createLinearGradient(startX, startY, endX, endY);
       gradient.addColorStop(0, color);
-      gradient.addColorStop(1, lighter(color, 0.62));
+      gradient.addColorStop(1, softer(color));
       bar.options = { ...bar.options, backgroundColor: gradient };
     });
   },
