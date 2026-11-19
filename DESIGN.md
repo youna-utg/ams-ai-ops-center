@@ -11,7 +11,7 @@ not a production AMS implementation.
 
 AMS is the company's internal central operations console for managing
 its product ecosystem, users, projects, AI providers/models,
-provider-side usage costs, and system operations.
+usage and cost, and system operations.
 
 ### Current product portfolio
 
@@ -54,10 +54,6 @@ products.
     destinations remain lightweight placeholders.
 -   Do not invent detailed workflows or final business rules for
     unconfirmed modules.
--   Current Usage / Cost means **the amount the company pays external
-    providers**.
--   Customer charges, selling prices, revenue, and margins are separate
-    future concepts and are out of scope.
 -   Detailed permission names and authorization policies are provisional
     until feature planning is complete.
 
@@ -132,7 +128,7 @@ uses an 18% wash of `#2F9AFF` with `--color-primary-400` text and icon.
   ----------------------- -----------
   `--color-neutral-0`     `#FFFFFF`
   `--color-neutral-25`    `#FDFDFD`
-  `--color-neutral-50`    `#F7F8FA`
+  `--color-neutral-50`    `#F9F9FB`
   `--color-neutral-100`   `#F1F2F4`
   `--color-neutral-200`   `#E9EBEF`
   `--color-neutral-300`   `#D8DCE2`
@@ -162,20 +158,20 @@ values. This keeps visual intent stable if the palette changes.
 
 -   **Primary action:** `--color-primary`, `--color-primary-hover`,
     `--color-primary-active`. Use for the highest-priority action,
-    focus, and the main data series. Sidebar selection uses
-    `--color-neutral-100` tinted with 5% `--color-primary`, with black
-    text rather than a solid primary fill.
+    focus, and the main data series. Sidebar selection is defined by the
+    dark sidebar tokens below, not by a light neutral wash.
 -   **Secondary action:** `--color-secondary`,
     `--color-secondary-hover`, `--color-secondary-active`. Use for
     neutral emphasized actions; do not compete with Primary.
 -   **Surfaces:** `--color-background` is the application canvas,
     `--color-surface` is the standard white content surface,
-    `--color-surface-subtle` separates low-emphasis regions, and
-    `--color-surface-raised` / `--color-surface-overlay` support elevated
+    `--color-surface-subtle` and `--color-surface-sunken` match the canvas,
+    and `--color-surface-raised` / `--color-surface-overlay` support elevated
     content.
 -   **Borders:** `--color-border` is the default boundary,
-    `--color-border-strong` is reserved for emphasis, and
-    `--color-divider` separates adjacent content.
+    `--color-border-strong` is reserved for emphasis,
+    `--color-divider` separates adjacent content, and `--color-table-row`
+    is the lighter line used only between table cells.
 -   **Text:** `--color-text-primary` for titles and core values,
     `--color-text-secondary` for descriptions, `--color-text-muted` for
     metadata, and `--color-text-disabled` for unavailable content.
@@ -189,10 +185,13 @@ Current canonical values:
 -   `--color-primary-hover: #1684EB`
 -   `--color-primary-active: #086BC7`
 -   `--color-secondary: #383D46` (`--color-neutral-700`)
--   `--color-background: #F8F8F8`
+-   `--color-background: #F9F9FB`
 -   `--color-surface: #FFFFFF`
--   `--color-surface-subtle: #F7F8FA`
--   `--color-surface-sunken: #F7F8FA` (table header bands)
+-   `--color-surface-subtle: #F9F9FB` (same as the canvas)
+-   `--color-surface-sunken: #F9F9FB` (table header bands)
+-   `--color-table-row: #EEF0F3`
+-   `--color-hover: #F1F2F4` (menu items and selected menu rows)
+-   Quiet hover fill: `#FCFCFD` (table rows, white buttons, tabs, header icons)
 -   `--color-border: #E9EBEF`
 -   `--color-text-primary: #15181E`
 -   `--color-text-secondary: #555B66`
@@ -203,7 +202,11 @@ status colors:
 
 -   Primary `#2F9AFF`, secondary `#38BDF8`, tertiary `#818CF8`, quaternary
     `#2DD4BF`, muted `#D8DCE2`.
--   Tooltip surface `#15181E`. Grid lines use 6% of `#15181E`.
+-   Chart tooltip surface `#1C2129`, 14px radius. Grid lines use 6% of
+    `#15181E`.
+-   A bar fills from its series color toward a lighter shade of the same
+    hue. Do not fade a bar to white or to a darker shade.
+-   Donut cutout is 58% on the Dashboard and 56% in the Showcase.
 
 Sidebar tokens live beside the light palette. Do not reuse light-surface
 tokens for the navigation column.
@@ -298,10 +301,11 @@ Do not make every control a pill. Compatibility aliases `--radius-sm`,
 ### Borders and shadows
 
 -   Default border: 1px solid `--color-border`.
--   Use that border on inputs, popovers, alerts, and status badges.
--   Cards are white and borderless. The `#F8F8F8` canvas separates them.
-    Table regions use dividers and a sunken header, not an outer card
-    border.
+-   Use that border on inputs, popovers, and alerts. Status badges have
+    no border.
+-   Cards are white and borderless. The `#F9F9FB` canvas separates them.
+    Table regions use the lighter row line and a canvas-colored header, not
+    an outer card border.
 -   Reserve elevation for menus, popovers, dialogs, and the mobile drawer.
 -   Do not nest a bordered card inside another card.
 
@@ -316,9 +320,9 @@ Elevation tokens, tinted with the current ink `#15181E`:
     mobile navigation drawer.
 
 Dashboard and showcase cards are white, borderless, and use Large radius.
-They separate from `#F8F8F8` by surface contrast. Keep a 1px border on
-inputs, popovers, alerts, and status badges. Do not nest a bordered card
-inside another card.
+They separate from `#F9F9FB` by surface contrast. Keep a 1px border on
+inputs, popovers, and alerts. Status badges stay borderless. Do not nest a
+bordered card inside another card.
 
 Legacy `--shadow-xs` through `--shadow-lg` aliases map to these semantic
 tokens.
@@ -327,12 +331,17 @@ tokens.
 
 -   Border: `--border-default` and `--border-strong`; components should not
     rebuild border shorthand values.
--   Divider: `--divider` or `--color-divider`; use one-pixel separators and
-    avoid excessive vertical rules.
--   Focus: `--focus-outline` for keyboard focus and `--focus-ring` for form
-    controls. Focus must remain visible and must not rely on browser defaults.
--   Hover: neutral `--color-hover` for low-emphasis controls; Primary actions
-    use `--color-primary-hover`.
+-   Divider: `--divider` for general separators. Table body cells use
+    `--table-row-line` (`#EEF0F3`). Do not use the stronger divider between
+    table rows.
+-   Focus: links and non-field controls keep the 2px primary outline.
+    Text inputs, textareas, selects, checkboxes, and radios do not draw a
+    focus ring or a focus border change.
+-   Hover: Primary actions use `--color-primary-hover`. Outline, Ghost,
+    icon buttons, header notification and profile controls, inactive tabs,
+    and table rows use `#FCFCFD`. Menu items and the selected menu row use
+    `--color-hover`. Filter and sort triggers do not change background on
+    hover or while open; only their text may darken.
 -   Active / selected: `--color-active` and `--color-selected`, paired with
     text, weight, or an indicator.
 -   Disabled: `--color-disabled-*` and `--disabled-opacity`; preserve
@@ -358,8 +367,8 @@ tokens.
 ### Sidebar
 
 -   Dark surface `#171A20`, full viewport height, 1px translucent divider.
--   Service identity at top: Ops Center wordmark at 18px extrabold, with
-    AMS remaining the small product label where the breadcrumb needs it.
+-   Service identity at top: "AI Ops Center" at 18px extrabold. The browser
+    title is "Ops Center". The breadcrumb root remains "AMS".
 -   Group labels are 12px semibold `#8B919C`, sentence case.
 -   Menu items are 32px high, 14/20, 10px radius, 16px icons.
 -   Idle label `#F4F6F8`. Idle icon `#A6ABB4`.
@@ -379,6 +388,10 @@ tokens.
 -   Notifications.
 -   User profile menu.
 
+The global search is a 240px pill on `#F9F9FB`, with a 26px white icon
+disc inset 5px from the left. Focus does not change its background,
+border, or shadow. Notification and profile hover use `#FCFCFD`.
+
 Keep page-level filters and actions in the page header rather than
 overcrowding the global header.
 
@@ -392,41 +405,59 @@ overcrowding the global header.
 
 ## 7. Provisional information architecture
 
-This is a planning hypothesis, not a final approved IA. Keep menu labels
-and groups configurable.
+IA v1.1 is a team-review draft, not a final approved IA. Keep menu labels,
+groups, internal tabs, and planned workflows configurable. `IA_DRAFT.md`
+contains the detailed page plans.
 
 ### Overview
 
--   Dashboard
+-   Dashboard — 전체 운영 현황
+
+### Customer Management
+
+-   Organizations — 고객사 및 팀
+-   Users — 통합 사용자
 
 ### Product Management
 
--   Products
--   Product Users
--   Projects
+-   Products — 제품 및 제품별 AI 연결
+-   Plans & Points — 서비스 플랜과 포인트 정책
+    -   Plans
+    -   Point Policies
 
 ### AI Operations
 
--   Providers & Models
--   Provider Pricing
--   Usage & Cost
--   Logs
+-   Providers & Models — AI 제공업체 및 모델
+    -   Providers
+    -   Models
+-   Usage & Costs — AI 사용량, Provider 비용 및 단가
+    -   API Usage
+    -   Cost Analytics
+    -   Rate Cards
 
 ### Administration
 
--   Plans
--   Point Policies
--   Admin Accounts
--   Roles & Permissions
+-   Admin & Permissions — 내부 관리자 계정과 접근 권한
+    -   Admin Accounts
+    -   Permissions
+    -   Presets
+-   Activity History — 관리 활동 및 변경 이력
 
 ### System
 
--   System Health
--   Settings
+-   System Monitoring — 시스템 상태, 기술 로그 및 장애 이력
+    -   Health
+    -   System Logs
+    -   Incidents
+-   Settings — 공통 운영 설정
+    -   General
+    -   Notifications
+    -   Preferences
 
-Only Dashboard is populated in the initial prototype. Other destinations
-show the page title and the shared placeholder description, "해당 영역의
-기능은 아직 확정되지 않았습니다." Do not invent detailed workflows.
+Only Dashboard is populated in this step. Other destinations show the page
+title, description, planned sections, and internal tab navigation. Tabs use
+the `tab` query parameter. Do not implement the planned tables, charts, forms,
+or backend workflows during the IA step.
 
 ### Product identity
 
@@ -437,24 +468,28 @@ separate product brand colors; use the shared blue and neutral palette.
 
 ## 8. Dashboard
 
-Use realistic but clearly fictional mock data. Add a visible sample-data
-cue where appropriate.
+Use realistic but clearly fictional mock data. Do not place a Sample Data
+banner on the Dashboard. A pricing example in the Showcase may keep its
+own sample-price notice.
 
 ### Page header
 
 -   Title: Dashboard
--   Description: Monitor products, platform activity, and AI operations.
+-   Description: 제품, 플랫폼 활동, AI 운영 현황을 한눈에 확인합니다.
+-   Do not add a heading such as "운영 핵심 지표" above the KPI row.
 -   Date range selector
 -   Filter action
 -   Optional dashboard customization action
 
 ### KPI cards
 
-Initial metrics: 1. Total Products 2. Active Users 3. Total API Requests
-4. Provider Cost 5. Total Tokens 6. Error Rate
+Initial metrics, in order: 1. Total API Requests 2. Total Products
+3. Active Users 4. Total Provider Cost 5. Total Tokens 6. Error Rate
 
-Each card may include a label, main value, previous-period comparison,
-supporting description, and optional sparkline.
+Each card includes a label, main value, comparison or supporting line, and
+a 40px circular icon. Cards are white except Total API Requests, which is
+the only gradient card: 105 degrees from `#2F9AFF` to `#1684EB`, with white
+text and a white icon disc.
 
 ### Usage analytics
 
@@ -471,12 +506,8 @@ consistent date ranges. Avoid visual clutter.
 -   Cost by Provider --- donut or bar chart.
 -   Cost by Model --- horizontal bar chart or ranked table.
 
-**Cost definition:** these values represent the company's payments to
-external AI/API providers. Do not show customer selling price, customer
-charges, revenue, profit, or margin.
-
-When showing multiple breakdowns, make clear that they are alternative
-groupings of the same spend and must not be added together.
+When showing multiple breakdowns, treat them as alternative groupings of
+the same cost and do not add them together.
 
 ### Product overview table
 
@@ -549,9 +580,9 @@ hover moves to the darker danger text color.
 
 States: Default, Hover, Focus-visible, Active, Disabled, Loading.
 
-Icon-only buttons need accessible labels. Keyboard focus uses the shared
-2px primary outline, or the 3px focus ring on fields. Do not remove the
-focus ring to make a control look quieter.
+Outline and Ghost hover fills are `#FCFCFD`, not `#F1F2F4`. Icon-only
+buttons need accessible labels. Keyboard focus on buttons may use the
+shared outline. Fields do not show a focus ring.
 
 ### Form controls
 
@@ -596,11 +627,28 @@ selection. - Search and filters. - Pagination and result count. - Status
 cells and row actions. - Numeric alignment. - Empty, loading, and error
 states. - Responsive horizontal overflow.
 
-Rules: - Distinct but restrained headers. - Left-align names and
-descriptions. - Right-align comparable numeric values. - Use tabular
-numerals for costs, counts, percentages, and tokens. - Consistent row
-heights. - Subtle hover. - Avoid excessive vertical borders. - Do not
-hide important values without an inspection method.
+Rules:
+
+-   Header cells are 56px, Micro, semibold, uppercase, on `#F9F9FB`.
+    Their bottom edge is an 8px transparent gap, not a data line. Round
+    only the outer header corners by 12px.
+-   Body cells use 13px secondary text and a 1px `#EEF0F3` bottom line.
+    The last row has no bottom line.
+-   Row hover is `#FCFCFD`.
+-   Left-align names and descriptions. Right-align comparable numbers.
+    Use tabular numerals.
+-   Search, status, owner, target, and sort controls in a table toolbar
+    are custom pill triggers plus a white menu. Do not use a native select
+    for those controls. The menu sits 6px below the trigger, has 12px
+    radius, 6px padding, and the dropdown shadow. Items are 32px. Item
+    hover and the active item use `#F1F2F4`. Opening one menu closes the
+    others. Escape closes them.
+-   The trigger itself does not change background on hover or when expanded.
+-   Do not draw a line above pagination.
+-   An empty table state centers a 13px semibold title and an 11px muted
+    description. The standalone empty folder is a simple sky-blue folder:
+    tab `#B9E4FF`, body from `#8FD4FF` to `#49A7F4`, inner lines `#E9F6FF`.
+    Do not use a glass or layered folder.
 
 ### Charts
 
@@ -611,10 +659,17 @@ Chart.js 4.x is the adopted rendering library, wrapped by a reusable Angular
 resolves design-token CSS variables before drawing to canvas. Raw mock data
 stays under `src/app/data/mocks` and is not embedded in the chart component.
 
-Rules: - Primary blue for the main series. - Supporting series must be
-distinguishable but restrained. - Readable axes and labels. - Tooltips
-for exact values. - Explicit units and time ranges. - Never rely on
-color alone. - No 3D charts or unnecessary animation.
+Rules:
+
+-   Primary blue for the main series. Supporting series use the chart
+    tokens, not status colors.
+-   Bars gradient from the series color to a lighter shade of that same
+    hue. Area fills fade from 42% opacity to transparent.
+-   Dashboard donuts use a 58% cutout. Showcase donuts use 56%.
+-   Tooltips use the `#1C2129` card, 14px radius, a 13px title, and 12px
+    values.
+-   Readable axes, legends, explicit units, and time ranges.
+-   Never rely on color alone. No 3D charts.
 
 ### Navigation
 
@@ -872,18 +927,20 @@ screen with a local palette.
 -   **Buttons.** One of Primary, Secondary, Outline, Ghost, or Danger, at
     32 / 36 / 40px. One primary action per local group.
 -   **Forms.** Every field has a visible label. Errors sit under the field
-    in danger text. Focus always shows the ring, including error and
-    success.
--   **Tables.** Names align left. Comparable numbers align right. Headers
-    use the sunken surface, Micro uppercase. Rows hover with
-    `--color-hover`. Selected rows may use the primary subtle fill. Wide
-    tables scroll inside `.table-scroll`.
+    in danger text. Inputs, selects, checkboxes, and radios do not show a
+    focus ring.
+-   **Tables.** Follow the table rules in Section 9. Headers and quiet
+    fills use `#F9F9FB`. Row lines are `#EEF0F3`. Row hover is `#FCFCFD`.
+    Wide tables scroll inside `.table-scroll`.
 -   **Charts.** Go through `ChartComponent`. Pass token `var(...)` colors.
-    Primary series is `#2F9AFF`. Pair color with a legend or label.
+    Primary series is `#2F9AFF`. Bars lighten within the same hue. Pair
+    color with a legend or label.
 -   **Status.** Use `app-status-badge`. Color is never the only signal.
--   **Feedback.** Alerts, toasts, dialogs, and empty states use the same
-    status and surface tokens. Dialogs have a title, description, and an
-    explicit dismiss control.
+-   **Feedback.** Alerts are light pastel cards: status background, 1px
+    status border, 16px radius, and a 40px white circle holding a 22px
+    status icon. Do not use a dark alert bar. Empty states use the simple
+    sky-blue folder. Dialogs have a title, description, and an explicit
+    dismiss control.
 -   **AMS patterns.** Token, cost, provider, pricing, permission,
     monitoring, and activity examples stay in the showcase and consume the
     same tokens. Sample credentials and prices stay fictional.
@@ -926,8 +983,6 @@ screen with a local palette.
 -   Dashboard is the only fully populated navigation page in the initial
     prototype.
 -   Other pages remain placeholders.
--   Provider costs are company-paid external costs.
--   Customer billing and margin remain out of scope.
 -   Permission details remain provisional.
 -   No production backend integration is implied.
 
@@ -946,6 +1001,36 @@ Ops Center product as its information architecture and business
 requirements are finalized. AMS remains the internal system name.
 
 ## 21. Changelog
+
+Earlier notes below record the sequence of decisions. Where they disagree
+with Sections 3 through 9, those sections are the current rule.
+
+### 2026-11-19 --- Current UI alignment
+
+-   Set the canvas, neutral 50, subtle surface, and sunken surface to
+    `#F9F9FB`. Search fields, table headers, filter chips, and matching
+    quiet fills use that color.
+-   Limited table row separators to `#EEF0F3`, with an 8px transparent
+    header gap and no line above pagination.
+-   Set quiet hover to `#FCFCFD` for rows, white buttons, tabs, and header
+    icon controls. Menu items stay on `#F1F2F4`. Filter and sort triggers
+    do not change background when hovered or open.
+-   Replaced table status, owner, target, and sort selects with the shared
+    pill-and-menu control.
+-   Removed field focus rings. Kept the dark sidebar, borderless badges,
+    light pastel alerts, and the simple sky-blue empty folder.
+-   Recorded the bar gradient, donut cutouts, `#1C2129` chart tooltip, and
+    the single blue KPI gradient.
+-   Removed the Dashboard Sample Data banner and the "운영 핵심 지표"
+    heading.
+-   Renamed the sidebar wordmark to AI Ops Center. Browser title stays
+    Ops Center, and the breadcrumb root stays AMS.
+-   Replaced the navigation with Overview, Customer Management, Product
+    Management, AI Operations, Administration, and System: 6 groups and 11
+    Sidebar menus. Related destinations move into internal tabs according to
+    IA v1.1.
+-   Added query-parameter tab navigation and legacy-route redirects for the
+    merged destinations. Detailed plans live in `IA_DRAFT.md`.
 
 ### 2026-11-16 --- Design audit alignment
 

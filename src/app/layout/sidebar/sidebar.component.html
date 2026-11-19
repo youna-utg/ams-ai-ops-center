@@ -49,7 +49,12 @@
                 class="nav-item"
                 [routerLink]="item.path"
                 routerLinkActive="nav-item--active"
-                [routerLinkActiveOptions]="{ exact: true }"
+                [routerLinkActiveOptions]="{
+                  paths: 'subset',
+                  queryParams: 'ignored',
+                  matrixParams: 'ignored',
+                  fragment: 'ignored'
+                }"
                 [attr.title]="collapsed() ? item.label : null"
                 (click)="navigationSelect.emit()"
               >

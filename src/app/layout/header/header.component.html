@@ -12,7 +12,27 @@
     <div class="breadcrumb" aria-label="현재 위치">
       <span class="breadcrumb__root">AMS</span>
       <app-icon name="chevron-right" [size]="14" />
-      <strong>{{ currentItem().label }}</strong>
+      @if (organizationName()) {
+        <a routerLink="/organizations" [queryParams]="organizationListQuery()">
+          {{ currentItem().label }}
+        </a>
+        <app-icon name="chevron-right" [size]="14" />
+        <strong>{{ organizationName() }}</strong>
+      } @else if (productName()) {
+        <a routerLink="/products" [queryParams]="productListQuery()">Products</a>
+        <app-icon name="chevron-right" [size]="14" />
+        <strong>{{ productName() }}</strong>
+      } @else if (userCrumb()) {
+        <a routerLink="/users" [queryParams]="userListQuery()">Users</a>
+        <app-icon name="chevron-right" [size]="14" />
+        <strong>{{ userCrumb() === 'import' ? '일괄 등록' : userName() }}</strong>
+      } @else if (providerName()) {
+        <a routerLink="/providers-models" [queryParams]="providerListQuery()">Providers & Models</a>
+        <app-icon name="chevron-right" [size]="14" />
+        <strong>{{ providerName() }}</strong>
+      } @else {
+        <strong>{{ currentItem().label }}</strong>
+      }
     </div>
   </div>
 

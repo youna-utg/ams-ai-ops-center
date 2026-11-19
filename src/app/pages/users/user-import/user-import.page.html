@@ -1,0 +1,67 @@
+<section class="import-page">
+  <button type="button" class="back-link" (click)="backToUsers()">
+    <app-icon name="chevron-left" [size]="16" />
+    Users로 돌아가기
+  </button>
+  <header>
+    <h1>사용자 일괄 등록</h1>
+    <p>CSV를 검증한 뒤, 모든 행이 유효할 때만 한 번에 등록합니다.</p>
+  </header>
+
+  @if (importedCount() !== null) {
+    <section class="card result">
+      <h2>{{ importedCount() }}명을 등록했습니다.</h2>
+      <p>등록 방식은 일괄 등록으로 기록되었습니다.</p>
+      <button type="button" class="button button--primary" (click)="backToUsers()">Users로 돌아가기</button>
+    </section>
+  } @else {
+    <section class="card">
+      <div class="upload-row">
+        <label class="button button--secondary">
+          CSV 파일 선택
+          <input type="file" accept=".csv,text/csv" (change)="onFile($event)" />
+        </label>
+        <button type="button" class="text-button" (click)="downloadTemplate()">CSV 템플릿 다운로드</button>
+        <p>XLSX는 지원하지 않습니다. 개인정보는 브라우저 안에서만 확인합니다.</p>
+      </div>
+      @if (fileError()) { <p class="form-error">{{ fileError() }}</p> }
+    </section>
+
+    @if (rows().length) {
+      <section class="card">
+        <header class="section-header">
+          <div>
+            <h2>미리보기</h2>
+            <p>유효 {{ validCount() }}행 / 오류 {{ rows().length - validCount() }}행. 오류가 있으면 전체를 등록하지 않습니다.</p>
+          </div>
+          <button type="button" class="button button--primary" [disabled]="validCount() !== rows().length" (click)="importUsers()">
+            {{ rows().length }}명 등록
+          </button>
+        </header>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Row</th><th>Full Name</th><th>Email</th><th>Organization</th><th>Team</th><th>Phone</th><th>Job Title</th><th>Validation</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.rowNumber) {
+                <tr [class.has-error]="row.errors.length">
+                  <td>{{ row.rowNumber }}</td>
+                  <td><input [value]="row.name" (input)="updateRow(row.rowNumber, 'name', $any($event.target).value)" /></td>
+                  <td><input [value]="row.email" (input)="updateRow(row.rowNumber, 'email', $any($event.target).value)" /></td>
+                  <td><input [value]="row.organizationCode" (input)="updateRow(row.rowNumber, 'organizationCode', $any($event.target).value)" /></td>
+                  <td><input [value]="row.teamName" (input)="updateRow(row.rowNumber, 'teamName', $any($event.target).value)" /></td>
+                  <td><input [value]="row.phone" (input)="updateRow(row.rowNumber, 'phone', $any($event.target).value)" /></td>
+                  <td><input [value]="row.jobTitle" (input)="updateRow(row.rowNumber, 'jobTitle', $any($event.target).value)" /></td>
+                  <td>{{ row.errors.length ? row.errors.join(' ') : '유효' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+</section>

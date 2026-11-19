@@ -1,0 +1,217 @@
+<section class="user-page">
+  <header class="user-page__header">
+    <div>
+      <h1>Users</h1>
+      <p>사용자 계정, Organization 소속, 계정 접근을 관리합니다.</p>
+    </div>
+    <div class="header-actions">
+      <a class="button button--secondary" routerLink="/users/import" [queryParams]="detailQuery()">
+        사용자 일괄 등록
+      </a>
+      <button type="button" class="button button--primary" (click)="openCreate()">사용자 추가</button>
+    </div>
+  </header>
+
+  <section class="summary-grid" aria-label="사용자 요약">
+    <article class="summary-card">
+      <span>Total Users</span>
+      <strong>{{ summary().total }}</strong>
+      <small>삭제된 계정 제외</small>
+    </article>
+    <article class="summary-card">
+      <span>Active Users</span>
+      <strong>{{ summary().active }}</strong>
+      <small>현재 활성 계정</small>
+    </article>
+    <article class="summary-card">
+      <span>Inactive Users</span>
+      <strong>{{ summary().inactive }}</strong>
+      <small>계정 자체 비활성</small>
+    </article>
+  </section>
+
+  <section class="table-card">
+    <header class="table-toolbar">
+      <div class="table-title">
+        <strong>Users</strong>
+        <span>{{ filteredRows().length }}개 항목</span>
+      </div>
+      <div class="table-tools">
+        <label class="table-search">
+          <span class="u-sr-only">사용자 검색</span>
+          <app-icon name="search" [size]="16" />
+          <input
+            type="search"
+            placeholder="이름 또는 이메일 검색"
+            [value]="params().q"
+            (input)="updateQuery($any($event.target).value)"
+          />
+        </label>
+        <select class="toolbar-select" aria-label="Organization" [value]="params().organization" (change)="updateFilter('organization', $any($event.target).value)">
+          <option value="all" [selected]="params().organization === 'all'">전체 Organization</option>
+          @for (organization of organizations(); track organization.id) {
+            <option [value]="organization.id" [selected]="params().organization === organization.id">{{ organization.name }}</option>
+          }
+        </select>
+        <select class="toolbar-select" aria-label="Team" [value]="params().team" [disabled]="params().organization === 'all'" (change)="updateTeam($any($event.target).value)">
+          <option value="all" [selected]="params().team === 'all'">
+            {{ params().organization === 'all' ? 'Organization 선택 후 Team' : '전체 Team' }}
+          </option>
+          @if (params().organization !== 'all') {
+            <option value="unassigned" [selected]="params().team === 'unassigned'">미지정</option>
+            @for (team of filterTeams(); track team.id) {
+              <option [value]="team.id" [selected]="params().team === team.id">{{ team.name }}</option>
+            }
+          }
+        </select>
+        <select class="toolbar-select" aria-label="상태" [value]="params().status" (change)="updateFilter('status', $any($event.target).value)">
+          <option value="all" [selected]="params().status === 'all'">전체 상태</option>
+          <option value="active" [selected]="params().status === 'active'">활성</option>
+          <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
+        </select>
+        <select class="toolbar-select" aria-label="등록 방식" [value]="params().registration" (change)="updateFilter('registration', $any($event.target).value)">
+          <option value="all" [selected]="params().registration === 'all'">전체 등록 방식</option>
+          <option value="manual" [selected]="params().registration === 'manual'">직접 등록</option>
+          <option value="bulk" [selected]="params().registration === 'bulk'">일괄 등록</option>
+        </select>
+        @if (hasFilters()) {
+          <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button>
+        }
+      </div>
+    </header>
+
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><button type="button" class="sort-button" (click)="sortBy('name')">User @if (params().sort === 'name') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('organization')">Organization @if (params().sort === 'organization') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('team')">Team @if (params().sort === 'team') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('status')">Status @if (params().sort === 'status') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('registration')">Registration @if (params().sort === 'registration') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('joined')">Joined At @if (params().sort === 'joined') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('login')">Last Login @if (params().sort === 'login') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th class="table-actions-heading">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of pagedRows(); track user.id) {
+            <tr>
+              <td>
+                <a class="user-link" [routerLink]="['/users', user.id]" [queryParams]="detailQuery()">
+                  <strong>{{ user.name }}</strong>
+                  <small>{{ user.email }}</small>
+                </a>
+              </td>
+              <td>{{ organizationName(user.organizationId) }}</td>
+              <td>{{ teamName(user.teamId) }}</td>
+              <td>
+                <app-status-badge [label]="user.active ? '활성' : '비활성'" [tone]="user.active ? 'success' : 'neutral'" />
+              </td>
+              <td>{{ user.registrationType === 'bulk' ? '일괄 등록' : '직접 등록' }}</td>
+              <td>{{ user.createdAt | date: 'yyyy-MM-dd' }}</td>
+              <td>{{ user.lastLoginAt ? (user.lastLoginAt | date: 'yyyy-MM-dd HH:mm') : '없음' }}</td>
+              <td class="row-actions">
+                <button type="button" class="icon-action" aria-label="User 작업" [attr.aria-expanded]="actionMenu() === user.id" (click)="toggleActionMenu(user.id, $event)">
+                  <app-icon name="more" [size]="16" />
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td class="table-empty" colspan="8">
+                {{ hasFilters() ? '조건에 맞는 사용자가 없습니다.' : '등록된 사용자가 없습니다.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer class="table-footer">
+      <nav class="pagination" aria-label="페이지">
+        <button type="button" aria-label="이전" [disabled]="params().page <= 1" (click)="changePage(params().page - 1)">
+          <app-icon name="chevron-left" [size]="14" />
+        </button>
+        @for (page of pageNumbers(); track page) {
+          <button type="button" [class.is-active]="page === params().page" (click)="changePage(page)">{{ page }}</button>
+        }
+        <button type="button" aria-label="다음" [disabled]="params().page >= totalPages()" (click)="changePage(params().page + 1)">
+          <app-icon name="chevron-right" [size]="14" />
+        </button>
+      </nav>
+    </footer>
+  </section>
+</section>
+
+@if (activeActionUser(); as user) {
+  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
+    <a [routerLink]="['/users', user.id]" [queryParams]="detailQuery()">상세</a>
+    <button type="button" (click)="openEdit(user)">수정</button>
+    <button type="button" (click)="requestAction(user, user.active ? 'deactivate' : 'activate')">
+      {{ user.active ? '비활성화' : '활성화' }}
+    </button>
+    <button type="button" (click)="requestAction(user, 'delete')">삭제</button>
+  </div>
+}
+
+@if (dialogMode()) {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="user-form-title" (click)="$event.stopPropagation()">
+      <header>
+        <h2 id="user-form-title">{{ dialogMode() === 'create' ? '사용자 추가' : '사용자 수정' }}</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()">
+          <app-icon name="close" [size]="16" />
+        </button>
+      </header>
+      <form class="form-grid" [formGroup]="form" (ngSubmit)="saveUser()">
+        <label class="field">이름 <em>*</em><input formControlName="name" /></label>
+        <label class="field">이메일 <em>*</em><input formControlName="email" type="email" /></label>
+        <label class="field">
+          Organization <em>*</em>
+          <select formControlName="organizationId" (change)="changeOrganization($event)">
+            <option value="">선택</option>
+            @for (organization of organizations(); track organization.id) {
+              <option [value]="organization.id">{{ organization.name }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          Team
+          <select formControlName="teamId">
+            <option value="">미지정</option>
+            @for (team of organizationTeams(); track team.id) {
+              <option [value]="team.id">{{ team.name }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">전화번호<input formControlName="phone" /></label>
+        <label class="field">직책<input formControlName="jobTitle" /></label>
+        @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+        <footer>
+          <button type="button" class="button button--secondary" (click)="closeDialog()">취소</button>
+          <button type="submit" class="button button--primary">저장</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (confirmAction()) {
+  <div class="dialog-backdrop" (click)="closeConfirm()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header>
+        <h2>{{ confirmTitle() }}</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeConfirm()">
+          <app-icon name="close" [size]="16" />
+        </button>
+      </header>
+      <p>{{ confirmMessage() }}</p>
+      <footer>
+        <button type="button" class="button button--secondary" (click)="closeConfirm()">취소</button>
+        <button type="button" class="button button--primary" (click)="applyAction()">확인</button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }

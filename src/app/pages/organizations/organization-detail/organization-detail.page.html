@@ -1,0 +1,333 @@
+<section class="detail-page">
+  @if (detail(); as current) {
+    <button type="button" class="back-link" (click)="goBack()">
+      <app-icon name="chevron-left" [size]="16" />
+      목록으로
+    </button>
+
+    <header class="detail-header">
+      <div class="identity">
+        <span class="avatar">{{ current.organization.name.slice(0, 1) }}</span>
+        <div>
+          <div class="title-row">
+            <h1>{{ current.organization.name }}</h1>
+            <app-status-badge
+              [label]="current.organization.status === 'active' ? '활성' : '비활성'"
+              [tone]="current.organization.status === 'active' ? 'success' : 'neutral'"
+            />
+          </div>
+          <p>{{ current.organization.code }} · {{ current.organization.industry || '업종 미지정' }}</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="button button--outline" (click)="openOrganizationEdit()">수정</button>
+        <button
+          type="button"
+          class="button button--outline"
+          (click)="requestConfirmation(current.organization.status === 'active' ? 'deactivate' : 'activate')"
+        >
+          {{ current.organization.status === 'active' ? '비활성화' : '활성화' }}
+        </button>
+        <button type="button" class="button button--danger-outline" (click)="requestConfirmation('delete-organization')">
+          삭제
+        </button>
+      </div>
+    </header>
+
+    <div class="kpi-grid" aria-label="Organization summary">
+      <article><span>Teams</span><strong>{{ kpis().teams }}</strong><small>소속 팀</small></article>
+      <article><span>Users</span><strong>{{ kpis().users }}</strong><small>활성 {{ kpis().activeUsers }}명</small></article>
+      <article><span>Active Products</span><strong>{{ kpis().products }}</strong><small>현재 이용 중</small></article>
+    </div>
+
+    <nav class="top-tabs" role="tablist" aria-label="Organization details">
+      @for (tab of tabs; track tab.id) {
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === tab.id"
+          [class.is-active]="activeTab() === tab.id"
+          (click)="setTab(tab.id)"
+        >{{ tab.label }}</button>
+      }
+    </nav>
+
+    <div class="tab-content">
+      @switch (activeTab()) {
+        @case ('overview') {
+          <div class="overview-grid">
+            <article class="card info-card">
+              <header><h2>기본 정보</h2><button type="button" class="text-button" (click)="openOrganizationEdit()">수정</button></header>
+              <dl>
+                <div><dt>Organization Code</dt><dd class="mono">{{ current.organization.code }}</dd></div>
+                <div><dt>업종</dt><dd>{{ current.organization.industry || '—' }}</dd></div>
+                <div><dt>담당자</dt><dd>{{ current.organization.contactName || '—' }}</dd></div>
+                <div><dt>이메일</dt><dd>{{ current.organization.contactEmail || '—' }}</dd></div>
+                <div><dt>연락처</dt><dd>{{ current.organization.contactPhone || '—' }}</dd></div>
+                <div><dt>주소</dt><dd>{{ current.organization.address || '—' }}</dd></div>
+              </dl>
+              <div class="description"><span>설명</span><p>{{ current.organization.description || '등록된 설명이 없습니다.' }}</p></div>
+            </article>
+
+            <article class="card contract-card">
+              <header><h2>계약 정보</h2></header>
+              <div class="date-pair">
+                <div><span>시작일</span><strong>{{ formatDate(current.organization.contractStartDate) }}</strong></div>
+                <div><span>종료일</span><strong>{{ formatDate(current.organization.contractEndDate) }}</strong></div>
+              </div>
+              <div class="contract-line"><span>등록일</span><strong>{{ formatDate(current.organization.createdAt) }}</strong></div>
+              <div class="contract-line"><span>최근 수정</span><strong>{{ formatDateTime(current.organization.updatedAt) }}</strong></div>
+            </article>
+
+            <article class="card memo-card">
+              <header><h2>메모</h2><button type="button" class="text-button" (click)="openOrganizationEdit()">수정</button></header>
+              <p>{{ current.organization.memo || '등록된 메모가 없습니다.' }}</p>
+            </article>
+          </div>
+        }
+
+        @case ('teams') {
+          <section class="card table-card">
+            <header class="section-header">
+              <div><div class="table-title"><h2>Teams</h2><span>{{ current.teams.length }}개 항목</span></div><p>소속 사용자와 팀 구성을 관리합니다.</p></div>
+              <button type="button" class="button button--primary" (click)="openTeam()"><app-icon name="plus" [size]="15" />Team 추가</button>
+            </header>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Team</th><th>Description</th><th class="numeric">Members</th><th>Updated</th><th>Actions</th></tr></thead>
+                <tbody>
+                  @for (team of current.teams; track team.id) {
+                    <tr>
+                      <td><strong>{{ team.name }}</strong></td>
+                      <td>{{ team.description || '—' }}</td>
+                      <td class="numeric">{{ team.memberIds.length }}</td>
+                      <td>{{ formatDate(team.updatedAt) }}</td>
+                      <td class="actions">
+                        <button type="button" class="text-button" (click)="viewMembers(team)">멤버 보기</button>
+                        <button type="button" class="text-button" (click)="openTeam(team)">수정</button>
+                        <button type="button" class="text-button danger" (click)="requestConfirmation('delete-team', team)">삭제</button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="5" class="table-empty">등록된 Team이 없습니다.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+
+        @case ('users') {
+          <section class="card table-card">
+            <header class="section-header">
+              <div><div class="table-title"><h2>Users</h2><span>{{ filteredUsers().length }}개 항목</span></div><p>이 화면에서는 소속 사용자를 조회합니다.</p></div>
+              <div class="table-tools">
+                <label class="table-search"><app-icon name="search" [size]="15" /><input type="search" placeholder="이름, 이메일 또는 Role 검색" [value]="queryState().userQ" (input)="updateSearch('userQ', $event)" /></label>
+                <select class="toolbar-select" aria-label="Team" [value]="queryState().team" (change)="updateFilter('team', $event)"><option value="all" [selected]="queryState().team === 'all'">전체 Team</option>@for (team of current.teams; track team.id) {<option [value]="team.id" [selected]="queryState().team === team.id">{{ team.name }}</option>}</select>
+                <select class="toolbar-select" aria-label="상태" [value]="queryState().userStatus" (change)="updateFilter('userStatus', $event)"><option value="all" [selected]="queryState().userStatus === 'all'">전체 상태</option><option value="active" [selected]="queryState().userStatus === 'active'">활성</option><option value="inactive" [selected]="queryState().userStatus === 'inactive'">비활성</option></select>
+              </div>
+            </header>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>User</th><th>Email</th><th>Team</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+                <tbody>
+                  @for (user of filteredUsers(); track user.id) {
+                    <tr>
+                      <td><strong>{{ user.name }}</strong></td>
+                      <td>{{ user.email }}</td>
+                      <td>{{ teamName(user.teamId) }}</td>
+                      <td>{{ user.role }}</td>
+                      <td><app-status-badge [label]="user.active ? '활성' : '비활성'" [tone]="user.active ? 'success' : 'neutral'" /></td>
+                      <td>{{ formatDate(user.createdAt) }}</td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="6" class="table-empty">선택한 조건에 해당하는 User가 없습니다.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+
+        @case ('products') {
+          <div class="product-sections">
+            <section class="card table-card">
+              <header class="section-header">
+                <div><div class="table-title"><h2>Current Product Access</h2><span>{{ activeAccesses().length }}개 항목</span></div><p>현재 이용 중인 Product입니다.</p></div>
+                <button type="button" class="button button--primary" (click)="openAccess()"><app-icon name="plus" [size]="15" />Product 추가</button>
+              </header>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Product</th><th>Access</th><th>Product Status</th><th class="numeric">Seat Limit</th><th>Start Date</th><th>End Date</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    @for (access of activeAccesses(); track access.id) {
+                      <tr>
+                        <td><strong>{{ access.product }}</strong></td>
+                        <td><app-status-badge label="이용 중" tone="success" /></td>
+                        <td><app-status-badge [label]="productStatusLabel(access.product)" [tone]="productStatusTone(access.product)" /></td>
+                        <td class="numeric">{{ access.seatLimit }}</td>
+                        <td>{{ formatDate(access.startsAt) }}</td>
+                        <td>{{ formatDate(access.endsAt) }}</td>
+                        <td class="actions">
+                          <button type="button" class="text-button" (click)="openAccess(access)">종료일 수정</button>
+                          <button type="button" class="text-button danger" (click)="requestConfirmation('end-access', access)">이용 종료</button>
+                          <button type="button" class="text-button danger" (click)="requestConfirmation('remove-access', access)">제거</button>
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="7" class="table-empty">이용 중인 Product가 없습니다.</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="card table-card">
+              <header class="section-header"><div><div class="table-title"><h2>Ended Product Access</h2><span>{{ endedAccesses().length }}개 항목</span></div><p>종료된 이용은 다시 추가하거나 제거할 수 있습니다.</p></div></header>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Product</th><th>Access</th><th>Product Status</th><th class="numeric">Seat Limit</th><th>Started</th><th>Ended</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    @for (access of endedAccesses(); track access.id) {
+                      <tr>
+                        <td><strong>{{ access.product }}</strong></td>
+                        <td><app-status-badge label="종료" tone="neutral" /></td>
+                        <td><app-status-badge [label]="productStatusLabel(access.product)" [tone]="productStatusTone(access.product)" /></td>
+                        <td class="numeric">{{ access.seatLimit }}</td>
+                        <td>{{ formatDate(access.startsAt) }}</td>
+                        <td>{{ formatDate(access.endsAt) }}</td>
+                        <td class="actions">
+                          <button type="button" class="text-button" (click)="requestConfirmation('reuse-access', access)">재이용</button>
+                          <button type="button" class="text-button danger" (click)="requestConfirmation('remove-access', access)">제거</button>
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="7" class="table-empty">종료된 이용이 없습니다.</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        }
+
+        @case ('history') {
+          <section class="card table-card">
+            <nav class="nested-tabs" role="tablist" aria-label="History views">
+              <button type="button" [class.is-active]="historyTab() === 'product-usage'" (click)="setHistoryTab('product-usage')">Product Usage History</button>
+              <button type="button" [class.is-active]="historyTab() === 'activity'" (click)="setHistoryTab('activity')">Organization Activity</button>
+            </nav>
+            @if (historyTab() === 'product-usage') {
+              <div class="table-tools history-toolbar">
+                <span class="table-title"><span>{{ filteredProductHistory().length }}개 항목</span></span>
+                <label class="table-search"><app-icon name="search" [size]="15" /><input type="search" placeholder="Product 이력 검색" [value]="queryState().historyQ" (input)="updateSearch('historyQ', $event)" /></label>
+                <select class="toolbar-select" aria-label="Product" [value]="queryState().historyProduct" (change)="updateFilter('historyProduct', $event)"><option value="all" [selected]="queryState().historyProduct === 'all'">전체 Product</option>@for (product of products(); track product) {<option [value]="product" [selected]="queryState().historyProduct === product">{{ product }}</option>}</select>
+              </div>
+              <div class="table-scroll">
+                <table><thead><tr><th>Product</th><th>Event</th><th>Details</th><th>Source</th><th>Occurred</th></tr></thead>
+                  <tbody>@for (row of filteredProductHistory(); track row.id) {<tr><td><strong>{{ row.product }}</strong></td><td>{{ row.event }}</td><td>{{ row.detail }}</td><td>{{ row.source }}</td><td>{{ formatDateTime(row.occurredAt) }}</td></tr>} @empty {<tr><td colspan="5" class="table-empty">선택한 조건에 해당하는 Product 이력이 없습니다.</td></tr>}</tbody>
+                </table>
+              </div>
+            } @else {
+              <div class="table-tools history-toolbar">
+                <span class="table-title"><span>{{ filteredActivities().length }}개 항목</span></span>
+                <label class="table-search"><app-icon name="search" [size]="15" /><input type="search" placeholder="활동 검색" [value]="queryState().historyQ" (input)="updateSearch('historyQ', $event)" /></label>
+                <select class="toolbar-select" aria-label="활동 유형" [value]="queryState().historyType" (change)="updateFilter('historyType', $event)"><option value="all" [selected]="queryState().historyType === 'all'">전체 활동</option>@for (type of activityTypes(); track type) {<option [value]="type" [selected]="queryState().historyType === type">{{ activityTypeLabel(type) }}</option>}</select>
+              </div>
+              <div class="table-scroll">
+                <table><thead><tr><th>Activity</th><th>Type</th><th>Description</th><th>Actor</th><th>Occurred</th></tr></thead>
+                  <tbody>@for (activity of filteredActivities(); track activity.id) {<tr><td><strong>{{ activity.title }}</strong></td><td>{{ activityTypeLabel(activity.type) }}</td><td>{{ activity.description }}</td><td>{{ actorName(activity) }}</td><td>{{ formatDateTime(activity.createdAt) }}</td></tr>} @empty {<tr><td colspan="5" class="table-empty">선택한 조건에 해당하는 활동이 없습니다.</td></tr>}</tbody>
+                </table>
+              </div>
+            }
+          </section>
+        }
+      }
+    </div>
+  } @else {
+    <div class="not-found">
+      <span>404</span>
+      <h1>Organization을 찾을 수 없습니다</h1>
+      <p>삭제되었거나 주소가 올바르지 않습니다.</p>
+      <button type="button" class="button button--primary" (click)="goBack()">목록으로</button>
+    </div>
+  }
+</section>
+
+@if (dialog() === 'organization') {
+  <div class="dialog-backdrop" (click)="dialog.set(null)">
+    <section class="dialog dialog--large" role="dialog" aria-modal="true" aria-labelledby="organization-dialog-title" (click)="$event.stopPropagation()">
+      <header><div><h2 id="organization-dialog-title">Organization 수정</h2><p>기본 정보, 계약, 메모를 수정합니다.</p></div><button type="button" class="icon-button" aria-label="닫기" (click)="dialog.set(null)"><app-icon name="close" [size]="18" /></button></header>
+      <form [formGroup]="organizationForm" (ngSubmit)="saveOrganization()">
+        <div class="form-grid">
+          <label class="field"><span>고객사명 *</span><input formControlName="name" /></label>
+          <label class="field"><span>업종</span><input formControlName="industry" /></label>
+          <label class="field field--wide"><span>설명</span><textarea rows="3" formControlName="description"></textarea></label>
+          <label class="field"><span>담당자</span><input formControlName="contactName" /></label>
+          <label class="field"><span>이메일</span><input type="email" formControlName="contactEmail" /></label>
+          <label class="field"><span>연락처</span><input formControlName="contactPhone" /></label>
+          <label class="field"><span>주소</span><input formControlName="address" /></label>
+          <label class="field"><span>계약 시작일 *</span><input type="date" formControlName="contractStartDate" /></label>
+          <label class="field"><span>계약 종료일</span><input type="date" formControlName="contractEndDate" />@if (organizationForm.controls.contractEndDate.value && organizationForm.controls.contractEndDate.value < organizationForm.controls.contractStartDate.value) {<small>종료일은 시작일보다 이전일 수 없습니다.</small>}</label>
+          <label class="field field--wide"><span>메모</span><textarea rows="4" formControlName="memo"></textarea></label>
+        </div>
+        @if (error()) {<p class="form-error">{{ error() }}</p>}
+        <footer><button type="button" class="button button--ghost" (click)="dialog.set(null)">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'team') {
+  <div class="dialog-backdrop" (click)="dialog.set(null)">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="team-dialog-title" (click)="$event.stopPropagation()">
+      <header><div><h2 id="team-dialog-title">{{ editingTeam() ? 'Team 수정' : 'Team 추가' }}</h2><p>User는 하나의 Team에만 속할 수 있습니다. 여기서 지정하면 기존 Team에서 이동합니다.</p></div><button type="button" class="icon-button" aria-label="닫기" (click)="dialog.set(null)"><app-icon name="close" [size]="18" /></button></header>
+      <form [formGroup]="teamForm" (ngSubmit)="saveTeam()">
+        <div class="form-grid">
+          <label class="field field--wide"><span>Team 이름 *</span><input formControlName="name" /></label>
+          <label class="field field--wide"><span>설명</span><textarea rows="3" formControlName="description"></textarea></label>
+          <fieldset class="member-picker field--wide"><legend>멤버</legend>
+            @for (user of detail()?.users ?? []; track user.id) {
+              <label><input type="checkbox" [checked]="teamForm.controls.memberIds.value.includes(user.id)" (change)="toggleMember(user.id, $any($event.target).checked)" /><span><strong>{{ user.name }}</strong><small>{{ user.email }} · {{ teamName(user.teamId) }}</small></span></label>
+            } @empty {<p>배정할 User가 없습니다.</p>}
+          </fieldset>
+        </div>
+        @if (error()) {<p class="form-error">{{ error() }}</p>}
+        <footer><button type="button" class="button button--ghost" (click)="dialog.set(null)">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'access') {
+  <div class="dialog-backdrop" (click)="dialog.set(null)">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="access-dialog-title" (click)="$event.stopPropagation()">
+      <header><div><h2 id="access-dialog-title">{{ editingAccess() ? 'Product 이용 수정' : 'Product 추가' }}</h2><p>같은 Product의 활성 이용은 하나만 둘 수 있습니다.</p></div><button type="button" class="icon-button" aria-label="닫기" (click)="dialog.set(null)"><app-icon name="close" [size]="18" /></button></header>
+      <form [formGroup]="accessForm" (ngSubmit)="saveAccess()">
+        <div class="form-grid">
+          <label class="field"><span>Product *</span><select formControlName="product">@for (product of products(); track product) {<option [value]="product">{{ product }}</option>}</select></label>
+          <label class="field"><span>좌석 수 *</span><input type="number" min="1" step="1" formControlName="seatLimit" /></label>
+          <label class="field"><span>시작일 *</span><input type="date" formControlName="startsAt" /></label>
+          <label class="field"><span>종료일</span><input type="date" formControlName="endsAt" />@if (accessForm.controls.endsAt.value && accessForm.controls.endsAt.value < accessForm.controls.startsAt.value) {<small>종료일은 시작일보다 이전일 수 없습니다.</small>}</label>
+        </div>
+        @if (error()) {<p class="form-error">{{ error() }}</p>}
+        <footer><button type="button" class="button button--ghost" (click)="dialog.set(null)">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'confirm') {
+  <div class="dialog-backdrop" (click)="dialog.set(null)">
+    <section class="dialog dialog--confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" (click)="$event.stopPropagation()">
+      <h2 id="confirm-title">{{ confirmationTitle() }}</h2>
+      <p>{{ confirmationText() }}</p>
+      @if (error()) {<p class="form-error">{{ error() }}</p>}
+      <footer><button type="button" class="button button--ghost" (click)="dialog.set(null)">취소</button><button type="button" class="button" [class.button--danger]="pendingAction() === 'delete-organization' || pendingAction() === 'delete-team' || pendingAction() === 'remove-access' || pendingAction() === 'end-access'" [class.button--primary]="pendingAction() !== 'delete-organization' && pendingAction() !== 'delete-team' && pendingAction() !== 'remove-access' && pendingAction() !== 'end-access'" (click)="confirmAction()">확인</button></footer>
+    </section>
+  </div>
+}
+
+@if (toast()) {
+  <div class="toast" role="status"><span>✓</span>{{ toast() }}<button type="button" aria-label="닫기" (click)="toast.set('')">×</button></div>
+}

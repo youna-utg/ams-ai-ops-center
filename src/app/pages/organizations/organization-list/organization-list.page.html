@@ -1,0 +1,264 @@
+<section class="org-page">
+  <header class="org-page__header">
+    <div>
+      <h1>Organizations</h1>
+      <p>고객사, 팀, 사용자와 Product 이용 정보를 관리합니다.</p>
+    </div>
+    <button type="button" class="button button--primary" (click)="openCreate()">
+      <app-icon name="plus" [size]="16" />
+      Organization 추가
+    </button>
+  </header>
+
+  <div class="summary-grid">
+    <article class="summary-card">
+      <span>Total Organizations</span>
+      <strong>{{ summary().total }}</strong>
+      <small>삭제된 고객사 제외</small>
+    </article>
+    <article class="summary-card">
+      <span>Active Organizations</span>
+      <strong>{{ summary().active }}</strong>
+      <small>현재 활성 고객사</small>
+    </article>
+    <article class="summary-card">
+      <span>Inactive Organizations</span>
+      <strong>{{ summary().inactive }}</strong>
+      <small>이용이 제한된 고객사</small>
+    </article>
+  </div>
+
+  <section class="table-card">
+    <header class="table-toolbar">
+      <div class="table-title">
+        <strong>Organizations</strong>
+        <span>{{ filteredRows().length }}개 항목</span>
+      </div>
+      <div class="table-tools">
+        <label class="table-search">
+          <app-icon name="search" [size]="15" />
+          <span class="u-sr-only">Organization 검색</span>
+          <input
+            type="search"
+            placeholder="이름 또는 Code 검색"
+            [value]="query().q"
+            (input)="updateSearch($event)"
+          />
+        </label>
+        <select class="toolbar-select" aria-label="상태" [value]="query().status" (change)="updateSelect('status', $event)">
+          <option value="all" [selected]="query().status === 'all'">전체 상태</option>
+          <option value="active" [selected]="query().status === 'active'">활성</option>
+          <option value="inactive" [selected]="query().status === 'inactive'">비활성</option>
+        </select>
+        <select class="toolbar-select" aria-label="Product" [value]="query().product" (change)="updateSelect('product', $event)">
+          <option value="all" [selected]="query().product === 'all'">전체 Product</option>
+          @for (product of products(); track product) {
+            <option [value]="product" [selected]="query().product === product">{{ product }}</option>
+          }
+        </select>
+      </div>
+    </header>
+
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><button type="button" class="sort-button" (click)="sortBy('name')">Organization @if (query().sort === 'name') { <app-icon [name]="query().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('code')">Code @if (query().sort === 'code') { <app-icon [name]="query().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('status')">Status @if (query().sort === 'status') { <app-icon [name]="query().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th class="numeric"><button type="button" class="sort-button" (click)="sortBy('users')">Users @if (query().sort === 'users') { <app-icon [name]="query().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th class="numeric"><button type="button" class="sort-button" (click)="sortBy('teams')">Teams @if (query().sort === 'teams') { <app-icon [name]="query().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th class="numeric"><button type="button" class="sort-button" (click)="sortBy('products')">Products @if (query().sort === 'products') { <app-icon [name]="query().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('contractEnd')">Contract End @if (query().sort === 'contractEnd') { <app-icon [name]="query().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('createdAt')">Created @if (query().sort === 'createdAt') { <app-icon [name]="query().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th class="table-actions-heading">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of pagedRows(); track row.organization.id) {
+            <tr (click)="openDetail(row.organization, $event)">
+              <td>
+                <a
+                  class="organization-link"
+                  [routerLink]="['/organizations', row.organization.id]"
+                  [queryParams]="detailParams()"
+                >
+                  <strong>{{ row.organization.name }}</strong>
+                </a>
+              </td>
+              <td class="mono">{{ row.organization.code }}</td>
+              <td>
+                <app-status-badge
+                  [label]="row.organization.status === 'active' ? '활성' : '비활성'"
+                  [tone]="row.organization.status === 'active' ? 'success' : 'neutral'"
+                />
+              </td>
+              <td class="numeric">{{ row.users }}</td>
+              <td class="numeric">{{ row.teams }}</td>
+              <td class="numeric">{{ row.products }}</td>
+              <td>
+                {{ row.organization.contractEndDate ?? '—' }}
+                @if (isExpired(row.organization.contractEndDate)) {
+                  <span class="expired">만료</span>
+                }
+              </td>
+              <td>{{ row.organization.createdAt.slice(0, 10) }}</td>
+              <td class="row-actions">
+                <button
+                  type="button"
+                  class="icon-action"
+                  aria-label="Organization 작업"
+                  [attr.aria-expanded]="actionMenu() === row.organization.id"
+                  (click)="toggleActionMenu(row.organization.id, $event)"
+                >
+                  <app-icon name="more" [size]="17" />
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" class="table-empty">
+                {{ store.organizations().length
+                  ? '선택한 조건에 해당하는 Organization이 없습니다.'
+                  : '등록된 Organization이 없습니다.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="table-footer">
+      <nav class="pagination" aria-label="테이블 페이지">
+        <button type="button" aria-label="이전 페이지" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
+          <app-icon name="chevron-left" [size]="15" />
+        </button>
+        @for (number of pageNumbers(); track number) {
+          <button type="button" [class.is-active]="page() === number" (click)="goToPage(number)">
+            {{ number }}
+          </button>
+        }
+        <button type="button" aria-label="다음 페이지" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">
+          <app-icon name="chevron-right" [size]="15" />
+        </button>
+      </nav>
+    </footer>
+  </section>
+</section>
+
+@if (activeActionOrganization(); as organization) {
+  <div
+    class="action-menu"
+    [style.top]="actionMenuStyle()?.top"
+    [style.left]="actionMenuStyle()?.left"
+  >
+    <a
+      [routerLink]="['/organizations', organization.id]"
+      [queryParams]="detailParams()"
+    >상세</a>
+    <button type="button" (click)="openEdit(organization)">수정</button>
+    <button type="button" (click)="requestAction(organization, 'toggle')">
+      {{ organization.status === 'active' ? '비활성화' : '활성화' }}
+    </button>
+    <button type="button" class="danger" (click)="requestAction(organization, 'delete')">
+      삭제
+    </button>
+  </div>
+}
+
+@if (dialog() === 'form') {
+  <div class="dialog-backdrop" (click)="dialog.set(null)">
+    <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header>
+        <div>
+          <h2>{{ editing() ? 'Organization 수정' : 'Organization 추가' }}</h2>
+          <p>고객사 기본 정보와 계약 정보를 입력합니다.</p>
+        </div>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="dialog.set(null)">
+          <app-icon name="close" [size]="18" />
+        </button>
+      </header>
+      <form [formGroup]="form" (ngSubmit)="saveOrganization()">
+        <div class="form-grid">
+          <label class="field field--wide">
+            <span>고객사명 <em>*</em></span>
+            <input formControlName="name" maxlength="80" />
+            @if (form.controls.name.touched && form.controls.name.invalid) {
+              <small>고객사명을 입력하세요.</small>
+            }
+          </label>
+          @if (editing()) {
+            <label class="field">
+              <span>Code</span>
+              <input formControlName="code" readonly />
+            </label>
+          }
+          <label class="field">
+            <span>담당자</span>
+            <input formControlName="contactName" maxlength="60" />
+          </label>
+          <label class="field">
+            <span>연락처</span>
+            <input formControlName="contactPhone" maxlength="30" />
+          </label>
+          <label class="field">
+            <span>계약 시작일 <em>*</em></span>
+            <input type="date" formControlName="contractStartDate" />
+          </label>
+          <label class="field">
+            <span>계약 종료일</span>
+            <input type="date" formControlName="contractEndDate" />
+            @if (
+              form.controls.contractEndDate.value &&
+              form.controls.contractEndDate.value < form.controls.contractStartDate.value
+            ) {
+              <small>종료일은 시작일보다 이전일 수 없습니다.</small>
+            }
+          </label>
+          <label class="field field--wide">
+            <span>메모</span>
+            <textarea rows="4" formControlName="memo" maxlength="500"></textarea>
+          </label>
+        </div>
+        <footer>
+          <button type="button" class="button button--ghost" (click)="dialog.set(null)">취소</button>
+          <button type="submit" class="button button--primary">저장</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'confirm') {
+  <div class="dialog-backdrop" (click)="dialog.set(null)">
+    <section class="dialog dialog--confirm" role="alertdialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <h2>
+        {{ pendingAction() === 'delete'
+          ? 'Organization을 삭제할까요?'
+          : editing()?.status === 'active'
+            ? 'Organization을 비활성화할까요?'
+            : 'Organization을 활성화할까요?' }}
+      </h2>
+      <p>
+        <strong>{{ editing()?.name }}</strong>의 상태가 변경됩니다.
+        @if (pendingAction() === 'delete') {
+          기본 목록에서는 제외되고, 기존 기록은 유지됩니다.
+        }
+      </p>
+      <footer>
+        <button type="button" class="button button--ghost" (click)="dialog.set(null)">취소</button>
+        <button type="button" class="button" [class.button--danger]="pendingAction() === 'delete'" [class.button--primary]="pendingAction() !== 'delete'" (click)="confirmAction()">
+          확인
+        </button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (toast()) {
+  <div class="toast" role="status">
+    <span>✓</span>
+    {{ toast() }}
+    <button type="button" aria-label="닫기" (click)="toast.set('')">×</button>
+  </div>
+}

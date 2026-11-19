@@ -281,8 +281,7 @@
 }
 
 .section-heading__meta,
-.result-count,
-.cost-definition {
+.result-count {
   flex: 0 0 auto;
   padding: 5px 8px;
   color: var(--color-text-muted);
@@ -291,12 +290,6 @@
   border-radius: var(--radius-full);
   font-size: var(--font-size-micro);
   font-weight: var(--font-weight-medium);
-}
-
-.cost-definition {
-  color: var(--color-warning-text);
-  background: var(--color-warning-bg);
-  border-color: var(--color-warning-border);
 }
 
 .kpi-grid {

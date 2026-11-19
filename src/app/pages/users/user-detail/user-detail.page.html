@@ -1,0 +1,277 @@
+<section class="detail-page">
+  @if (user(); as current) {
+    <button type="button" class="back-link" (click)="goBack()">
+      <app-icon name="chevron-left" [size]="16" />
+      Users로 돌아가기
+    </button>
+
+    <header class="detail-header">
+      <div>
+        <div class="title-row">
+          <h1>{{ current.name }}</h1>
+          <app-status-badge [label]="current.active ? '활성' : '비활성'" [tone]="current.active ? 'success' : 'neutral'" />
+        </div>
+        <p>{{ current.email }}</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="button button--secondary" (click)="openEdit()">사용자 수정</button>
+        <div class="more-actions">
+          <button type="button" class="button button--secondary" (click)="moreOpen.set(!moreOpen())">추가 작업</button>
+          @if (moreOpen()) {
+            <div class="action-menu">
+              <button type="button" (click)="requestAction(current.active ? 'deactivate' : 'activate')">
+                {{ current.active ? '비활성화' : '활성화' }}
+              </button>
+              <button type="button" (click)="requestAction('delete')">삭제</button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <section class="summary-grid">
+      <article><span>Organization</span><strong>{{ organization()?.name }}</strong><small>{{ organization()?.code }}</small></article>
+      <article><span>Team</span><strong>{{ team()?.name ?? '미지정' }}</strong><small>최대 1개 팀</small></article>
+      <article><span>Available Products</span><strong>{{ availableProductCount() }}</strong><small>고객사 이용 중 제품</small></article>
+    </section>
+
+    <nav class="top-tabs" role="tablist">
+      @for (item of tabs; track item.id) {
+        <button type="button" role="tab" [class.is-active]="tab() === item.id" [attr.aria-selected]="tab() === item.id" (click)="setTab(item.id)">
+          {{ item.label }}
+        </button>
+      }
+    </nav>
+
+    @switch (tab()) {
+      @case ('overview') {
+        <div class="split">
+          <article class="card">
+            <h2>기본 정보</h2>
+            <dl>
+              <div><dt>이름</dt><dd>{{ current.name }}</dd></div>
+              <div><dt>이메일</dt><dd>{{ current.email }}</dd></div>
+              <div><dt>전화번호</dt><dd>{{ display(current.phone) }}</dd></div>
+              <div><dt>직책</dt><dd>{{ display(current.jobTitle) }}</dd></div>
+              <div><dt>상태</dt><dd>{{ current.active ? '활성' : '비활성' }}</dd></div>
+              <div><dt>등록 방식</dt><dd>{{ current.registrationType === 'bulk' ? '일괄 등록' : '직접 등록' }}</dd></div>
+              <div><dt>등록일</dt><dd>{{ current.createdAt | date: 'yyyy-MM-dd' }}</dd></div>
+              <div><dt>최근 로그인</dt><dd>{{ current.lastLoginAt ? (current.lastLoginAt | date: 'yyyy-MM-dd HH:mm') : '없음' }}</dd></div>
+            </dl>
+          </article>
+          <article class="card">
+            <h2>소속 정보</h2>
+            <dl>
+              <div>
+                <dt>Organization</dt>
+                <dd>
+                  @if (organization(); as organization) {
+                    <a [routerLink]="['/organizations', organization.id]">{{ organization.name }}</a>
+                  }
+                </dd>
+              </div>
+              <div><dt>Team</dt><dd>{{ team()?.name ?? '미지정' }}</dd></div>
+            </dl>
+            <div class="account-note">
+              <strong>Account: {{ current.active ? 'Active' : 'Inactive' }}</strong>
+              @if (organization()?.status === 'inactive') {
+                <p>Access: Restricted by Organization</p>
+                <small>고객사 비활성으로 접근이 제한된 상태입니다. 사용자 계정 상태는 그대로 유지됩니다.</small>
+              } @else {
+                <p>Access: {{ current.active ? 'Available' : 'Restricted by User' }}</p>
+              }
+            </div>
+          </article>
+        </div>
+      }
+      @case ('access') {
+        <section class="card">
+          <header class="section-header">
+            <div>
+              <h2>Product Access</h2>
+              <p>이 프로토타입에서 제품 접근은 소속 Organization의 이용 권한을 따릅니다.</p>
+            </div>
+            @if (organization(); as organization) {
+              <a class="button button--secondary" [routerLink]="['/organizations', organization.id]" [queryParams]="{ tab: 'products' }">
+                Organization Products
+              </a>
+            }
+          </header>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Product</th><th>Organization Access</th><th>Product Status</th><th>Expiration</th><th>Effective Access</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of accessRows(); track row.product) {
+                  <tr>
+                    <td><strong>{{ row.product }}</strong></td>
+                    <td>{{ row.organizationAccess }}</td>
+                    <td>{{ row.productStatus }}</td>
+                    <td>{{ row.expiration }} @if (row.expired) { <span class="expired">종료일 경과</span> }</td>
+                    <td>{{ row.effective }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+      @case ('usage') {
+        @if (!hasAnyUsage()) {
+          <p class="empty-panel">이 사용자의 이용 기록이 없습니다.</p>
+        } @else {
+          <section class="summary-grid">
+            <article><span>Total Requests</span><strong>{{ usageSummary().requests }}</strong></article>
+            <article><span>Input Tokens</span><strong>{{ usageSummary().inputTokens }}</strong></article>
+            <article><span>Output Tokens</span><strong>{{ usageSummary().outputTokens }}</strong></article>
+            <article><span>Estimated Provider Cost</span><strong>{{ money(usageSummary().cost) }}</strong></article>
+          </section>
+          <section class="card">
+            <header class="section-header">
+              <h2>Usage by Product</h2>
+              <div class="filters">
+                <input type="date" [value]="usageFrom()" (change)="updateUsage('usageFrom', $any($event.target).value)" />
+                <input type="date" [value]="usageTo()" (change)="updateUsage('usageTo', $any($event.target).value)" />
+                <select [value]="usageProduct()" (change)="updateUsage('usageProduct', $any($event.target).value)">
+                  <option value="all">전체 Product</option>
+                  @for (product of products(); track product) { <option [value]="product">{{ product }}</option> }
+                </select>
+              </div>
+            </header>
+            <div class="data-table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Product</th><th>Requests</th><th>Input Tokens</th><th>Output Tokens</th><th>Provider Cost</th></tr></thead>
+                <tbody>
+                  @for (row of usageByProduct(); track row.product) {
+                    <tr>
+                      <td>{{ row.product }}</td><td>{{ row.requests }}</td><td>{{ row.inputTokens }}</td><td>{{ row.outputTokens }}</td><td>{{ money(row.cost) }}</td>
+                    </tr>
+                  } @empty { <tr><td class="table-empty" colspan="5">선택한 조건의 이용 기록이 없습니다.</td></tr> }
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section class="card">
+            <h2>Recent Usage</h2>
+            <div class="data-table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Date</th><th>Product</th><th>Provider</th><th>Model</th><th>Requests</th><th>Cost</th></tr></thead>
+                <tbody>
+                  @for (record of usageRecords(); track record.id) {
+                    <tr>
+                      <td>{{ record.occurredAt | date: 'yyyy-MM-dd' }}</td>
+                      <td>{{ record.product }}</td><td>{{ record.provider }}</td><td>{{ record.model }}</td>
+                      <td>{{ record.requests }}</td><td>{{ money(record.providerCost) }}</td>
+                    </tr>
+                  } @empty { <tr><td class="table-empty" colspan="6">선택한 조건의 이용 기록이 없습니다.</td></tr> }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+      }
+      @case ('history') {
+        <section class="card">
+          <header class="section-header">
+            <h2>History</h2>
+            <div class="filters">
+              <input type="date" [value]="historyFrom()" (change)="updateHistory('historyFrom', $any($event.target).value)" />
+              <input type="date" [value]="historyTo()" (change)="updateHistory('historyTo', $any($event.target).value)" />
+              <select [value]="historyAction()" (change)="updateHistory('historyAction', $any($event.target).value)">
+                <option value="all">전체 작업</option>
+                <option value="user-created">사용자 등록</option>
+                <option value="user-updated">사용자 수정</option>
+                <option value="user-activated">활성화</option>
+                <option value="user-deactivated">비활성화</option>
+                <option value="user-organization-changed">고객사 변경</option>
+                <option value="user-team-changed">팀 변경</option>
+              </select>
+            </div>
+          </header>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Timestamp</th><th>Action</th><th>Field</th><th>Previous</th><th>New</th><th>Updated By</th></tr></thead>
+              <tbody>
+                @for (activity of history(); track activity.id) {
+                  <tr>
+                    <td>{{ activity.createdAt | date: 'yyyy-MM-dd HH:mm' }}</td>
+                    <td>{{ actionLabel(activity.type) }}</td>
+                    <td>{{ display(activity.field) }}</td>
+                    <td>{{ display(activity.previousValue) }}</td>
+                    <td>{{ display(activity.nextValue) }}</td>
+                    <td>{{ actorName(activity.actorId) }}</td>
+                  </tr>
+                } @empty { <tr><td class="table-empty" colspan="6">표시할 변경 이력이 없습니다.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    }
+  } @else {
+    <section class="empty-panel">
+      <h1>사용자를 찾을 수 없습니다</h1>
+      <p>요청한 User ID가 없거나 삭제된 계정입니다.</p>
+      <a class="button button--primary" routerLink="/users">Users로 돌아가기</a>
+    </section>
+  }
+</section>
+
+@if (editing()) {
+  <div class="dialog-backdrop" (click)="closeEdit()">
+    <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header>
+        <h2>사용자 수정</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeEdit()"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <form class="form-grid" [formGroup]="form" (ngSubmit)="saveUser()">
+        <label class="field">이름 <em>*</em><input formControlName="name" /></label>
+        <label class="field">이메일 <em>*</em><input formControlName="email" type="email" /></label>
+        <label class="field">Organization <em>*</em>
+          <select formControlName="organizationId" (change)="changeOrganization($event)">
+            @for (organization of organizations(); track organization.id) {
+              <option [value]="organization.id">{{ organization.name }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">Team
+          <select formControlName="teamId">
+            <option value="">미지정</option>
+            @for (team of organizationTeams(); track team.id) { <option [value]="team.id">{{ team.name }}</option> }
+          </select>
+        </label>
+        <label class="field">전화번호<input formControlName="phone" /></label>
+        <label class="field">직책<input formControlName="jobTitle" /></label>
+        @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+        <footer>
+          <button type="button" class="button button--secondary" (click)="closeEdit()">취소</button>
+          <button type="submit" class="button button--primary">저장</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (confirmAction()) {
+  <div class="dialog-backdrop" (click)="confirmAction.set(null)">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header>
+        <h2>{{ confirmAction() === 'delete' ? '사용자 삭제' : confirmAction() === 'activate' ? '사용자 활성화' : '사용자 비활성화' }}</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="confirmAction.set(null)"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <p>
+        @if (confirmAction() === 'delete') { 계정을 목록에서 제외합니다. 과거 기록은 유지되며 이 화면에서는 복구하지 않습니다. }
+        @else { 사용자 계정 상태만 변경합니다. Organization 상태는 바뀌지 않습니다. }
+      </p>
+      <footer>
+        <button type="button" class="button button--secondary" (click)="confirmAction.set(null)">취소</button>
+        <button type="button" class="button button--primary" (click)="applyAction()">확인</button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }

@@ -1,0 +1,262 @@
+<section class="detail-page">
+  @if (product(); as current) {
+    <button type="button" class="back-link" (click)="goBack()"><app-icon name="chevron-left" [size]="16" />Products로 돌아가기</button>
+    <header class="detail-header">
+      <div class="identity">
+        <span class="mark">{{ current.name.slice(0, 1) }}</span>
+        <div>
+          <div class="title-row">
+            <h1>{{ current.name }}</h1>
+            <app-status-badge [label]="statusLabel(current.status)" [tone]="statusTone(current.status)" />
+          </div>
+          <p>{{ current.code }} · 임시 식별 코드</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="button button--secondary" (click)="openEdit()">제품 수정</button>
+        <button type="button" class="button button--secondary" (click)="openStatus()">상태 변경</button>
+      </div>
+    </header>
+
+    <section class="summary-grid">
+      <article><span>Assigned Organizations</span><strong>{{ assigned() }}</strong><small>이용 관계가 유지된 고객사</small></article>
+      <article><span>Active Users</span><strong>{{ activeUsers() }}</strong><small>현재 접근 가능한 사용자</small></article>
+      <article><span>Active AI Mappings</span><strong>{{ activeMappings() }}</strong><small>LLM {{ llmCount() }} · Non-LLM {{ nonLlmCount() }}</small></article>
+    </section>
+
+    <nav class="top-tabs" role="tablist">
+      @for (item of tabs; track item.id) {
+        <button type="button" role="tab" [class.is-active]="tab() === item.id" [attr.aria-selected]="tab() === item.id" (click)="setTab(item.id)">{{ item.label }}</button>
+      }
+    </nav>
+
+    @switch (tab()) {
+      @case ('overview') {
+        <div class="split">
+          <article class="card">
+            <h2>Product Information</h2>
+            <dl>
+              <div><dt>제품명</dt><dd>{{ current.name }}</dd></div>
+              <div><dt>Product Code</dt><dd>{{ current.code }}</dd></div>
+              <div><dt>상태</dt><dd>{{ statusLabel(current.status) }}</dd></div>
+              <div><dt>등록일</dt><dd>{{ current.createdAt | date: 'yyyy-MM-dd' }}</dd></div>
+              <div><dt>최근 수정</dt><dd>{{ current.updatedAt | date: 'yyyy-MM-dd HH:mm' }}</dd></div>
+              <div><dt>설명</dt><dd>{{ current.description || '—' }}</dd></div>
+            </dl>
+          </article>
+          <article class="card">
+            <h2>Configuration Summary</h2>
+            <dl>
+              <div><dt>Assigned Organizations</dt><dd>{{ assigned() }}</dd></div>
+              <div><dt>Active Users</dt><dd>{{ activeUsers() }}</dd></div>
+              <div><dt>LLM</dt><dd>{{ llmCount() }} Active Mappings</dd></div>
+              <div><dt>Non-LLM</dt><dd>{{ nonLlmCount() }} Active Mappings</dd></div>
+            </dl>
+            <p class="note">이용량과 Provider 비용은 이 화면에서 계산하지 않습니다.</p>
+          </article>
+        </div>
+      }
+      @case ('configuration') {
+        <section class="card">
+          <nav class="sub-tabs" role="tablist">
+            <button type="button" [class.is-active]="kind() === 'llm'" (click)="setKind('llm')">Providers (LLM)</button>
+            <button type="button" [class.is-active]="kind() === 'non-llm'" (click)="setKind('non-llm')">Providers (Non-LLM)</button>
+          </nav>
+          <header class="section-header">
+            <div>
+              <h2>Action Code Mapping</h2>
+              <p>Action Code마다 여러 Provider와 Model을 연결할 수 있습니다. 호출 우선순위는 정하지 않습니다.</p>
+            </div>
+            <button type="button" class="button button--primary" (click)="openMapping()">Mapping 추가</button>
+          </header>
+          <div class="filters">
+            <label class="table-search">
+              <app-icon name="search" [size]="16" />
+              <input type="search" placeholder="Action Code 검색" [value]="mapQuery()" (input)="updateMap('mapQ', $any($event.target).value)" />
+            </label>
+            <select [value]="mapProvider()" (change)="changeMapProvider($any($event.target).value)">
+              <option value="all" [selected]="mapProvider() === 'all'">전체 Provider</option>
+              @for (provider of providerOptions(); track provider.id) { <option [value]="provider.id" [selected]="mapProvider() === provider.id">{{ provider.name }}{{ provider.status === 'inactive' ? ' · 비활성' : '' }}</option> }
+            </select>
+            <select [value]="mapModel()" (change)="updateMap('mapModel', $any($event.target).value)">
+              <option value="all" [selected]="mapModel() === 'all'">전체 Model</option>
+              @for (model of filterModels(); track model.id) { <option [value]="model.id" [selected]="mapModel() === model.id">{{ model.name }}{{ model.status === 'inactive' ? ' · 비활성' : '' }}</option> }
+            </select>
+            <select [value]="mapStatus()" (change)="updateMap('mapStatus', $any($event.target).value)">
+              <option value="all" [selected]="mapStatus() === 'all'">전체 상태</option>
+              <option value="active" [selected]="mapStatus() === 'active'">활성</option>
+              <option value="inactive" [selected]="mapStatus() === 'inactive'">비활성</option>
+            </select>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Action Code</th><th>Provider</th><th>Model</th><th>Status</th><th>Updated At</th><th>Action</th></tr></thead>
+              <tbody>
+                @for (mapping of mappingRows(); track mapping.id) {
+                  <tr>
+                    <td><strong>{{ store.actionCode(mapping.actionCodeId) }}</strong></td>
+                    <td>{{ store.providerName(mapping.providerId) }}@if (store.providerById(mapping.providerId)?.status === 'inactive') { <small class="entity-state">Provider 비활성</small> }</td>
+                    <td>{{ store.modelName(mapping.modelId) }}@if (store.modelById(mapping.modelId)?.status === 'inactive') { <small class="entity-state">Model 비활성</small> }</td>
+                    <td><app-status-badge [label]="mapping.status === 'active' ? '활성' : '비활성'" [tone]="mapping.status === 'active' ? 'success' : 'neutral'" /></td>
+                    <td>{{ mapping.updatedAt | date: 'yyyy-MM-dd' }}</td>
+                    <td class="actions">
+                      <button type="button" class="text-button" (click)="openMapping(mapping)">수정</button>
+                      <button type="button" class="text-button" (click)="toggleMapping(mapping)">{{ mapping.status === 'active' ? '비활성화' : '활성화' }}</button>
+                      <button type="button" class="text-button danger" (click)="requestRemove(mapping)">제거</button>
+                    </td>
+                  </tr>
+                } @empty { <tr><td class="table-empty" colspan="6">연결된 Mapping이 없습니다.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+      @case ('organizations') {
+        <section class="summary-grid compact">
+          <article><span>Assigned</span><strong>{{ organizationSummary().assigned }}</strong></article>
+          <article><span>Active Organizations</span><strong>{{ organizationSummary().active }}</strong></article>
+          <article><span>Inactive Organizations</span><strong>{{ organizationSummary().inactive }}</strong></article>
+        </section>
+        <section class="card">
+          <header class="section-header">
+            <div><h2>Organizations</h2><p>이용 권한의 등록과 종료는 Organization Detail에서 관리합니다.</p></div>
+          </header>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Organization</th><th>Code</th><th>Organization Status</th><th>Product Access</th><th>Start</th><th>End</th></tr></thead>
+              <tbody>
+                @for (row of organizationRows(); track row.access.id) {
+                  <tr>
+                    <td><a [routerLink]="['/organizations', row.organization!.id]" [queryParams]="{ tab: 'products' }"><strong>{{ row.organization!.name }}</strong></a></td>
+                    <td>{{ row.organization!.code }}</td>
+                    <td><app-status-badge [label]="row.organization!.status === 'active' ? '활성' : '비활성'" [tone]="row.organization!.status === 'active' ? 'success' : 'neutral'" /></td>
+                    <td>{{ row.access.status === 'active' ? '이용 중' : '종료' }}</td>
+                    <td>{{ row.access.startsAt | date: 'yyyy-MM-dd' }}</td>
+                    <td>{{ row.access.endsAt ? (row.access.endsAt | date: 'yyyy-MM-dd') : '미설정' }}</td>
+                  </tr>
+                } @empty { <tr><td class="table-empty" colspan="6">연결된 고객사가 없습니다.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+      @case ('activity') {
+        <section class="card">
+          <header class="section-header">
+            <h2>Activity</h2>
+            <div class="filters">
+              <input type="date" [value]="historyFrom()" (change)="updateHistory('historyFrom', $any($event.target).value)" />
+              <input type="date" [value]="historyTo()" (change)="updateHistory('historyTo', $any($event.target).value)" />
+              <select [value]="historyAction()" (change)="updateHistory('historyAction', $any($event.target).value)">
+                <option value="all" [selected]="historyAction() === 'all'">전체 작업</option>
+                <option value="product-created" [selected]="historyAction() === 'product-created'">제품 등록</option>
+                <option value="product-updated" [selected]="historyAction() === 'product-updated'">제품 수정</option>
+                <option value="product-status-changed" [selected]="historyAction() === 'product-status-changed'">상태 변경</option>
+                <option value="mapping-added" [selected]="historyAction() === 'mapping-added'">Mapping 추가</option>
+                <option value="mapping-updated" [selected]="historyAction() === 'mapping-updated'">Mapping 수정</option>
+                <option value="mapping-activated" [selected]="historyAction() === 'mapping-activated'">Mapping 활성화</option>
+                <option value="mapping-deactivated" [selected]="historyAction() === 'mapping-deactivated'">Mapping 비활성화</option>
+                <option value="mapping-removed" [selected]="historyAction() === 'mapping-removed'">Mapping 제거</option>
+              </select>
+            </div>
+          </header>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Timestamp</th><th>Action</th><th>Target</th><th>Previous</th><th>New</th><th>Updated By</th></tr></thead>
+              <tbody>
+                @for (activity of history(); track activity.id) {
+                  <tr>
+                    <td>{{ activity.createdAt | date: 'yyyy-MM-dd HH:mm' }}</td>
+                    <td>{{ actionLabel(activity.type) }}</td>
+                    <td>{{ activity.target }}</td>
+                    <td>{{ display(activity.previousValue) }}</td>
+                    <td>{{ display(activity.nextValue) }}</td>
+                    <td>시스템</td>
+                  </tr>
+                } @empty { <tr><td class="table-empty" colspan="6">표시할 변경 이력이 없습니다.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    }
+  } @else {
+    <section class="empty-panel">
+      <h1>제품을 찾을 수 없습니다</h1>
+      <p>요청한 Product ID가 없습니다.</p>
+      <a class="button button--primary" routerLink="/products">Products로 돌아가기</a>
+    </section>
+  }
+</section>
+
+@if (dialog() === 'edit') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>제품 수정</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <form class="form-grid" [formGroup]="productForm" (ngSubmit)="saveProduct()">
+        <label class="field">제품명 <em>*</em><input formControlName="name" /></label>
+        <label class="field">Product Code<input [value]="product()?.code" readonly /></label>
+        <label class="field field--wide">설명<textarea formControlName="description" rows="3"></textarea></label>
+        @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+        <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'status') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>상태 변경</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <label class="field">상태
+        <select [formControl]="statusControl">
+          <option value="active" [selected]="statusControl.value === 'active'">활성</option>
+          <option value="inactive" [selected]="statusControl.value === 'inactive'">비활성</option>
+          <option value="maintenance" [selected]="statusControl.value === 'maintenance'">점검</option>
+        </select>
+      </label>
+      @if (formError() === 'confirmed') { <p>활성 제품을 바꾸면 모든 고객사의 신규 작업에 영향을 줍니다. 고객사별 이용 관계는 유지됩니다.</p> }
+      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--primary" (click)="saveStatus()">{{ formError() === 'confirmed' ? '변경' : '저장' }}</button></footer>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'mapping') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>{{ editingMappingId() ? 'Mapping 수정' : 'Mapping 추가' }}</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <form class="form-grid" [formGroup]="mappingForm" (ngSubmit)="saveMapping()">
+        <label class="field">Action Code <em>*</em>
+          <input formControlName="actionCode" list="action-codes" />
+          <datalist id="action-codes">@for (code of actionOptions(); track code.id) { <option [value]="code.code"></option> }</datalist>
+        </label>
+        <label class="field">상태 <em>*</em>
+          <select formControlName="status">
+            <option value="active" [selected]="mappingForm.controls.status.value === 'active'">활성</option>
+            <option value="inactive" [selected]="mappingForm.controls.status.value === 'inactive'">비활성</option>
+          </select>
+        </label>
+        <label class="field">Provider <em>*</em>
+          <select formControlName="providerId" (change)="changeProvider($event)"><option value="" [selected]="selectedProviderId() === ''">선택</option>@for (provider of providerOptions(); track provider.id) { <option [value]="provider.id" [selected]="selectedProviderId() === provider.id">{{ provider.name }}{{ provider.status === 'inactive' ? ' · 비활성' : '' }}</option> }</select>
+        </label>
+        <label class="field">Model <em>*</em>
+          <select formControlName="modelId"><option value="" [selected]="mappingForm.controls.modelId.value === ''">선택</option>@for (model of modelOptions(); track model.id) { <option [value]="model.id" [selected]="mappingForm.controls.modelId.value === model.id">{{ model.name }}{{ model.status === 'inactive' ? ' · 비활성' : '' }}</option> }</select>
+        </label>
+        @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+        <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'remove') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>Mapping 제거</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <p>이 연결만 현재 설정에서 제거합니다. Provider와 Model 자체는 삭제되지 않습니다.</p>
+      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--primary" (click)="removeMapping()">제거</button></footer>
+    </section>
+  </div>
+}
+
+@if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }

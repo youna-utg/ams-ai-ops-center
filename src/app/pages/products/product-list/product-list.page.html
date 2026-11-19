@@ -1,0 +1,148 @@
+<section class="product-page">
+  <header class="product-page__header">
+    <div>
+      <h1>Products</h1>
+      <p>제품 정보, 운영 상태, AI 설정을 관리합니다.</p>
+    </div>
+    <button type="button" class="button button--primary" (click)="openCreate()">제품 추가</button>
+  </header>
+
+  <section class="summary-grid" aria-label="제품 요약">
+    <article class="summary-card"><span>Total Products</span><strong>{{ summary().total }}</strong><small>등록된 제품</small></article>
+    <article class="summary-card"><span>Active Products</span><strong>{{ summary().active }}</strong><small>운영 중</small></article>
+    <article class="summary-card"><span>Inactive Products</span><strong>{{ summary().inactive }}</strong><small>신규 작업 제한</small></article>
+    <article class="summary-card"><span>Maintenance Products</span><strong>{{ summary().maintenance }}</strong><small>점검 중</small></article>
+  </section>
+
+  <section class="table-card">
+    <header class="table-toolbar">
+      <div class="table-title"><strong>Products</strong><span>{{ filteredRows().length }}개 항목</span></div>
+      <div class="table-tools">
+        <label class="table-search">
+          <span class="u-sr-only">제품 검색</span>
+          <app-icon name="search" [size]="16" />
+          <input type="search" placeholder="이름 또는 Code 검색" [value]="params().q" (input)="updateQuery($any($event.target).value)" />
+        </label>
+        <select class="toolbar-select" aria-label="상태" [value]="params().status" (change)="updateStatus($any($event.target).value)">
+          <option value="all" [selected]="params().status === 'all'">전체 상태</option>
+          <option value="active" [selected]="params().status === 'active'">활성</option>
+          <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
+          <option value="maintenance" [selected]="params().status === 'maintenance'">점검</option>
+        </select>
+        @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+      </div>
+    </header>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><button type="button" class="sort-button" (click)="sortBy('name')">Product @if (params().sort === 'name') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('code')">Product Code @if (params().sort === 'code') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('status')">Status @if (params().sort === 'status') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('organizations')">Assigned Organizations @if (params().sort === 'organizations') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('users')">Active Users @if (params().sort === 'users') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th><button type="button" class="sort-button" (click)="sortBy('created')">Created At @if (params().sort === 'created') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+            <th class="table-actions-heading">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of pagedRows(); track product.id) {
+            <tr (click)="openDetail(product, $event)">
+              <td>
+                <a class="product-link" [routerLink]="['/products', product.id]" [queryParams]="listQuery()">
+                  <span><strong>{{ product.name }}</strong><small>{{ product.description }}</small></span>
+                </a>
+              </td>
+              <td>{{ product.code }}</td>
+              <td><app-status-badge [label]="statusLabel(product.status)" [tone]="statusTone(product.status)" /></td>
+              <td>{{ assigned(product) }}</td>
+              <td>{{ activeUsers(product) }}</td>
+              <td>{{ product.createdAt | date: 'yyyy-MM-dd' }}</td>
+              <td class="row-actions">
+                <button type="button" class="icon-action" aria-label="Product 작업" [attr.aria-expanded]="actionMenu() === product.id" (click)="toggleActionMenu(product.id, $event)">
+                  <app-icon name="more" [size]="16" />
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td class="table-empty" colspan="7">{{ hasFilters() ? '조건에 맞는 제품이 없습니다.' : '등록된 제품이 없습니다.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer class="table-footer">
+      <nav class="pagination" aria-label="페이지">
+        <button type="button" aria-label="이전" [disabled]="params().page <= 1" (click)="changePage(params().page - 1)"><app-icon name="chevron-left" [size]="14" /></button>
+        @for (page of pageNumbers(); track page) {
+          <button type="button" [class.is-active]="page === params().page" (click)="changePage(page)">{{ page }}</button>
+        }
+        <button type="button" aria-label="다음" [disabled]="params().page >= totalPages()" (click)="changePage(params().page + 1)"><app-icon name="chevron-right" [size]="14" /></button>
+      </nav>
+    </footer>
+  </section>
+</section>
+
+@if (activeActionProduct(); as product) {
+  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
+    <a [routerLink]="['/products', product.id]" [queryParams]="listQuery()">상세</a>
+    <button type="button" (click)="openEdit(product)">수정</button>
+    <button type="button" (click)="openStatus(product)">상태 변경</button>
+  </div>
+}
+
+@if (dialog() === 'create' || dialog() === 'edit') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header>
+        <h2>{{ dialog() === 'create' ? '제품 추가' : '제품 수정' }}</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <form class="form-grid" [formGroup]="form" (ngSubmit)="saveProduct()">
+        <label class="field">제품명 <em>*</em><input formControlName="name" /></label>
+        <label class="field">Product Code <em>*</em><input formControlName="code" [readOnly]="dialog() === 'edit'" /><small class="hint">임시 식별 코드입니다. 등록 후 변경할 수 없습니다.</small></label>
+        <label class="field field--wide">설명<textarea formControlName="description" rows="3"></textarea></label>
+        @if (dialog() === 'create') {
+          <label class="field">초기 상태 <em>*</em>
+            <select formControlName="status">
+              <option value="inactive" [selected]="form.controls.status.value === 'inactive'">비활성</option>
+              <option value="active" [selected]="form.controls.status.value === 'active'">활성</option>
+              <option value="maintenance" [selected]="form.controls.status.value === 'maintenance'">점검</option>
+            </select>
+          </label>
+        }
+        @if (formError() && formError() !== 'confirmed') { <p class="form-error">{{ formError() }}</p> }
+        <footer>
+          <button type="button" class="button button--secondary" (click)="closeDialog()">취소</button>
+          <button type="submit" class="button button--primary">저장</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'status') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header>
+        <h2>상태 변경</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <label class="field">상태
+        <select [formControl]="statusControl">
+          <option value="active" [selected]="statusControl.value === 'active'">활성</option>
+          <option value="inactive" [selected]="statusControl.value === 'inactive'">비활성</option>
+          <option value="maintenance" [selected]="statusControl.value === 'maintenance'">점검</option>
+        </select>
+      </label>
+      @if (formError() === 'confirmed') {
+        <p>활성 제품을 바꾸면 모든 고객사의 신규 작업에 영향을 줍니다. 고객사별 이용 관계는 유지됩니다.</p>
+      }
+      <footer>
+        <button type="button" class="button button--secondary" (click)="closeDialog()">취소</button>
+        <button type="button" class="button button--primary" (click)="saveStatus()">{{ formError() === 'confirmed' ? '변경' : '저장' }}</button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }

@@ -1,0 +1,366 @@
+<section class="plans-page">
+  <header class="plans-page__header">
+    <div>
+      <h1>Plans & Points</h1>
+      <p>서비스 플랜, 제공 포인트, 차감 정책을 관리합니다.</p>
+    </div>
+    @if (params().tab === 'plans') {
+      <button type="button" class="button button--primary" (click)="openPlan()">플랜 추가</button>
+    } @else {
+      <button type="button" class="button button--primary" (click)="openPolicy()">정책 추가</button>
+    }
+  </header>
+
+  <nav class="page-tabs" role="tablist" aria-label="Plans & Points" (keydown)="selectAdjacentTab($event)">
+    @for (tab of tabs; track tab.id) {
+      <button type="button" role="tab" [class.is-active]="(tab.id === 'plans' ? params().tab === 'plans' : params().tab === 'policies')" [attr.aria-selected]="tab.id === 'plans' ? params().tab === 'plans' : params().tab === 'policies'" (click)="setTab(tab.id)">{{ tab.label }}</button>
+    }
+  </nav>
+
+  @if (params().tab === 'plans') {
+    <section class="summary-grid" aria-label="플랜 요약">
+      <article class="summary-card"><span>Total Plans</span><strong>{{ planSummary().total }}</strong><small>등록된 플랜</small></article>
+      <article class="summary-card"><span>Active Plans</span><strong>{{ planSummary().active }}</strong><small>사용 가능</small></article>
+      <article class="summary-card"><span>Inactive Plans</span><strong>{{ planSummary().inactive }}</strong><small>신규 적용 안 함</small></article>
+    </section>
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>Plans</strong><span>{{ filteredPlans().length }}개 항목</span></div>
+        <div class="table-tools">
+          <label class="table-search">
+            <span class="u-sr-only">플랜 검색</span>
+            <app-icon name="search" [size]="16" />
+            <input type="search" placeholder="이름 또는 Code 검색" [value]="params().q" (input)="updateQuery($any($event.target).value)" />
+          </label>
+          <select class="toolbar-select" aria-label="상태" [value]="params().status" (change)="updateFilter('status', $any($event.target).value)">
+            <option value="all" [selected]="params().status === 'all'">전체 상태</option>
+            <option value="active" [selected]="params().status === 'active'">활성</option>
+            <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
+          </select>
+          <select class="toolbar-select" aria-label="Plan Type" [value]="params().kind" (change)="updateFilter('kind', $any($event.target).value)">
+            <option value="all" [selected]="params().kind === 'all'">전체 유형</option>
+            <option value="free" [selected]="params().kind === 'free'">Free</option>
+            <option value="trial" [selected]="params().kind === 'trial'">Trial</option>
+            <option value="point-based" [selected]="params().kind === 'point-based'">Point-based</option>
+            <option value="unlimited" [selected]="params().kind === 'unlimited'">Unlimited</option>
+          </select>
+          @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+        </div>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortBy('name')">Plan @if (params().sort === 'name') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('code')">Plan Code @if (params().sort === 'code') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('type')">Plan Type @if (params().sort === 'type') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('points')">Granted Points @if (params().sort === 'points') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('duration')">Duration @if (params().sort === 'duration') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('limit')">Request Limit @if (params().sort === 'limit') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('status')">Status @if (params().sort === 'status') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (plan of pagedPlans(); track plan.id) {
+              <tr (click)="openFromRow(plan.id, $event)">
+                <td><strong>{{ plan.name }}</strong></td>
+                <td>{{ plan.code }}</td>
+                <td>{{ typeLabel(plan.type) }}</td>
+                <td>{{ pointsLabel(plan) }}</td>
+                <td>{{ durationLabel(plan) }}</td>
+                <td>{{ limitLabel(plan) }}</td>
+                <td><app-status-badge [label]="statusLabel(plan.status)" [tone]="plan.status === 'active' ? 'success' : 'neutral'" /></td>
+                <td class="row-actions">
+                  <button type="button" class="icon-action" aria-label="Plan 작업" [attr.aria-expanded]="actionMenu() === plan.id" (click)="toggleActionMenu(plan.id, $event)"><app-icon name="more" [size]="16" /></button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="8">{{ hasFilters() ? '조건에 맞는 플랜이 없습니다.' : '등록된 플랜이 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer">
+        <nav class="pagination" aria-label="페이지">
+          <button type="button" aria-label="이전" [disabled]="currentPage() <= 1" (click)="changePage(currentPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>
+          @for (page of pageNumbers(); track page) { <button type="button" [class.is-active]="page === currentPage()" (click)="changePage(page)">{{ page }}</button> }
+          <button type="button" aria-label="다음" [disabled]="currentPage() >= totalPages()" (click)="changePage(currentPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button>
+        </nav>
+      </footer>
+    </section>
+  } @else {
+    <section class="summary-grid" aria-label="정책 요약">
+      <article class="summary-card"><span>Total Policies</span><strong>{{ policySummary().total }}</strong><small>등록된 정책</small></article>
+      <article class="summary-card"><span>Active Policies</span><strong>{{ policySummary().active }}</strong><small>적용 후보</small></article>
+      <article class="summary-card"><span>Inactive Policies</span><strong>{{ policySummary().inactive }}</strong><small>사용 안 함</small></article>
+    </section>
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>Point Policies</strong><span>{{ filteredPolicies().length }}개 항목</span></div>
+        <div class="table-tools">
+          <label class="table-search">
+            <span class="u-sr-only">정책 검색</span>
+            <app-icon name="search" [size]="16" />
+            <input type="search" placeholder="이름 또는 Code 검색" [value]="params().q" (input)="updateQuery($any($event.target).value)" />
+          </label>
+          <select class="toolbar-select" aria-label="Calculation Basis" [value]="params().kind" (change)="updateFilter('kind', $any($event.target).value)">
+            <option value="all" [selected]="params().kind === 'all'">전체 기준</option>
+            <option value="usd" [selected]="params().kind === 'usd'">USD-based</option>
+            <option value="token" [selected]="params().kind === 'token'">Token-based</option>
+            <option value="request" [selected]="params().kind === 'request'">Request-based</option>
+            <option value="unit" [selected]="params().kind === 'unit'">Unit-based</option>
+          </select>
+          <select class="toolbar-select" aria-label="상태" [value]="params().status" (change)="updateFilter('status', $any($event.target).value)">
+            <option value="all" [selected]="params().status === 'all'">전체 상태</option>
+            <option value="active" [selected]="params().status === 'active'">활성</option>
+            <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
+          </select>
+          @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+        </div>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortBy('name')">Policy @if (params().sort === 'name') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('code')">Policy Code @if (params().sort === 'code') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('basis')">Calculation Basis @if (params().sort === 'basis') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('summary')">Rate / Rule Summary @if (params().sort === 'summary') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('status')">Status @if (params().sort === 'status') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('updated')">Updated At @if (params().sort === 'updated') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (policy of pagedPolicies(); track policy.id) {
+              <tr (click)="openFromRow(policy.id, $event)">
+                <td><strong>{{ policy.name }}</strong><small>{{ policy.description }}</small></td>
+                <td>{{ policy.code }}</td>
+                <td>{{ basisLabel(policy) }}</td>
+                <td>{{ ruleSummary(policy) }}</td>
+                <td><app-status-badge [label]="statusLabel(policy.status)" [tone]="policy.status === 'active' ? 'success' : 'neutral'" /></td>
+                <td>{{ policy.updatedAt | date: 'yyyy-MM-dd' }}</td>
+                <td class="row-actions">
+                  <button type="button" class="icon-action" aria-label="Policy 작업" [attr.aria-expanded]="actionMenu() === policy.id" (click)="toggleActionMenu(policy.id, $event)"><app-icon name="more" [size]="16" /></button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="7">{{ hasFilters() ? '조건에 맞는 정책이 없습니다.' : '등록된 정책이 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer">
+        <nav class="pagination" aria-label="페이지">
+          <button type="button" aria-label="이전" [disabled]="currentPage() <= 1" (click)="changePage(currentPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>
+          @for (page of pageNumbers(); track page) { <button type="button" [class.is-active]="page === currentPage()" (click)="changePage(page)">{{ page }}</button> }
+          <button type="button" aria-label="다음" [disabled]="currentPage() >= totalPages()" (click)="changePage(currentPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button>
+        </nav>
+      </footer>
+    </section>
+  }
+</section>
+
+@if (actionMenu(); as menuId) {
+  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
+    <button type="button" (click)="editMenuRecord()">수정</button>
+    <button type="button" (click)="requestStatus(menuId, !menuIsActive())">{{ menuIsActive() ? '비활성화' : '활성화' }}</button>
+  </div>
+}
+
+@if (dialog() === 'plan') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="plan-dialog-title" (click)="$event.stopPropagation()">
+      <header>
+        <h2 id="plan-dialog-title">{{ editingId() ? '플랜 수정' : '플랜 추가' }}</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <form [formGroup]="planForm" (ngSubmit)="savePlan()">
+        <section class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-grid">
+            <label class="field">플랜명 <em>*</em><input formControlName="name" /></label>
+            <label class="field">Plan Code <em>*</em><input formControlName="code" /><small class="hint">임시 식별 코드입니다. 등록 후 변경할 수 없습니다.</small></label>
+            <label class="field">Plan Type <em>*</em>
+              <select formControlName="type" (change)="changePlanType($event)">
+                <option value="free" [selected]="planType() === 'free'">Free</option>
+                <option value="trial" [selected]="planType() === 'trial'">Trial</option>
+                <option value="point-based" [selected]="planType() === 'point-based'">Point-based</option>
+                <option value="unlimited" [selected]="planType() === 'unlimited'">Unlimited</option>
+              </select>
+            </label>
+            <label class="field">상태
+              <select formControlName="status">
+                <option value="active" [selected]="planForm.controls.status.value === 'active'">활성</option>
+                <option value="inactive" [selected]="planForm.controls.status.value === 'inactive'">비활성</option>
+              </select>
+            </label>
+            <label class="field field--wide">설명<textarea formControlName="description" rows="2"></textarea></label>
+          </div>
+        </section>
+        <section class="form-section">
+          <h3>Point Allowance</h3>
+          <label class="field">Granted Points
+            <input formControlName="grantedPoints" type="number" min="0" step="1" [placeholder]="planType() === 'unlimited' ? 'Not Applicable' : '0'" />
+            <small class="hint">{{ planType() === 'unlimited' ? 'Unlimited 유형에는 Granted Points를 적용하지 않습니다. 이 구분은 샘플입니다.' : '플랜에서 제공하는 포인트입니다.' }}</small>
+          </label>
+        </section>
+        <section class="form-section">
+          <h3>Usage Limits</h3>
+          <div class="form-grid">
+            <label class="field">Request Limit
+              <select formControlName="requestMode">
+                <option value="limited">RPM</option>
+                <option value="unlimited">Unlimited</option>
+              </select>
+            </label>
+            @if (planForm.controls.requestMode.value === 'limited') {
+              <label class="field">RPM<input formControlName="rpm" type="number" min="1" step="1" /></label>
+            }
+          </div>
+          <small class="hint">요청 제한의 실제 적용 방식은 아직 정하지 않았습니다.</small>
+        </section>
+        <section class="form-section">
+          <h3>Duration & Status</h3>
+          <div class="form-grid">
+            <label class="field">Duration
+              <select formControlName="duration">
+                <option value="7">7 Days</option>
+                <option value="30">30 Days</option>
+                <option value="unlimited">Unlimited</option>
+                <option value="custom">직접 입력</option>
+              </select>
+            </label>
+            @if (planForm.controls.duration.value === 'custom') {
+              <label class="field">Days<input formControlName="customDays" type="number" min="1" step="1" /></label>
+            }
+          </div>
+          <small class="hint">자동 갱신과 만료 처리는 구현하지 않습니다. 이 플랜을 고객사, 사용자, 제품에 배정하지 않습니다.</small>
+        </section>
+        @if (formError() === 'confirmed') { <p class="form-note">활성 플랜을 비활성화합니다. 이용 중인 고객사나 사용자에게 자동으로 적용되지는 않습니다.</p> }
+        @if (formError() && formError() !== 'confirmed') { <p class="form-error">{{ formError() }}</p> }
+        <footer>
+          <button type="button" class="button button--secondary" (click)="closeDialog()">취소</button>
+          <button type="submit" class="button button--primary">{{ formError() === 'confirmed' ? '변경' : '저장' }}</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'policy') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="policy-dialog-title" (click)="$event.stopPropagation()">
+      <header>
+        <h2 id="policy-dialog-title">{{ editingId() ? '정책 수정' : '정책 추가' }}</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <form [formGroup]="policyForm" (ngSubmit)="savePolicy()">
+        <section class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-grid">
+            <label class="field">정책명 <em>*</em><input formControlName="name" /></label>
+            <label class="field">Policy Code <em>*</em><input formControlName="code" /><small class="hint">임시 식별 코드입니다. 등록 후 변경할 수 없습니다.</small></label>
+            <label class="field">상태
+              <select formControlName="status">
+                <option value="active" [selected]="policyForm.controls.status.value === 'active'">활성</option>
+                <option value="inactive" [selected]="policyForm.controls.status.value === 'inactive'">비활성</option>
+              </select>
+            </label>
+            <label class="field field--wide">설명<textarea formControlName="description" rows="2"></textarea></label>
+          </div>
+        </section>
+        <section class="form-section">
+          <h3>Calculation Basis</h3>
+          <label class="field">기준 <em>*</em>
+            <select formControlName="basis" (change)="changeBasis($event)">
+              <option value="usd" [selected]="basis() === 'usd'">USD-based</option>
+              <option value="token" [selected]="basis() === 'token'">Token-based</option>
+              <option value="request" [selected]="basis() === 'request'">Request-based</option>
+              <option value="unit" [selected]="basis() === 'unit'">Unit-based</option>
+            </select>
+          </label>
+        </section>
+        <section class="form-section">
+          <h3>Calculation Settings</h3>
+          @switch (basis()) {
+            @case ('usd') {
+              <div class="form-grid">
+                <label class="field">USD Unit<input formControlName="usdUnit" type="number" min="0.01" step="0.01" /></label>
+                <label class="field">Points per USD Unit<input formControlName="pointsPerUsd" type="number" min="0" step="1" /></label>
+              </div>
+            }
+            @case ('token') {
+              <div class="form-grid">
+                <label class="field">Token Unit<input formControlName="tokenUnit" type="number" min="1" step="1" /></label>
+                <label class="field">Input Points<input formControlName="inputPoints" type="number" min="0" step="1" /></label>
+                <label class="field">Output Points<input formControlName="outputPoints" type="number" min="0" step="1" /></label>
+              </div>
+            }
+            @case ('request') {
+              <label class="field">Points per Request<input formControlName="pointsPerRequest" type="number" min="0" step="1" /></label>
+            }
+            @case ('unit') {
+              <div class="form-grid">
+                <label class="field">Unit Type
+                  <select formControlName="unitType">
+                    <option value="page">Page</option>
+                    <option value="image">Image</option>
+                    <option value="minute">Minute</option>
+                    <option value="slide">Slide</option>
+                  </select>
+                </label>
+                <label class="field">Points per Unit<input formControlName="pointsPerUnit" type="number" min="0" step="1" /></label>
+              </div>
+            }
+          }
+        </section>
+        <section class="form-section">
+          <h3>Preview</h3>
+          <p class="hint">입력한 규칙을 예시에 적용한 결과입니다. 실제 포인트 차감이나 Provider 비용 조회는 없습니다.</p>
+          <div class="preview-inputs">
+            @switch (basis()) {
+              @case ('usd') { <label class="field">Sample USD<input type="number" min="0" step="0.01" [value]="sampleUsd()" (input)="setSample('usd', $any($event.target).value)" /></label> }
+              @case ('token') {
+                <label class="field">Sample Input Tokens<input type="number" min="0" step="1" [value]="sampleInput()" (input)="setSample('input', $any($event.target).value)" /></label>
+                <label class="field">Sample Output Tokens<input type="number" min="0" step="1" [value]="sampleOutput()" (input)="setSample('output', $any($event.target).value)" /></label>
+              }
+              @case ('request') { <label class="field">Sample Requests<input type="number" min="0" step="1" [value]="sampleRequests()" (input)="setSample('requests', $any($event.target).value)" /></label> }
+              @case ('unit') { <label class="field">Sample Units<input type="number" min="0" step="1" [value]="sampleUnits()" (input)="setSample('units', $any($event.target).value)" /></label> }
+            }
+          </div>
+          @if (preview(); as result) {
+            <p class="preview"><span>{{ result.label }}</span><strong>{{ result.result }}</strong></p>
+          } @else {
+            <p class="hint">계산에 필요한 값을 입력하면 예시를 보여 줍니다.</p>
+          }
+        </section>
+        @if (formError() === 'confirmed') { <p class="form-note">활성 정책을 비활성화합니다. 과거 사용 기록은 바꾸지 않으며, 실제 적용 범위는 아직 정하지 않았습니다.</p> }
+        @if (formError() && formError() !== 'confirmed') { <p class="form-error">{{ formError() }}</p> }
+        <footer>
+          <button type="button" class="button button--secondary" (click)="closeDialog()">취소</button>
+          <button type="submit" class="button button--primary">{{ formError() === 'confirmed' ? '변경' : '저장' }}</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'confirm') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header>
+        <h2>비활성화</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <p>{{ params().tab === 'plans' ? '이 플랜을 비활성화합니다. 고객사, 사용자, 제품에 자동으로 적용되지는 않습니다.' : '이 정책을 비활성화합니다. 과거 사용 기록은 바꾸지 않으며, 실제 적용 범위는 아직 정하지 않았습니다.' }}</p>
+      <footer>
+        <button type="button" class="button button--secondary" (click)="closeDialog()">취소</button>
+        <button type="button" class="button button--primary" (click)="confirmStatus()">비활성화</button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }

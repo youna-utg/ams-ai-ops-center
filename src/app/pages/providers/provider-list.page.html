@@ -1,0 +1,290 @@
+<section class="catalog-page">
+  <header class="catalog-page__header">
+    <div>
+      <h1>Providers & Models</h1>
+      <p>AI Provider, Model, 제품 연결을 관리합니다.</p>
+    </div>
+    @if (params().tab === 'providers') {
+      <button type="button" class="button button--primary" (click)="openProvider()">Provider 추가</button>
+    } @else {
+      <button type="button" class="button button--primary" (click)="openModel()">Model 추가</button>
+    }
+  </header>
+
+  <nav class="page-tabs" role="tablist" aria-label="Providers & Models">
+    @for (tab of tabs; track tab.id) {
+      <button type="button" role="tab" [class.is-active]="params().tab === tab.id" [attr.aria-selected]="params().tab === tab.id" (click)="setTab(tab.id)">{{ tab.label }}</button>
+    }
+  </nav>
+
+  @if (params().tab === 'providers') {
+    <section class="summary-grid summary-grid--four" aria-label="Provider 요약">
+      <article class="summary-card"><span>Total Providers</span><strong>{{ providerSummary().total }}</strong><small>등록된 Provider</small></article>
+      <article class="summary-card"><span>Active Providers</span><strong>{{ providerSummary().active }}</strong><small>활성 상태</small></article>
+      <article class="summary-card"><span>LLM Providers</span><strong>{{ providerSummary().llm }}</strong><small>LLM</small></article>
+      <article class="summary-card"><span>Non-LLM Providers</span><strong>{{ providerSummary().nonLlm }}</strong><small>Non-LLM</small></article>
+    </section>
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>Providers</strong><span>{{ filteredProviders().length }}개 항목</span></div>
+        <div class="table-tools">
+          <label class="table-search"><span class="u-sr-only">Provider 검색</span><app-icon name="search" [size]="16" /><input type="search" placeholder="이름 또는 Code 검색" [value]="params().q" (input)="updateQuery($any($event.target).value)" /></label>
+          <select class="toolbar-select" aria-label="Provider Type" [value]="params().kind" (change)="updateFilter('kind', $any($event.target).value)">
+            <option value="all" [selected]="params().kind === 'all'">전체 유형</option>
+            <option value="llm" [selected]="params().kind === 'llm'">LLM</option>
+            <option value="non-llm" [selected]="params().kind === 'non-llm'">Non-LLM</option>
+          </select>
+          <select class="toolbar-select" aria-label="상태" [value]="params().status" (change)="updateFilter('status', $any($event.target).value)">
+            <option value="all" [selected]="params().status === 'all'">전체 상태</option>
+            <option value="active" [selected]="params().status === 'active'">활성</option>
+            <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
+          </select>
+          @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+        </div>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortBy('name')">Provider @if (params().sort === 'name') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('code')">Provider Code @if (params().sort === 'code') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('type')">Type @if (params().sort === 'type') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('models')">Models @if (params().sort === 'models') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('products')">Connected Products @if (params().sort === 'products') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('status')">Status @if (params().sort === 'status') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('updated')">Updated At @if (params().sort === 'updated') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (provider of pagedProviders(); track provider.id) {
+              <tr (click)="openProviderFromRow(provider.id, $event)">
+                <td><a [routerLink]="['/providers-models/providers', provider.id]" [queryParams]="detailQuery()"><strong>{{ provider.name }}</strong><small>{{ provider.description }}</small></a></td>
+                <td>{{ provider.code }}</td>
+                <td>{{ kindLabel(provider.kind) }}</td>
+                <td>{{ modelCount(provider.id) }}</td>
+                <td>{{ providerProductCount(provider.id) }}</td>
+                <td><app-status-badge [label]="statusLabel(provider.status)" [tone]="provider.status === 'active' ? 'success' : 'neutral'" /></td>
+                <td>{{ provider.updatedAt | date: 'yyyy-MM-dd' }}</td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="Provider 작업" [attr.aria-expanded]="actionMenu() === provider.id" (click)="toggleActionMenu(provider.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="8">{{ hasFilters() ? '조건에 맞는 Provider가 없습니다.' : '등록된 Provider가 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer"><nav class="pagination" aria-label="페이지"><button type="button" aria-label="이전" [disabled]="currentPage() <= 1" (click)="changePage(currentPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>@for (page of pageNumbers(); track page) { <button type="button" [class.is-active]="page === currentPage()" (click)="changePage(page)">{{ page }}</button> }<button type="button" aria-label="다음" [disabled]="currentPage() >= totalPages()" (click)="changePage(currentPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button></nav></footer>
+    </section>
+  } @else {
+    <section class="summary-grid" aria-label="Model 요약">
+      <article class="summary-card"><span>Total Models</span><strong>{{ modelSummary().total }}</strong><small>등록된 Model</small></article>
+      <article class="summary-card"><span>Active Models</span><strong>{{ modelSummary().active }}</strong><small>활성 상태</small></article>
+      <article class="summary-card"><span>Inactive Models</span><strong>{{ modelSummary().inactive }}</strong><small>비활성 상태</small></article>
+    </section>
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>Models</strong><span>{{ filteredModels().length }}개 항목</span></div>
+        <div class="table-tools">
+          <label class="table-search"><span class="u-sr-only">Model 검색</span><app-icon name="search" [size]="16" /><input type="search" placeholder="이름 또는 Code 검색" [value]="params().q" (input)="updateQuery($any($event.target).value)" /></label>
+          <select class="toolbar-select" aria-label="Provider" [value]="params().provider" (change)="updateFilter('provider', $any($event.target).value)">
+            <option value="all" [selected]="params().provider === 'all'">전체 Provider</option>
+            @for (provider of store.providers(); track provider.id) { <option [value]="provider.id" [selected]="params().provider === provider.id">{{ provider.name }}</option> }
+          </select>
+          <select class="toolbar-select" aria-label="Model Type" [value]="params().kind" (change)="updateFilter('kind', $any($event.target).value)">
+            <option value="all" [selected]="params().kind === 'all'">전체 유형</option>
+            <option value="llm" [selected]="params().kind === 'llm'">LLM</option>
+            <option value="non-llm" [selected]="params().kind === 'non-llm'">Non-LLM</option>
+          </select>
+          <select class="toolbar-select" aria-label="상태" [value]="params().status" (change)="updateFilter('status', $any($event.target).value)">
+            <option value="all" [selected]="params().status === 'all'">전체 상태</option>
+            <option value="active" [selected]="params().status === 'active'">활성</option>
+            <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
+          </select>
+          @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+        </div>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortBy('name')">Model @if (params().sort === 'name') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('code')">Model Code @if (params().sort === 'code') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('provider')">Provider @if (params().sort === 'provider') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('type')">Model Type @if (params().sort === 'type') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('products')">Connected Products @if (params().sort === 'products') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('status')">Status @if (params().sort === 'status') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBy('updated')">Updated At @if (params().sort === 'updated') { <app-icon [name]="params().direction === 'asc' ? 'arrow-up' : 'arrow-down'" [size]="13" /> }</button></th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (model of pagedModels(); track model.id) {
+              <tr (click)="openModelFromRow(model.id, $event)">
+                <td><strong>{{ model.name }}</strong><small>{{ model.description }}</small></td>
+                <td>{{ model.code }}</td>
+                <td><a [routerLink]="['/providers-models/providers', model.providerId]" [queryParams]="detailQuery()">{{ store.providerName(model.providerId) }}</a></td>
+                <td>{{ kindLabel(model.kind) }}</td>
+                <td>{{ modelProductCount(model.id) }}</td>
+                <td><app-status-badge [label]="statusLabel(model.status)" [tone]="model.status === 'active' ? 'success' : 'neutral'" /></td>
+                <td>{{ model.updatedAt | date: 'yyyy-MM-dd' }}</td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="Model 작업" [attr.aria-expanded]="actionMenu() === model.id" (click)="toggleActionMenu(model.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="8">{{ hasFilters() ? '조건에 맞는 Model이 없습니다.' : '등록된 Model이 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer"><nav class="pagination" aria-label="페이지"><button type="button" aria-label="이전" [disabled]="currentPage() <= 1" (click)="changePage(currentPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>@for (page of pageNumbers(); track page) { <button type="button" [class.is-active]="page === currentPage()" (click)="changePage(page)">{{ page }}</button> }<button type="button" aria-label="다음" [disabled]="currentPage() >= totalPages()" (click)="changePage(currentPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button></nav></footer>
+    </section>
+  }
+</section>
+
+@if (actionMenu(); as menuId) {
+  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
+    @if (params().tab === 'providers') {
+      <a [routerLink]="['/providers-models/providers', menuId]" [queryParams]="detailQuery()">상세</a>
+      <button type="button" (click)="openProvider(store.providerById(menuId))">수정</button>
+      <button type="button" (click)="requestStatus(menuId, store.providerById(menuId)?.status !== 'active')">{{ store.providerById(menuId)?.status === 'active' ? '비활성화' : '활성화' }}</button>
+    } @else {
+      <button type="button" (click)="openModelViewById(menuId)">상세</button>
+      <button type="button" (click)="openModel(store.modelById(menuId))">수정</button>
+      <button type="button" (click)="requestStatus(menuId, store.modelById(menuId)?.status !== 'active')">{{ store.modelById(menuId)?.status === 'active' ? '비활성화' : '활성화' }}</button>
+    }
+  </div>
+}
+
+@if (dialog() === 'provider') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="provider-dialog-title" (click)="$event.stopPropagation()">
+      <header><h2 id="provider-dialog-title">{{ editingId() ? 'Provider 수정' : 'Provider 추가' }}</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <form [formGroup]="providerForm" (ngSubmit)="saveProvider()">
+        <section class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-grid">
+            <label class="field">Provider명 <em>*</em><input formControlName="name" /></label>
+            <label class="field">Provider Code <em>*</em><input formControlName="code" /><small class="hint">임시 식별 코드입니다. 등록 후 변경할 수 없습니다.</small></label>
+            <label class="field">Provider Type <em>*</em>
+              <select formControlName="kind" (change)="changeProviderKind($event)">
+                <option value="llm" [selected]="providerKind() === 'llm'">LLM</option>
+                <option value="non-llm" [selected]="providerKind() === 'non-llm'">Non-LLM</option>
+              </select>
+            </label>
+            @if (!editingId()) {
+              <label class="field">초기 상태
+                <select formControlName="status">
+                  <option value="inactive" [selected]="providerForm.controls.status.value === 'inactive'">비활성</option>
+                  <option value="active" [selected]="providerForm.controls.status.value === 'active'">활성</option>
+                </select>
+              </label>
+            }
+            <label class="field field--wide">설명<textarea formControlName="description" rows="2"></textarea></label>
+          </div>
+        </section>
+        <section class="form-section">
+          <h3>Connection Settings</h3>
+          <div class="form-grid">
+            <label class="field field--wide">API Endpoint<input formControlName="endpoint" placeholder="https://mock.example/provider" /><small class="hint">샘플 주소만 저장합니다. 실제 요청은 보내지 않습니다.</small></label>
+            <label class="field">API Key<input value="••••••••mock" readonly /><small class="hint">Mock Credential. 실제 키를 입력하거나 저장하지 않습니다.</small></label>
+          </div>
+          <p class="hint">Demo configuration only. No live API connection.</p>
+        </section>
+        @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+        <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'model') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="model-dialog-title" (click)="$event.stopPropagation()">
+      <header><h2 id="model-dialog-title">{{ editingId() ? 'Model 수정' : 'Model 추가' }}</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <form [formGroup]="modelForm" (ngSubmit)="saveModel()">
+        <section class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-grid">
+            <label class="field">Provider <em>*</em>
+              <select formControlName="providerId" (change)="changeModelProvider($event)">
+                <option value="" [selected]="modelProviderId() === ''">선택</option>
+                @for (provider of store.providers(); track provider.id) { <option [value]="provider.id" [selected]="modelProviderId() === provider.id">{{ provider.name }}</option> }
+              </select>
+            </label>
+            <label class="field">Model Type<em>*</em><input [value]="modelTypeLabel()" readonly /><small class="hint">현재 카탈로그의 Model Type은 Provider 유형과 같습니다.</small></label>
+            <label class="field">Model명 <em>*</em><input formControlName="name" /></label>
+            <label class="field">Model Code <em>*</em><input formControlName="code" /><small class="hint">임시 식별 코드입니다. 전체 카탈로그에서 중복될 수 없으며 등록 후 변경할 수 없습니다.</small></label>
+            @if (!editingId()) {
+              <label class="field">초기 상태
+                <select formControlName="status">
+                  <option value="inactive" [selected]="modelForm.controls.status.value === 'inactive'">비활성</option>
+                  <option value="active" [selected]="modelForm.controls.status.value === 'active'">활성</option>
+                </select>
+              </label>
+            }
+            <label class="field field--wide">설명<textarea formControlName="description" rows="2"></textarea></label>
+          </div>
+        </section>
+        @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+        <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'view-model') {
+  @if (viewedModel(); as model) {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="model-view-title" (click)="$event.stopPropagation()">
+      <header>
+        <div><h2 id="model-view-title">{{ model.name }}</h2><p>{{ model.code }}</p></div>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <section class="form-section">
+        <h3>Basic Information</h3>
+        <dl class="detail-list">
+          <div><dt>Provider</dt><dd><a [routerLink]="['/providers-models/providers', model.providerId]" [queryParams]="detailQuery()">{{ store.providerName(model.providerId) }}</a></dd></div>
+          <div><dt>Model Type</dt><dd>{{ kindLabel(model.kind) }}</dd></div>
+          <div><dt>Status</dt><dd><app-status-badge [label]="statusLabel(model.status)" [tone]="model.status === 'active' ? 'success' : 'neutral'" /></dd></div>
+          <div><dt>Created At</dt><dd>{{ model.createdAt | date: 'yyyy-MM-dd' }}</dd></div>
+          <div><dt>Updated At</dt><dd>{{ model.updatedAt | date: 'yyyy-MM-dd' }}</dd></div>
+          <div><dt>설명</dt><dd>{{ model.description || '—' }}</dd></div>
+        </dl>
+      </section>
+      <section class="form-section">
+        <h3>Connected Products</h3>
+        <div class="data-table-wrap">
+          <table class="data-table data-table--inner">
+            <thead><tr><th>Product</th><th>Action Code</th><th>Mapping Status</th></tr></thead>
+            <tbody>
+              @for (mapping of viewedLinks(); track mapping.id) {
+                <tr>
+                  <td><a [routerLink]="['/products', mapping.productId]" [queryParams]="productLink(mapping.productId, model.kind)">{{ store.getById(mapping.productId)?.name }}</a></td>
+                  <td>{{ store.actionCode(mapping.actionCodeId) }}</td>
+                  <td><app-status-badge [label]="statusLabel(mapping.status)" [tone]="mapping.status === 'active' ? 'success' : 'neutral'" /></td>
+                </tr>
+              } @empty { <tr><td class="table-empty" colspan="3">연결된 제품이 없습니다.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <footer>
+        <button type="button" class="button button--secondary" (click)="openModel(model)">수정</button>
+        <button type="button" class="button button--primary" (click)="requestStatus(model.id, model.status !== 'active')">{{ model.status === 'active' ? '비활성화' : '활성화' }}</button>
+      </footer>
+    </section>
+  </div>
+  }
+}
+
+@if (dialog() === 'confirm') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>비활성화</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <p>{{ params().tab === 'providers' ? '이 Provider를 비활성화합니다.' : '이 Model을 비활성화합니다.' }} 연결된 Model과 Mapping은 유지됩니다. 현재 {{ confirmCount() }}개 제품과 연결되어 있습니다. 실제 요청은 차단하지 않습니다.</p>
+      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--primary" (click)="confirmStatus()">비활성화</button></footer>
+    </section>
+  </div>
+}
+
+@if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }

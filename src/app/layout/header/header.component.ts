@@ -11,6 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { NAV_ITEMS } from '../../core/config/navigation.config';
+import { PageContextService } from '../../core/services/page-context.service';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
@@ -23,6 +24,7 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
 export class HeaderComponent {
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
+  private readonly pageContext = inject(PageContextService);
 
   readonly menuToggle = output<void>();
   protected readonly searchQuery = signal('');
@@ -41,8 +43,93 @@ export class HeaderComponent {
 
   protected readonly currentItem = computed(
     () =>
-      NAV_ITEMS.find((item) => item.path === this.currentUrl()) ?? NAV_ITEMS[0],
+      NAV_ITEMS.find(
+        (item) =>
+          item.path === this.currentUrl() ||
+          this.currentUrl().startsWith(`${item.path}/`),
+      ) ?? NAV_ITEMS[0],
   );
+
+  protected readonly userCrumb = computed(() => {
+    const url = this.currentUrl();
+    if (url === '/users/import') return 'import' as const;
+    return /^\/users\/([^/?]+)/.exec(url) ? ('detail' as const) : null;
+  });
+
+  protected readonly userName = computed(() =>
+    this.userCrumb() === 'detail' ? this.pageContext.userName() || '사용자를 찾을 수 없습니다' : '',
+  );
+
+  protected readonly userListQuery = computed(() => {
+    this.currentUrl();
+    const params = { ...this.router.parseUrl(this.router.url).queryParams };
+    for (const key of [
+      'tab',
+      'usageProduct',
+      'usageFrom',
+      'usageTo',
+      'historyAction',
+      'historyFrom',
+      'historyTo',
+    ]) {
+      delete params[key];
+    }
+    return params;
+  });
+
+  protected readonly productName = computed(() => {
+    const match = /^\/products\/([^/?]+)/.exec(this.currentUrl());
+    return match ? this.pageContext.productName() || '제품을 찾을 수 없습니다' : '';
+  });
+
+  protected readonly productListQuery = computed(() => {
+    this.currentUrl();
+    const params = { ...this.router.parseUrl(this.router.url).queryParams };
+    for (const key of ['tab', 'ai', 'mapQ', 'mapProvider', 'mapModel', 'mapStatus', 'historyAction', 'historyFrom', 'historyTo']) {
+      delete params[key];
+    }
+    return params;
+  });
+
+  protected readonly providerName = computed(() => {
+    const match = /^\/providers-models\/providers\/([^/?]+)/.exec(this.currentUrl());
+    return match ? this.pageContext.providerName() || 'Provider를 찾을 수 없습니다' : '';
+  });
+
+  protected readonly providerListQuery = computed(() => {
+    this.currentUrl();
+    const params = { ...this.router.parseUrl(this.router.url).queryParams };
+    const listTab = params['listTab'];
+    delete params['listTab'];
+    delete params['section'];
+    if (listTab === 'models') params['tab'] = 'models';
+    return params;
+  });
+
+  protected readonly organizationName = computed(() => {
+    const match = /^\/organizations\/([^/?]+)/.exec(this.currentUrl());
+    return match
+      ? this.pageContext.organizationName() || 'Organization'
+      : '';
+  });
+
+  protected readonly organizationListQuery = computed(() => {
+    this.currentUrl();
+    const params = { ...this.router.parseUrl(this.router.url).queryParams };
+    for (const key of [
+      'tab',
+      'team',
+      'userQ',
+      'userStatus',
+      'historyTab',
+      'historyProduct',
+      'historyType',
+      'historyQ',
+    ]) {
+      delete params[key];
+    }
+    return params;
+  });
 
   protected readonly searchResults = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();

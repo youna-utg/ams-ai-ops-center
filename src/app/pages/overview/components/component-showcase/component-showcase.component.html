@@ -304,7 +304,7 @@
         </article>
         <article class="sample-card sample-card--info">
           <span class="sample-card__icon"><app-icon name="info" [size]="18" /></span>
-          <div><h4>Information Card</h4><p>Provider 비용은 회사가 지불하는 외부 원가입니다.</p></div>
+          <div><h4>Information Card</h4><p>선택한 기간의 Provider 비용과 사용량을 함께 보여 줍니다.</p></div>
         </article>
         <article class="sample-card sample-card--stat">
           <span>Statistics Card</span>
@@ -927,7 +927,7 @@
         <article class="demo-card demo-card--full">
           <h4>Accordion</h4>
           <div class="accordion">
-            @for (item of [{title: 'Provider 비용은 어떻게 계산되나요?', body: '외부 Provider가 제공하는 청구 단위와 사용량을 기준으로 계산합니다.'}, {title: 'Token 데이터는 실시간인가요?', body: '이 Showcase의 값은 Sample Data이며 실제 API와 연결되지 않습니다.'}, {title: '권한은 어디에서 관리하나요?', body: 'Roles & Permissions 메뉴에서 관리할 예정입니다.'}]; track item.title; let index = $index) {
+            @for (item of [{title: 'Provider 비용은 어떻게 계산되나요?', body: '사용량과 단가를 기준으로 계산합니다.'}, {title: 'Token 데이터는 실시간인가요?', body: '이 Showcase의 값은 Sample Data이며 실제 API와 연결되지 않습니다.'}, {title: '권한은 어디에서 관리하나요?', body: 'Roles & Permissions 메뉴에서 관리할 예정입니다.'}]; track item.title; let index = $index) {
               <div class="accordion__item">
                 <button type="button" [attr.aria-expanded]="accordionOpen() === index" (click)="accordionOpen.set(accordionOpen() === index ? null : index)"><span>{{ item.title }}</span><app-icon name="chevron-down" [size]="16" /></button>
                 @if (accordionOpen() === index) { <div class="accordion__content">{{ item.body }}</div> }

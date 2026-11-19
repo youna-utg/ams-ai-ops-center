@@ -1,17 +1,61 @@
 <section class="page">
   <header class="page__header">
     <h1 class="page__title">{{ item()?.label ?? '페이지' }}</h1>
+    <p class="page__desc">{{ item()?.description }}</p>
   </header>
 
-  <div class="placeholder">
+  @if (tabs().length) {
+    <nav
+      class="page-tabs"
+      role="tablist"
+      [attr.aria-label]="(item()?.label ?? '페이지') + ' 메뉴'"
+      (keydown)="selectAdjacentTab($event)"
+    >
+      @for (tab of tabs(); track tab.id) {
+        <a
+          role="tab"
+          [id]="'tab-' + tab.id"
+          [routerLink]="[]"
+          [queryParams]="{ tab: tab.id }"
+          [attr.aria-selected]="activeTab()?.id === tab.id"
+          [attr.aria-controls]="'panel-' + tab.id"
+          [attr.tabindex]="activeTab()?.id === tab.id ? 0 : -1"
+          [class.is-active]="activeTab()?.id === tab.id"
+        >
+          {{ tab.label }}
+        </a>
+      }
+    </nav>
+  }
+
+  <div
+    class="placeholder"
+    role="tabpanel"
+    [id]="'panel-' + (activeTab()?.id ?? 'overview')"
+    [attr.aria-labelledby]="activeTab() ? 'tab-' + activeTab()?.id : null"
+  >
     <div class="placeholder__icon" aria-hidden="true">
       <span></span>
       <span></span>
       <span></span>
     </div>
-    <h2>준비 중인 화면</h2>
-    <p>
-      해당 영역의 기능은 아직 확정되지 않았습니다.
+    <span class="placeholder__eyebrow">IA v1.1 · Planned</span>
+    <h2>{{ activeTab()?.label ?? item()?.label }}</h2>
+    <p>{{ activeTab()?.description ?? item()?.description }}</p>
+
+    @if (plannedSections().length) {
+      <div class="planned-sections" aria-label="계획된 화면 구성">
+        @for (section of plannedSections(); track section; let index = $index) {
+          <div class="planned-section">
+            <span>{{ index + 1 }}</span>
+            <strong>{{ section }}</strong>
+          </div>
+        }
+      </div>
+    }
+
+    <p class="placeholder__notice">
+      화면 구조 검토를 위한 초안입니다. 실제 업무 기능과 데이터는 다음 단계에서 구현합니다.
     </p>
   </div>
 </section>
