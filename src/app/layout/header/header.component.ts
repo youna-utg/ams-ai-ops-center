@@ -12,6 +12,7 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { NAV_ITEMS } from '../../core/config/navigation.config';
 import { PageContextService } from '../../core/services/page-context.service';
+import { SettingsStore } from '../../pages/settings/data/settings.store';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
@@ -25,6 +26,7 @@ export class HeaderComponent {
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   private readonly pageContext = inject(PageContextService);
+  private readonly settings = inject(SettingsStore);
 
   readonly menuToggle = output<void>();
   protected readonly searchQuery = signal('');
@@ -40,6 +42,8 @@ export class HeaderComponent {
     ),
     { initialValue: '/overview' },
   );
+
+  protected readonly workspaceName = computed(() => this.settings.general().workspaceDisplayName || 'AMS');
 
   protected readonly currentItem = computed(
     () =>

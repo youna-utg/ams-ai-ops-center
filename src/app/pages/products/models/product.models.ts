@@ -99,6 +99,17 @@ export interface ProductActivity {
   target: string;
   previousValue: string | null;
   nextValue: string | null;
+  actorLabel?: string | null;
+  createdAt: string;
+}
+
+export interface CatalogActivity {
+  id: string;
+  targetType: 'provider' | 'model';
+  targetId: string;
+  action: 'created' | 'updated' | 'status-changed';
+  changes: readonly { field: string; before: string | null; after: string | null }[];
+  actorLabel: string;
   createdAt: string;
 }
 
@@ -109,6 +120,7 @@ export interface ProductsData {
   actionCodes: readonly ActionCode[];
   mappings: readonly ProductMapping[];
   activities: readonly ProductActivity[];
+  catalogActivities: readonly CatalogActivity[];
 }
 
 export interface CreateProductInput {

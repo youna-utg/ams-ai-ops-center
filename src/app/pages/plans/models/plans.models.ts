@@ -36,9 +36,20 @@ export interface PointPolicy {
   updatedAt: string;
 }
 
+export interface PlanActivity {
+  id: string;
+  targetType: 'plan' | 'point-policy';
+  targetId: string;
+  action: 'created' | 'updated' | 'status-changed';
+  changes: readonly { field: string; before: string | null; after: string | null }[];
+  actorLabel: string;
+  createdAt: string;
+}
+
 export interface PlansData {
   plans: readonly Plan[];
   policies: readonly PointPolicy[];
+  activities: readonly PlanActivity[];
 }
 
 export type PlanInput = Omit<Plan, 'id' | 'createdAt' | 'updatedAt'>;

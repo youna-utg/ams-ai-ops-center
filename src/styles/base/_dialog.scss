@@ -1,0 +1,40 @@
+// Dashboard detail dialogs hide the native scrollbar and reveal a thin
+// overlay thumb only while the modal is being scrolled.
+
+.dialog,
+.dialog__scroll {
+  scrollbar-width: none;
+}
+
+.dialog::-webkit-scrollbar,
+.dialog__scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.dialog__scrollbar[data-auto] {
+  position: fixed;
+  z-index: 130;
+  width: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-neutral-300);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms ease;
+}
+
+.dialog__scrollbar[data-auto].is-active {
+  opacity: 1;
+}
+
+.button--danger {
+  color: var(--color-on-primary);
+  background: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+
+.button--danger:hover {
+  background: var(--color-danger-text);
+  border-color: var(--color-danger-text);
+}

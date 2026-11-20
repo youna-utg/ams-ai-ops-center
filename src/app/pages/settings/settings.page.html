@@ -1,0 +1,309 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <div>
+      <h1>Settings</h1>
+      <p>시스템 설정, 알림 규칙, 개인 화면 환경을 관리합니다.</p>
+    </div>
+  </header>
+  <p class="sample-note">샘플 설정입니다. 서버에 저장되지 않으며, 새로고침하면 처음 값으로 돌아갑니다.</p>
+
+  <nav class="page-tabs" role="tablist" aria-label="Settings">
+    @for (item of tabs; track item.id) {
+      <button type="button" role="tab" [class.is-active]="tab() === item.id" [attr.aria-selected]="tab() === item.id" (click)="setTab(item.id)">
+        {{ item.label }}
+        @if (tab() === item.id && dirty()) { <span>미저장</span> }
+      </button>
+    }
+  </nav>
+
+  <div class="settings-layout">
+    <form (submit)="$event.preventDefault(); save()">
+      @if (tab() === 'general') {
+        <section class="settings-section">
+          <header>
+            <h2>Workspace Information</h2>
+            <p>워크스페이스에 표시하는 기본 정보를 설정합니다.</p>
+          </header>
+          <label class="field">워크스페이스 이름
+            <input [value]="generalDraft().workspaceDisplayName" maxlength="60" (input)="setName($event)" />
+          </label>
+          <label class="field">설명
+            <textarea rows="3" maxlength="240" [value]="generalDraft().workspaceDescription" (input)="setDescription($event)"></textarea>
+          </label>
+          <p class="hint">저장하면 상단 경로의 루트 표시만 바뀝니다. 사이드바 이름과 로고는 유지됩니다.</p>
+        </section>
+
+        <section class="settings-section">
+          <header>
+            <h2>Date &amp; Time Settings</h2>
+            <p>시스템 기본 시간대와 날짜 형식입니다. 다른 메뉴의 기존 날짜 표시는 바꾸지 않습니다.</p>
+          </header>
+          <div class="form-grid">
+            <label class="field">Default Timezone
+              <select [value]="generalDraft().defaultTimezone" (change)="setTimezone($event)">
+                @for (zone of timezones; track zone) {
+                  <option [value]="zone" [selected]="generalDraft().defaultTimezone === zone">{{ zone }}</option>
+                }
+              </select>
+            </label>
+            <label class="field">Default Date Format
+              <select [value]="generalDraft().defaultDateFormat" (change)="setDateFormat($event)">
+                @for (format of dateFormats; track format) {
+                  <option [value]="format" [selected]="generalDraft().defaultDateFormat === format">{{ format }}</option>
+                }
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <header>
+            <h2>Environment Information</h2>
+            <p>이 프로토타입의 연결 상태입니다. 값은 바꿀 수 없습니다.</p>
+          </header>
+          <dl>
+            @for (item of environmentInfo; track item.label) {
+              <div><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>
+            }
+          </dl>
+        </section>
+      }
+
+      @if (tab() === 'notifications') {
+        <section class="settings-section">
+          <header>
+            <h2>Notification Rules</h2>
+            <p>어떤 운영 이벤트를 알림 대상으로 둘지 선택합니다. 실제 알림은 보내지 않습니다.</p>
+          </header>
+
+          <article class="rule">
+            <div class="rule__head">
+              <div>
+                <h3>Product Access Expiry</h3>
+                <p>이용 기간이 끝나기 전에 알림 대상으로 표시합니다. 기간이 지나도 제품 이용을 자동으로 막지 않습니다.</p>
+              </div>
+              <button type="button" class="ds-switch" role="switch" [class.ds-switch--on]="rule('product-access-expiry').enabled" [attr.aria-checked]="rule('product-access-expiry').enabled" aria-label="Product Access Expiry" (click)="toggleRule('product-access-expiry')"><span></span></button>
+            </div>
+            <div class="choice-group" [class.is-disabled]="!rule('product-access-expiry').enabled">
+              <label><input type="checkbox" [checked]="hasTiming('7-days')" [disabled]="!rule('product-access-expiry').enabled" (change)="toggleTiming('7-days')" />7일 전</label>
+              <label><input type="checkbox" [checked]="hasTiming('on-date')" [disabled]="!rule('product-access-expiry').enabled" (change)="toggleTiming('on-date')" />종료일 당일</label>
+            </div>
+          </article>
+
+          <article class="rule">
+            <div class="rule__head">
+              <div>
+                <h3>Incident Notifications</h3>
+                <p>System Monitoring에서 장애가 등록되거나 상태가 바뀔 때 알림 대상으로 표시합니다.</p>
+              </div>
+              <button type="button" class="ds-switch" role="switch" [class.ds-switch--on]="rule('incident-notifications').enabled" [attr.aria-checked]="rule('incident-notifications').enabled" aria-label="Incident Notifications" (click)="toggleRule('incident-notifications')"><span></span></button>
+            </div>
+            <div class="choice-group" [class.is-disabled]="!rule('incident-notifications').enabled">
+              <label><input type="checkbox" [checked]="hasEvent('created')" [disabled]="!rule('incident-notifications').enabled" (change)="toggleEvent('created')" />{{ eventLabel.created }}</label>
+              <label><input type="checkbox" [checked]="hasEvent('status-changed')" [disabled]="!rule('incident-notifications').enabled" (change)="toggleEvent('status-changed')" />{{ eventLabel['status-changed'] }}</label>
+              <label><input type="checkbox" [checked]="hasEvent('critical')" [disabled]="!rule('incident-notifications').enabled" (change)="toggleEvent('critical')" />{{ eventLabel.critical }}</label>
+            </div>
+          </article>
+
+          <article class="rule">
+            <div class="rule__head">
+              <div>
+                <h3>Product Status Changes</h3>
+                <p>제품의 Active, Inactive, Maintenance 상태가 바뀔 때 알림 대상으로 표시합니다.</p>
+              </div>
+              <button type="button" class="ds-switch" role="switch" [class.ds-switch--on]="rule('product-status').enabled" [attr.aria-checked]="rule('product-status').enabled" aria-label="Product Status Changes" (click)="toggleRule('product-status')"><span></span></button>
+            </div>
+          </article>
+
+          <article class="rule">
+            <div class="rule__head">
+              <div>
+                <h3>Provider &amp; Model Status Changes</h3>
+                <p>Provider 또는 Model의 운영 상태가 바뀔 때 알림 대상으로 표시합니다.</p>
+              </div>
+              <button type="button" class="ds-switch" role="switch" [class.ds-switch--on]="rule('provider-model-status').enabled" [attr.aria-checked]="rule('provider-model-status').enabled" aria-label="Provider and Model Status Changes" (click)="toggleRule('provider-model-status')"><span></span></button>
+            </div>
+          </article>
+
+          <article class="rule">
+            <div class="rule__head">
+              <div>
+                <h3>Admin &amp; Permission Changes</h3>
+                <p>관리자 계정과 권한 변경을 알림 대상으로 표시합니다.</p>
+              </div>
+              <button type="button" class="ds-switch" role="switch" [class.ds-switch--on]="rule('admin-permission').enabled" [attr.aria-checked]="rule('admin-permission').enabled" aria-label="Admin and Permission Changes" (click)="toggleRule('admin-permission')"><span></span></button>
+            </div>
+          </article>
+        </section>
+
+        <section class="settings-section">
+          <header>
+            <h2>Delivery Channels</h2>
+            <p>채널의 연결 상태입니다. 주소나 Webhook은 입력받지 않습니다.</p>
+          </header>
+          <ul class="channel-list">
+            @for (channel of channels; track channel.id) {
+              <li>
+                <div><strong>{{ channel.label }}</strong><small>{{ channel.detail }}</small></div>
+                <app-status-badge [label]="channel.statusLabel" [tone]="channel.tone" />
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="settings-section">
+          <header>
+            <h2>Notification Preview</h2>
+            <p>선택한 샘플 문구입니다. 알림은 전송되지 않습니다.</p>
+          </header>
+          <label class="field">Sample Event
+            <select [value]="previewId()" (change)="setPreview($event)">
+              @for (item of previews; track item.id) {
+                <option [value]="item.id" [selected]="previewId() === item.id">{{ item.label }}</option>
+              }
+            </select>
+          </label>
+        </section>
+      }
+
+      @if (tab() === 'preferences') {
+        <section class="settings-section">
+          <header>
+            <h2>Personal Preferences</h2>
+            <p>Demo Administrator의 화면 설정입니다. 로그인 계정과 연결되어 있지 않습니다.</p>
+          </header>
+          <p class="actor">{{ actorLabel }}</p>
+        </section>
+
+        <section class="settings-section">
+          <header>
+            <h2>Display Settings</h2>
+            <p>개인 시간대와 날짜 형식입니다. 시스템 기본값을 고르면 General에 저장된 값을 사용합니다.</p>
+          </header>
+          <div class="form-grid">
+            <label class="field">Preferred Timezone
+              <select [value]="preferenceDraft().preferredTimezone" (change)="setPreferredTimezone($event)">
+                <option value="system" [selected]="preferenceDraft().preferredTimezone === 'system'">시스템 기본값</option>
+                @for (zone of timezones; track zone) {
+                  <option [value]="zone" [selected]="preferenceDraft().preferredTimezone === zone">{{ zone }}</option>
+                }
+              </select>
+            </label>
+            <label class="field">Preferred Date Format
+              <select [value]="preferenceDraft().preferredDateFormat" (change)="setPreferredFormat($event)">
+                <option value="system" [selected]="preferenceDraft().preferredDateFormat === 'system'">시스템 기본값</option>
+                @for (format of dateFormats; track format) {
+                  <option [value]="format" [selected]="preferenceDraft().preferredDateFormat === format">{{ format }}</option>
+                }
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <header>
+            <h2>Table Settings</h2>
+            <p>목록을 새로 열 때 쓸 기본 행 수입니다. 이미 각 화면에서 고른 페이지 크기는 바꾸지 않습니다.</p>
+          </header>
+          <label class="field">Default Rows per Page
+            <select [value]="preferenceDraft().defaultPageSize" (change)="setPageSize($event)">
+              @for (size of pageSizes; track size) {
+                <option [value]="size" [selected]="preferenceDraft().defaultPageSize === size">{{ size }}</option>
+              }
+            </select>
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <header>
+            <h2>Navigation Settings</h2>
+            <p>기본으로 보고 싶은 화면입니다. 로그인 후 자동으로 이동하지는 않습니다.</p>
+          </header>
+          <label class="field">Default Landing Page
+            <select [value]="preferenceDraft().defaultLandingPage" (change)="setLanding($event)">
+              @for (page of landingPages; track page.id) {
+                <option [value]="page.id" [selected]="preferenceDraft().defaultLandingPage === page.id">{{ page.label }}</option>
+              }
+            </select>
+          </label>
+          <button type="button" class="text-button" (click)="openLanding()">선택한 화면 열기</button>
+        </section>
+      }
+
+      <div class="action-bar">
+        @if (dirty()) { <p role="status">저장하지 않은 변경이 있습니다.</p> }
+        @if (formError()) { <p class="field-error">{{ formError() }}</p> }
+        <div>
+          <button type="button" class="text-button" (click)="askReset()">기본값으로 되돌리기</button>
+          <button type="button" class="button button--secondary" [disabled]="!dirty()" (click)="cancel()">취소</button>
+          <button type="submit" class="button button--primary" [disabled]="!dirty()">변경 저장</button>
+        </div>
+      </div>
+    </form>
+
+    <aside class="preview-panel">
+      @if (tab() === 'general') {
+        <h2>Preview</h2>
+        <p class="hint">저장 전 초안입니다. 샘플 시각 {{ generalPreview() }}</p>
+        <p class="preview-name">{{ generalDraft().workspaceDisplayName.trim() || '이름 없음' }}</p>
+        <p>{{ generalDraft().workspaceDescription.trim() || '설명이 없습니다.' }}</p>
+      } @else if (tab() === 'notifications') {
+        <h2>Preview Notification</h2>
+        <p class="preview-kicker">{{ selectedPreview().label }}</p>
+        <p class="preview-name">{{ selectedPreview().title }}</p>
+        <p>{{ selectedPreview().message }}</p>
+        <p class="hint">{{ previewEnabled() ? '이 규칙은 현재 편집 상태에서 켜져 있습니다.' : '이 규칙은 현재 편집 상태에서 꺼져 있습니다.' }} 전송 버튼은 없습니다.</p>
+      } @else {
+        <h2>Preview</h2>
+        <p class="hint">저장된 General 값과 이 탭의 초안을 합친 표시입니다.</p>
+        <p class="preview-name">{{ preferencePreview().text }}</p>
+        <p>{{ preferencePreview().timezone }}</p>
+        <p>{{ preferencePreview().format }}</p>
+        <p class="hint">기본 화면 {{ landingName() }} · 기본 {{ preferenceDraft().defaultPageSize }}행. 아래 표는 5행까지만 보여 줍니다.</p>
+        <table class="data-table data-table--static">
+          <thead><tr><th>Sample</th><th>Rows</th></tr></thead>
+          <tbody>
+            @for (row of previewRows(); track row) {
+              <tr><td>Sample row {{ row }}</td><td>{{ preferenceDraft().defaultPageSize }}</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+      <p class="hint">저장 시각 {{ savedAt() }}. 메모리에만 남습니다.</p>
+    </aside>
+  </div>
+</section>
+
+@if (dialog() === 'reset') {
+  <div class="dialog-backdrop" (click)="dialog.set(null)">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" aria-labelledby="reset-title" (click)="$event.stopPropagation()">
+      <header>
+        <h2 id="reset-title">기본값 불러오기</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="dialog.set(null)"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <p>이 탭의 기본값을 편집 내용에 불러옵니다. 변경 저장을 누르기 전까지 저장된 설정은 바뀌지 않습니다.</p>
+      <footer>
+        <button type="button" class="button button--secondary" (click)="dialog.set(null)">취소</button>
+        <button type="button" class="button button--primary" (click)="applyReset()">기본값 불러오기</button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'leave') {
+  <div class="dialog-backdrop" (click)="keepEditing()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" aria-labelledby="leave-title" (click)="$event.stopPropagation()">
+      <header>
+        <h2 id="leave-title">저장하지 않은 변경</h2>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="keepEditing()"><app-icon name="close" [size]="16" /></button>
+      </header>
+      <p>저장하지 않은 변경이 있습니다. 변경을 버리고 이동하면 마지막 저장 값으로 돌아갑니다.</p>
+      <footer>
+        <button type="button" class="button button--secondary" (click)="keepEditing()">계속 편집</button>
+        <button type="button" class="button button--primary" (click)="discard()">변경 버리고 이동</button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }

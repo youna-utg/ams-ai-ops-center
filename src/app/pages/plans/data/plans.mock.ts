@@ -1,4 +1,4 @@
-import { Plan, PlansData, PointPolicy } from '../models/plans.models';
+import { Plan, PlanActivity, PlansData, PointPolicy } from '../models/plans.models';
 
 const CREATED_AT = '2026-01-02T09:00:00.000Z';
 const UPDATED_AT = '2026-11-18T09:00:00.000Z';
@@ -115,4 +115,43 @@ function policy(
   };
 }
 
-export const PLANS_MOCK_DATA: PlansData = { plans, policies };
+const activities: readonly PlanActivity[] = [
+  {
+    id: 'plan-activity-9001',
+    targetType: 'plan',
+    targetId: 'plan-pro',
+    action: 'updated',
+    changes: [{ field: 'Granted Points', before: '8000', after: '10000' }],
+    actorLabel: 'Demo Administrator',
+    createdAt: '2026-11-12T06:00:00.000Z',
+  },
+  {
+    id: 'plan-activity-9002',
+    targetType: 'plan',
+    targetId: 'plan-trial',
+    action: 'status-changed',
+    changes: [{ field: 'Status', before: '활성', after: '비활성' }],
+    actorLabel: 'Demo Administrator',
+    createdAt: '2026-11-05T02:10:00.000Z',
+  },
+  {
+    id: 'plan-activity-9003',
+    targetType: 'point-policy',
+    targetId: 'policy-token',
+    action: 'updated',
+    changes: [{ field: 'Input Points', before: '60', after: '80' }],
+    actorLabel: 'Demo Administrator',
+    createdAt: '2026-10-29T07:40:00.000Z',
+  },
+  {
+    id: 'plan-activity-9004',
+    targetType: 'point-policy',
+    targetId: 'policy-minute',
+    action: 'status-changed',
+    changes: [{ field: 'Status', before: '활성', after: '비활성' }],
+    actorLabel: 'Demo Administrator',
+    createdAt: '2026-10-23T05:50:00.000Z',
+  },
+];
+
+export const PLANS_MOCK_DATA: PlansData = { plans, policies, activities };

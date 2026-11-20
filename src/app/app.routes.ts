@@ -6,7 +6,7 @@ import { OverviewPage } from './pages/overview/overview.page';
 import { PlaceholderPage } from './pages/placeholder/placeholder.page';
 
 const placeholderRoutes: Routes = NAV_ITEMS.filter(
-  (item) => !['/overview', '/organizations', '/users', '/products', '/plans-points', '/providers-models'].includes(item.path),
+  (item) => !['/overview', '/organizations', '/users', '/products', '/plans-points', '/providers-models', '/usage-costs', '/admin-permissions', '/activity-history', '/system-monitoring', '/settings'].includes(item.path),
 ).map((item) => ({
   path: item.path.slice(1),
   component: PlaceholderPage,
@@ -132,6 +132,32 @@ export const routes: Routes = [
         path: 'providers-models/providers/:providerId',
         loadComponent: () =>
           import('./pages/providers/provider-detail.page').then((page) => page.ProviderDetailPage),
+      },
+      {
+        path: 'admin-permissions',
+        loadComponent: () =>
+          import('./pages/admin/admin-permissions.page').then((page) => page.AdminPermissionsPage),
+      },
+      {
+        path: 'activity-history',
+        loadComponent: () =>
+          import('./pages/activity/activity-history.page').then((page) => page.ActivityHistoryPage),
+      },
+      {
+        path: 'system-monitoring',
+        loadComponent: () =>
+          import('./pages/monitoring/system-monitoring.page').then((page) => page.SystemMonitoringPage),
+      },
+      {
+        path: 'settings',
+        canDeactivate: [(component: { canLeave: () => boolean | Promise<boolean> }) => component.canLeave()],
+        loadComponent: () =>
+          import('./pages/settings/settings.page').then((page) => page.SettingsPage),
+      },
+      {
+        path: 'usage-costs',
+        loadComponent: () =>
+          import('./pages/usage/usage-costs.page').then((page) => page.UsageCostsPage),
       },
       {
         path: 'plans-points',

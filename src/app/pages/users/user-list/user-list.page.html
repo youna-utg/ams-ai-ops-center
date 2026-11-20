@@ -8,7 +8,6 @@
       <a class="button button--secondary" routerLink="/users/import" [queryParams]="detailQuery()">
         사용자 일괄 등록
       </a>
-      <button type="button" class="button button--primary" (click)="openCreate()">사용자 추가</button>
     </div>
   </header>
 
@@ -77,6 +76,7 @@
         @if (hasFilters()) {
           <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button>
         }
+        <button type="button" class="button button--primary" (click)="openCreate()">사용자 추가<app-icon name="plus" [size]="15" /></button>
       </div>
     </header>
 
@@ -208,7 +208,7 @@
       <p>{{ confirmMessage() }}</p>
       <footer>
         <button type="button" class="button button--secondary" (click)="closeConfirm()">취소</button>
-        <button type="button" class="button button--primary" (click)="applyAction()">확인</button>
+        <button type="button" class="button" [class.button--danger]="confirmAction() !== 'activate'" [class.button--primary]="confirmAction() === 'activate'" (click)="applyAction()">확인</button>
       </footer>
     </section>
   </div>

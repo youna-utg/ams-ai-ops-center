@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Plan, PlanInput, PlansData, PointPolicy, PolicyInput, RecordStatus } from '../models/plans.models';
+import { Plan, PlanActivity, PlanInput, PlansData, PointPolicy, PolicyInput, RecordStatus } from '../models/plans.models';
 import { PLANS_MOCK_DATA } from './plans.mock';
 
 @Injectable({ providedIn: 'root' })
@@ -8,6 +8,7 @@ export class PlansStore {
 
   readonly plans = computed(() => this.state().plans);
   readonly policies = computed(() => this.state().policies);
+  readonly activityLog = computed(() => this.state().activities);
 
   createPlan(input: PlanInput): Plan {
     const current = this.state();
@@ -19,7 +20,11 @@ export class PlansStore {
       createdAt: now,
       updatedAt: now,
     };
-    this.state.set({ ...current, plans: [...current.plans, created] });
+    this.state.set({
+      ...current,
+      plans: [...current.plans, created],
+      activities: [...current.activities, this.activity(current, 'plan', created.id, 'created', [{ field: 'Name', before: null, after: created.name }], now)],
+    });
     return created;
   }
 
@@ -27,8 +32,21 @@ export class PlansStore {
     const current = this.state();
     const existing = this.requirePlan(id, current);
     const plan = this.normalizePlan(input, current, existing);
-    const updated: Plan = { ...existing, ...plan, code: existing.code, updatedAt: new Date().toISOString() };
-    this.state.set({ ...current, plans: current.plans.map((item) => (item.id === id ? updated : item)) });
+    const now = new Date().toISOString();
+    const updated: Plan = { ...existing, ...plan, code: existing.code, updatedAt: now };
+    const changes = this.fieldChanges([
+      ['Name', existing.name, updated.name],
+      ['Description', existing.description, updated.description],
+      ['Type', existing.type, updated.type],
+      ['Granted Points', this.amount(existing.grantedPoints), this.amount(updated.grantedPoints)],
+      ['Duration', this.amount(existing.durationDays), this.amount(updated.durationDays)],
+      ['Request Limit', this.amount(existing.requestLimitRpm), this.amount(updated.requestLimitRpm)],
+    ]);
+    this.state.set({
+      ...current,
+      plans: current.plans.map((item) => (item.id === id ? updated : item)),
+      activities: changes.length ? [...current.activities, this.activity(current, 'plan', id, 'updated', changes, now)] : current.activities,
+    });
     return updated;
   }
 
@@ -46,7 +64,11 @@ export class PlansStore {
       createdAt: now,
       updatedAt: now,
     };
-    this.state.set({ ...current, policies: [...current.policies, created] });
+    this.state.set({
+      ...current,
+      policies: [...current.policies, created],
+      activities: [...current.activities, this.activity(current, 'point-policy', created.id, 'created', [{ field: 'Name', before: null, after: created.name }], now)],
+    });
     return created;
   }
 
@@ -54,8 +76,26 @@ export class PlansStore {
     const current = this.state();
     const existing = this.requirePolicy(id, current);
     const policy = this.normalizePolicy(input, current, existing);
-    const updated: PointPolicy = { ...existing, ...policy, code: existing.code, updatedAt: new Date().toISOString() };
-    this.state.set({ ...current, policies: current.policies.map((item) => (item.id === id ? updated : item)) });
+    const now = new Date().toISOString();
+    const updated: PointPolicy = { ...existing, ...policy, code: existing.code, updatedAt: now };
+    const changes = this.fieldChanges([
+      ['Name', existing.name, updated.name],
+      ['Description', existing.description, updated.description],
+      ['Basis', existing.basis, updated.basis],
+      ['USD Unit', this.amount(existing.usdUnit), this.amount(updated.usdUnit)],
+      ['Points per USD', this.amount(existing.pointsPerUsdUnit), this.amount(updated.pointsPerUsdUnit)],
+      ['Token Unit', this.amount(existing.tokenUnit), this.amount(updated.tokenUnit)],
+      ['Input Points', this.amount(existing.inputPoints), this.amount(updated.inputPoints)],
+      ['Output Points', this.amount(existing.outputPoints), this.amount(updated.outputPoints)],
+      ['Points per Request', this.amount(existing.pointsPerRequest), this.amount(updated.pointsPerRequest)],
+      ['Unit Type', existing.unitType, updated.unitType],
+      ['Points per Unit', this.amount(existing.pointsPerUnit), this.amount(updated.pointsPerUnit)],
+    ]);
+    this.state.set({
+      ...current,
+      policies: current.policies.map((item) => (item.id === id ? updated : item)),
+      activities: changes.length ? [...current.activities, this.activity(current, 'point-policy', id, 'updated', changes, now)] : current.activities,
+    });
     return updated;
   }
 
@@ -71,14 +111,24 @@ export class PlansStore {
     if (kind === 'plan') {
       const existing = this.requirePlan(id, current);
       if (existing.status === status) return existing;
-      const updated = { ...existing, status, updatedAt: new Date().toISOString() };
-      this.state.set({ ...current, plans: current.plans.map((item) => (item.id === id ? updated : item)) });
+      const now = new Date().toISOString();
+      const updated = { ...existing, status, updatedAt: now };
+      this.state.set({
+        ...current,
+        plans: current.plans.map((item) => (item.id === id ? updated : item)),
+        activities: [...current.activities, this.activity(current, 'plan', id, 'status-changed', [{ field: 'Status', before: this.statusText(existing.status), after: this.statusText(status) }], now)],
+      });
       return updated;
     }
     const existing = this.requirePolicy(id, current);
     if (existing.status === status) return existing;
-    const updated = { ...existing, status, updatedAt: new Date().toISOString() };
-    this.state.set({ ...current, policies: current.policies.map((item) => (item.id === id ? updated : item)) });
+    const now = new Date().toISOString();
+    const updated = { ...existing, status, updatedAt: now };
+    this.state.set({
+      ...current,
+      policies: current.policies.map((item) => (item.id === id ? updated : item)),
+      activities: [...current.activities, this.activity(current, 'point-policy', id, 'status-changed', [{ field: 'Status', before: this.statusText(existing.status), after: this.statusText(status) }], now)],
+    });
     return updated;
   }
 
@@ -185,6 +235,40 @@ export class PlansStore {
     return {
       plans: data.plans.map((item) => ({ ...item })),
       policies: data.policies.map((item) => ({ ...item })),
+      activities: data.activities.map((item) => ({ ...item, changes: item.changes.map((change) => ({ ...change })) })),
     };
+  }
+
+  private activity(
+    data: PlansData,
+    targetType: PlanActivity['targetType'],
+    targetId: string,
+    action: PlanActivity['action'],
+    changes: PlanActivity['changes'],
+    timestamp: string,
+  ): PlanActivity {
+    return {
+      id: this.nextId('plan-activity', data.activities.map((item) => item.id)),
+      targetType,
+      targetId,
+      action,
+      changes,
+      actorLabel: 'Demo Administrator',
+      createdAt: timestamp,
+    };
+  }
+
+  private fieldChanges(pairs: readonly (readonly [string, string | null, string | null])[]): PlanActivity['changes'] {
+    return pairs
+      .filter(([, before, after]) => before !== after)
+      .map(([field, before, after]) => ({ field, before, after }));
+  }
+
+  private amount(value: number | null): string | null {
+    return value === null ? null : String(value);
+  }
+
+  private statusText(status: RecordStatus): string {
+    return status === 'active' ? '활성' : '비활성';
   }
 }

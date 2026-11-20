@@ -67,7 +67,6 @@
               <h2>Action Code Mapping</h2>
               <p>Action Code마다 여러 Provider와 Model을 연결할 수 있습니다. 호출 우선순위는 정하지 않습니다.</p>
             </div>
-            <button type="button" class="button button--primary" (click)="openMapping()">Mapping 추가</button>
           </header>
           <div class="filters">
             <label class="table-search">
@@ -87,6 +86,7 @@
               <option value="active" [selected]="mapStatus() === 'active'">활성</option>
               <option value="inactive" [selected]="mapStatus() === 'inactive'">비활성</option>
             </select>
+            <button type="button" class="button button--primary" (click)="openMapping()">Mapping 추가<app-icon name="plus" [size]="15" /></button>
           </div>
           <div class="data-table-wrap">
             <table class="data-table">
@@ -171,7 +171,7 @@
                     <td>{{ activity.target }}</td>
                     <td>{{ display(activity.previousValue) }}</td>
                     <td>{{ display(activity.nextValue) }}</td>
-                    <td>시스템</td>
+                    <td>{{ activity.actorLabel || '시스템' }}</td>
                   </tr>
                 } @empty { <tr><td class="table-empty" colspan="6">표시할 변경 이력이 없습니다.</td></tr> }
               </tbody>
@@ -254,7 +254,7 @@
     <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
       <header><h2>Mapping 제거</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
       <p>이 연결만 현재 설정에서 제거합니다. Provider와 Model 자체는 삭제되지 않습니다.</p>
-      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--primary" (click)="removeMapping()">제거</button></footer>
+      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--danger" (click)="removeMapping()">제거</button></footer>
     </section>
   </div>
 }

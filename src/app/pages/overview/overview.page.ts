@@ -182,18 +182,20 @@ export class OverviewPage {
     (sum, product) => sum + product.activeUsers,
     0,
   );
-  protected readonly totalRequests = PRODUCTS.reduce(
-    (sum, product) => sum + product.apiRequests,
-    0,
-  );
-  protected readonly totalTokens = PRODUCTS.reduce(
-    (sum, product) => sum + product.tokenUsage,
-    0,
-  );
-  protected readonly totalProviderCost = PRODUCTS.reduce(
-    (sum, product) => sum + product.providerCost,
-    0,
-  );
+  protected get totalRequests(): number {
+    return this.trend().apiRequests.reduce((sum, value) => sum + value, 0);
+  }
+
+  protected get totalTokens(): number {
+    return (
+      this.trend().inputTokens.reduce((sum, value) => sum + value, 0)
+      + this.trend().outputTokens.reduce((sum, value) => sum + value, 0)
+    ) * 1_000_000;
+  }
+
+  protected get totalProviderCost(): number {
+    return this.trend().providerCost.reduce((sum, value) => sum + value, 0);
+  }
 
   protected readonly activeFilterCount = computed(
     () =>

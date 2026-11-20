@@ -141,6 +141,7 @@ export interface OrganizationActivity {
   field: string | null;
   previousValue: string | null;
   nextValue: string | null;
+  actorLabel?: string | null;
   createdAt: string;
   updatedAt: string;
 }

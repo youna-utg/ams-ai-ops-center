@@ -33,6 +33,7 @@ export class ProviderDetailPage {
   ];
   private readonly providerId = signal('');
   protected readonly section = signal<SectionId>('overview');
+  private openedModel = '';
   protected readonly dialog = signal<DialogId>(null);
   protected readonly editingId = signal<string | null>(null);
   protected readonly modelProviderId = signal('');
@@ -90,6 +91,13 @@ export class ProviderDetailPage {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
       const section = query.get('section');
       this.section.set(section === 'models' || section === 'products' ? section : 'overview');
+      const modelId = query.get('model') ?? '';
+      const model = this.store.modelById(modelId);
+      if (modelId && modelId !== this.openedModel && model?.providerId === this.providerId()) {
+        this.openedModel = modelId;
+        this.openModelView(model);
+      }
+      if (!modelId) this.openedModel = '';
     });
     effect(() => this.pageContext.providerName.set(this.provider()?.name ?? ''));
     const syncMenu = () => this.syncActionMenu();

@@ -4,11 +4,6 @@
       <h1>Plans & Points</h1>
       <p>서비스 플랜, 제공 포인트, 차감 정책을 관리합니다.</p>
     </div>
-    @if (params().tab === 'plans') {
-      <button type="button" class="button button--primary" (click)="openPlan()">플랜 추가</button>
-    } @else {
-      <button type="button" class="button button--primary" (click)="openPolicy()">정책 추가</button>
-    }
   </header>
 
   <nav class="page-tabs" role="tablist" aria-label="Plans & Points" (keydown)="selectAdjacentTab($event)">
@@ -45,6 +40,7 @@
             <option value="unlimited" [selected]="params().kind === 'unlimited'">Unlimited</option>
           </select>
           @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+          <button type="button" class="button button--primary" (click)="openPlan()">플랜 추가<app-icon name="plus" [size]="15" /></button>
         </div>
       </header>
       <div class="data-table-wrap">
@@ -117,6 +113,7 @@
             <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
           </select>
           @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+          <button type="button" class="button button--primary" (click)="openPolicy()">정책 추가<app-icon name="plus" [size]="15" /></button>
         </div>
       </header>
       <div class="data-table-wrap">
@@ -357,7 +354,7 @@
       <p>{{ params().tab === 'plans' ? '이 플랜을 비활성화합니다. 고객사, 사용자, 제품에 자동으로 적용되지는 않습니다.' : '이 정책을 비활성화합니다. 과거 사용 기록은 바꾸지 않으며, 실제 적용 범위는 아직 정하지 않았습니다.' }}</p>
       <footer>
         <button type="button" class="button button--secondary" (click)="closeDialog()">취소</button>
-        <button type="button" class="button button--primary" (click)="confirmStatus()">비활성화</button>
+        <button type="button" class="button button--danger" (click)="confirmStatus()">비활성화</button>
       </footer>
     </section>
   </div>

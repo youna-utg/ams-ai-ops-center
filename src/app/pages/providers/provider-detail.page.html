@@ -11,7 +11,7 @@
       </div>
       <div class="header-actions">
         <button type="button" class="button button--outline" (click)="openProvider()">수정</button>
-        <button type="button" class="button button--outline" (click)="requestStatus('provider', current.id, current.status !== 'active')">{{ current.status === 'active' ? '비활성화' : '활성화' }}</button>
+        <button type="button" class="button" [class.button--danger]="current.status === 'active'" [class.button--primary]="current.status !== 'active'" (click)="requestStatus('provider', current.id, current.status !== 'active')">{{ current.status === 'active' ? '비활성화' : '활성화' }}</button>
       </div>
     </header>
 
@@ -65,7 +65,7 @@
         <section class="card">
           <header class="section-header">
             <div><h2>Models</h2><p>이 Provider에 등록된 Model입니다.</p></div>
-            <button type="button" class="button button--primary" (click)="openModel()">Model 추가</button>
+            <button type="button" class="button button--primary" (click)="openModel()">Model 추가<app-icon name="plus" [size]="15" /></button>
           </header>
           <div class="data-table-wrap">
             <table class="data-table">
@@ -95,7 +95,7 @@
           </header>
           <div class="data-table-wrap">
             <table class="data-table">
-              <thead><tr><th>Product</th><th>Action Code</th><th>Model</th><th>Mapping Status</th><th>Product Status</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Product</th><th>Action Code</th><th>Model</th><th>Mapping Status</th><th>Product Status</th><th class="table-actions-heading">Actions</th></tr></thead>
               <tbody>
                 @for (mapping of providerMappings(); track mapping.id) {
                   <tr>
@@ -217,7 +217,7 @@
         </section>
         <footer>
           <button type="button" class="button button--secondary" (click)="openModel(model)">수정</button>
-          <button type="button" class="button button--primary" (click)="requestStatus('model', model.id, model.status !== 'active')">{{ model.status === 'active' ? '비활성화' : '활성화' }}</button>
+          <button type="button" class="button" [class.button--danger]="model.status === 'active'" [class.button--primary]="model.status !== 'active'" (click)="requestStatus('model', model.id, model.status !== 'active')">{{ model.status === 'active' ? '비활성화' : '활성화' }}</button>
         </footer>
       </section>
     </div>
@@ -230,7 +230,7 @@
     <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
       <header><h2>비활성화</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
       <p>{{ target.kind === 'provider' ? '이 Provider를 비활성화합니다.' : '이 Model을 비활성화합니다.' }} 연결된 Model과 Mapping은 유지됩니다. 현재 {{ confirmCount() }}개 제품과 연결되어 있습니다. 실제 요청은 차단하지 않습니다.</p>
-      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--primary" (click)="confirmStatus()">비활성화</button></footer>
+      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--danger" (click)="confirmStatus()">비활성화</button></footer>
     </section>
   </div>
   }

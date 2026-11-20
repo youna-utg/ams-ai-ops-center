@@ -1,0 +1,581 @@
+<section class="monitor-page">
+  <header class="monitor-page__header">
+    <div>
+      <h1>System Monitoring</h1>
+      <p>서비스 상태, 시스템 이벤트, 장애 처리 현황을 확인합니다.</p>
+    </div>
+    @if (params().tab !== 'incidents') {
+      <div class="header-actions">
+        <button type="button" class="button button--secondary" (click)="refresh()">새로고침</button>
+      </div>
+    }
+  </header>
+  <p class="sample-note">샘플 모니터링 데이터입니다. 실제 시스템과 연결되어 있지 않습니다.</p>
+
+  <nav class="page-tabs" role="tablist" aria-label="System Monitoring">
+    @for (tab of tabs; track tab.id) {
+      <button type="button" role="tab" [class.is-active]="params().tab === tab.id" [attr.aria-selected]="params().tab === tab.id" (click)="setTab(tab.id)">{{ tab.label }}</button>
+    }
+  </nav>
+
+  @if (params().tab === 'health') {
+    <section class="summary-grid" aria-label="서비스 상태 요약">
+      <article class="summary-card"><span>Total Services</span><strong>{{ healthSummary().total }}</strong><small>샘플 카탈로그</small></article>
+      <article class="summary-card"><span>Healthy Services</span><strong>{{ healthSummary().healthy }}</strong><small>최신 샘플이 정상</small></article>
+      <article class="summary-card"><span>Degraded Services</span><strong>{{ healthSummary().degraded }}</strong><small>최신 샘플이 저하</small></article>
+      <article class="summary-card"><span>Down Services</span><strong>{{ healthSummary().down }}</strong><small>최신 샘플이 중단</small></article>
+    </section>
+
+    <article class="overall">
+      <div>
+        <span>Overall Health</span>
+        <strong>{{ overall().title }}</strong>
+        <small>{{ overall().detail }}</small>
+      </div>
+      <app-status-badge [label]="overall().badge" [tone]="overall().tone" />
+    </article>
+    <p class="range-note">Last Checked는 샘플 시각입니다. 방금 서버를 확인한 시간이 아닙니다. 확인 불가 {{ healthSummary().unknown }}개는 Healthy에 포함하지 않습니다.</p>
+
+    @if (serviceCards().length === 0) {
+      <p class="table-empty">모니터링 대상 서비스가 없습니다.</p>
+    } @else {
+      <section class="health-panel" aria-label="서비스 상태">
+      <div class="health-grid">
+        @for (card of serviceCards(); track card.id) {
+          <article class="service-card">
+            <div class="service-card__head">
+              <span>
+                <strong>{{ card.name }}</strong>
+                <small>{{ card.type }}</small>
+              </span>
+              <div class="service-card__tools">
+                <app-status-badge [label]="statusLabel[card.status]" [tone]="healthTone(card.status)" />
+                <button type="button" class="service-card__menu" [attr.aria-label]="card.name + ' 상세'" (click)="showService(card.id)">
+                  <app-icon name="more" [size]="16" />
+                </button>
+              </div>
+            </div>
+            <span class="service-card__metrics">
+              <span>
+                <em>Last Checked</em>
+                <b>{{ formatStamp(card.checked) }}</b>
+              </span>
+              <span>
+                <em>Response Time</em>
+                <b>{{ responseLabel(card.response) }}</b>
+              </span>
+            </span>
+            <span class="service-card__foot">
+              <span><i [attr.data-status]="card.status"></i>샘플 상태</span>
+            </span>
+          </article>
+        }
+      </div>
+      </section>
+    }
+  }
+
+  @if (params().tab === 'system-logs') {
+    <section class="summary-grid" aria-label="로그 요약">
+      <article class="summary-card"><span>Total Logs</span><strong>{{ logSummary().total }}</strong><small>현재 필터 결과</small></article>
+      <article class="summary-card"><span>Error Logs</span><strong>{{ logSummary().error }}</strong><small>Error만 집계</small></article>
+      <article class="summary-card"><span>Warning Logs</span><strong>{{ logSummary().warning }}</strong><small>Warning만 집계</small></article>
+      <article class="summary-card"><span>Critical Logs</span><strong>{{ logSummary().critical }}</strong><small>Critical만 집계</small></article>
+    </section>
+    <section class="filter-bar" aria-label="로그 필터">
+      <div class="range-switch" role="group" aria-label="Date Range">
+        @for (item of ranges; track item.id) {
+          <button type="button" [class.is-active]="params().logRange === item.id" (click)="setLogRange(item.id)">{{ item.label }}</button>
+        }
+      </div>
+      @if (params().logRange === 'custom') {
+        <label class="date-field">시작<input type="date" [value]="params().logFrom" (change)="updateLog('logFrom', $any($event.target).value)" /></label>
+        <label class="date-field">종료<input type="date" [value]="params().logTo" (change)="updateLog('logTo', $any($event.target).value)" /></label>
+      }
+      <select class="toolbar-select" aria-label="Log Level" [value]="params().logLevel" (change)="updateLog('logLevel', $any($event.target).value)">
+        <option value="all" [selected]="params().logLevel === 'all'">전체 수준</option>
+        @for (level of levels; track level) { <option [value]="level" [selected]="params().logLevel === level">{{ level }}</option> }
+      </select>
+      <select class="toolbar-select" aria-label="Service" [value]="params().logService" (change)="updateLog('logService', $any($event.target).value)">
+        <option value="all" [selected]="params().logService === 'all'">전체 서비스</option>
+        @for (service of store.services(); track service.id) { <option [value]="service.id" [selected]="params().logService === service.id">{{ service.name }}</option> }
+      </select>
+      <button type="button" class="text-button" (click)="clearLogFilters()">필터 지우기</button>
+      <span class="range-note">KST · {{ logWindowLabel() }}</span>
+    </section>
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>System Logs</strong><span>{{ logRows().length }}개 항목</span></div>
+        <div class="table-tools">
+          <label class="table-search"><app-icon name="search" [size]="16" /><input type="search" aria-label="로그 검색" placeholder="로그 ID, 이벤트, 메시지, Correlation ID" [value]="params().logQuery" (input)="updateLog('logQuery', $any($event.target).value)" /></label>
+          <select class="toolbar-select" aria-label="페이지 크기" [value]="params().logSize" (change)="changeLogSize($any($event.target).value)">
+            <option value="10" [selected]="params().logSize === 10">10개</option>
+            <option value="20" [selected]="params().logSize === 20">20개</option>
+            <option value="50" [selected]="params().logSize === 50">50개</option>
+          </select>
+        </div>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table data-table--logs">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortLogs('timestamp')">Timestamp</button></th>
+              <th><button type="button" class="sort-button" (click)="sortLogs('level')">Level</button></th>
+              <th><button type="button" class="sort-button" (click)="sortLogs('service')">Service</button></th>
+              <th>Event</th>
+              <th>Message</th>
+              <th>Correlation ID</th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of logPaged(); track log.id) {
+              <tr (click)="openLogRow(log.id, $event)">
+                <td>{{ formatStamp(log.timestamp) }}</td>
+                <td><app-status-badge [label]="log.level" [tone]="levelTone(log.level)" [showDot]="false" /></td>
+                <td>{{ store.serviceName(log.serviceId) }}</td>
+                <td>{{ log.event }}</td>
+                <td [title]="redact(log.message)">{{ redact(log.message) }}</td>
+                <td>
+                  @if (log.correlationId) {
+                    <span class="correlation">{{ log.correlationId }} <button type="button" class="text-button" (click)="copyValue(log.correlationId, $event)">복사</button></span>
+                  } @else { — }
+                </td>
+                <td class="row-actions"><button type="button" class="text-button" (click)="showLog(log.id, 'list')">상세</button></td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="7">{{ logFiltered() ? '조건에 맞는 로그가 없습니다.' : '시스템 로그가 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer">
+        <nav class="pagination" aria-label="로그 페이지">
+          <button type="button" aria-label="이전" [disabled]="logPage() <= 1" (click)="changeLogPage(logPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>
+          @for (item of pages(logPageCount()); track item) { <button type="button" [class.is-active]="item === logPage()" (click)="changeLogPage(item)">{{ item }}</button> }
+          <button type="button" aria-label="다음" [disabled]="logPage() >= logPageCount()" (click)="changeLogPage(logPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button>
+        </nav>
+      </footer>
+    </section>
+  }
+
+  @if (params().tab === 'incidents') {
+    <section class="summary-grid" aria-label="장애 요약">
+      <article class="summary-card"><span>Total Incidents</span><strong>{{ incidentSummary().total }}</strong><small>현재 필터 결과</small></article>
+      <article class="summary-card"><span>Open Incidents</span><strong>{{ incidentSummary().open }}</strong><small>해결이 아닌 상태</small></article>
+      <article class="summary-card"><span>Critical Incidents</span><strong>{{ incidentSummary().critical }}</strong><small>심각도 Critical</small></article>
+      <article class="summary-card"><span>Resolved Incidents</span><strong>{{ incidentSummary().resolved }}</strong><small>상태 해결</small></article>
+    </section>
+    <section class="filter-bar" aria-label="장애 필터">
+      <div class="range-switch" role="group" aria-label="Date Range">
+        @for (item of ranges; track item.id) {
+          <button type="button" [class.is-active]="params().incidentRange === item.id" (click)="setIncidentRange(item.id)">{{ item.label }}</button>
+        }
+      </div>
+      @if (params().incidentRange === 'custom') {
+        <label class="date-field">시작<input type="date" [value]="params().incidentFrom" (change)="updateIncident('incidentFrom', $any($event.target).value)" /></label>
+        <label class="date-field">종료<input type="date" [value]="params().incidentTo" (change)="updateIncident('incidentTo', $any($event.target).value)" /></label>
+      }
+      <select class="toolbar-select" aria-label="Status" [value]="params().incidentStatus" (change)="updateIncident('incidentStatus', $any($event.target).value)">
+        <option value="all" [selected]="params().incidentStatus === 'all'">전체 상태</option>
+        @for (status of statuses; track status) { <option [value]="status" [selected]="params().incidentStatus === status">{{ incidentStatusLabel[status] }}</option> }
+      </select>
+      <select class="toolbar-select" aria-label="Severity" [value]="params().incidentSeverity" (change)="updateIncident('incidentSeverity', $any($event.target).value)">
+        <option value="all" [selected]="params().incidentSeverity === 'all'">전체 심각도</option>
+        @for (severity of severities; track severity) { <option [value]="severity" [selected]="params().incidentSeverity === severity">{{ severity }}</option> }
+      </select>
+      <select class="toolbar-select" aria-label="Service" [value]="params().incidentService" (change)="updateIncident('incidentService', $any($event.target).value)">
+        <option value="all" [selected]="params().incidentService === 'all'">전체 서비스</option>
+        @for (service of store.services(); track service.id) { <option [value]="service.id" [selected]="params().incidentService === service.id">{{ service.name }}</option> }
+      </select>
+      <button type="button" class="text-button" (click)="clearIncidentFilters()">필터 지우기</button>
+      <span class="range-note">KST · {{ incidentWindowLabel() }}</span>
+    </section>
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>Incidents</strong><span>{{ incidentRows().length }}개 항목</span></div>
+        <div class="table-tools">
+          <label class="table-search"><app-icon name="search" [size]="16" /><input type="search" aria-label="장애 검색" placeholder="장애 ID, 제목, 설명, 서비스" [value]="params().incidentQuery" (input)="updateIncident('incidentQuery', $any($event.target).value)" /></label>
+          <select class="toolbar-select" aria-label="페이지 크기" [value]="params().incidentSize" (change)="changeIncidentSize($any($event.target).value)">
+            <option value="10" [selected]="params().incidentSize === 10">10개</option>
+            <option value="20" [selected]="params().incidentSize === 20">20개</option>
+            <option value="50" [selected]="params().incidentSize === 50">50개</option>
+          </select>
+          <button type="button" class="button button--primary" (click)="openCreate()">장애 추가<app-icon name="plus" [size]="15" /></button>
+        </div>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table data-table--incidents">
+          <thead>
+            <tr>
+              <th>Incident ID</th>
+              <th>Title</th>
+              <th><button type="button" class="sort-button" (click)="sortIncidents('severity')">Severity</button></th>
+              <th><button type="button" class="sort-button" (click)="sortIncidents('status')">Status</button></th>
+              <th>Affected Service</th>
+              <th>Assignee</th>
+              <th><button type="button" class="sort-button" (click)="sortIncidents('createdAt')">Created At</button></th>
+              <th>Updated At</th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (incident of incidentPaged(); track incident.id) {
+              <tr (click)="openIncidentRow(incident.id, $event)">
+                <td>{{ incident.id }}</td>
+                <td [title]="incident.title">{{ incident.title }}</td>
+                <td><app-status-badge [label]="incident.severity" [tone]="severityTone(incident.severity)" [showDot]="false" /></td>
+                <td><app-status-badge [label]="incidentStatusLabel[incident.status]" [tone]="incidentTone(incident.status)" /></td>
+                <td>{{ store.serviceName(incident.affectedServiceIds[0] || '') }}</td>
+                <td>{{ assigneeName(incident.assigneeId) }}</td>
+                <td>{{ formatStamp(incident.createdAt) }}</td>
+                <td>{{ formatStamp(incident.updatedAt) }}</td>
+                <td class="row-actions">
+                  <button type="button" class="text-button" (click)="showIncident(incident.id)">상세</button>
+                  <button type="button" class="text-button" (click)="showStatus(incident.id)">상태 변경</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="9">{{ incidentFiltered() ? '조건에 맞는 장애가 없습니다.' : '장애가 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer">
+        <nav class="pagination" aria-label="장애 페이지">
+          <button type="button" aria-label="이전" [disabled]="incidentPage() <= 1" (click)="changeIncidentPage(incidentPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>
+          @for (item of pages(incidentPageCount()); track item) { <button type="button" [class.is-active]="item === incidentPage()" (click)="changeIncidentPage(item)">{{ item }}</button> }
+          <button type="button" aria-label="다음" [disabled]="incidentPage() >= incidentPageCount()" (click)="changeIncidentPage(incidentPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button>
+        </nav>
+      </footer>
+    </section>
+  }
+</section>
+
+@if (serviceView(); as view) {
+  <div class="dialog-backdrop" (click)="dismiss()">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="service-detail-title" (click)="$event.stopPropagation()">
+      @if (view.missing) {
+        <header>
+          <h2 id="service-detail-title">Service</h2>
+          <button type="button" class="dialog-close" aria-label="닫기" (click)="dismiss()"><app-icon name="close" [size]="16" /></button>
+        </header>
+        <p>서비스를 찾을 수 없습니다.</p>
+      } @else {
+        <header>
+          <div>
+            <p class="dialog-kicker">{{ view.service.id }}</p>
+            <h2 id="service-detail-title">{{ view.service.name }}</h2>
+            <app-status-badge [label]="statusLabel[view.status]" [tone]="healthTone(view.status)" />
+          </div>
+          <button type="button" class="dialog-close" aria-label="닫기" (click)="dismiss()"><app-icon name="close" [size]="16" /></button>
+        </header>
+        <section class="form-section">
+          <h3>Service</h3>
+          <dl>
+            <div><dt>Service Name</dt><dd>{{ view.service.name }}</dd></div>
+            <div><dt>Service Type</dt><dd>{{ view.type }}</dd></div>
+            <div><dt>Current Status</dt><dd>{{ statusLabel[view.status] }}</dd></div>
+            <div><dt>Last Checked</dt><dd>{{ formatStamp(view.checked) }}</dd></div>
+            <div><dt>Response Time</dt><dd>{{ responseLabel(view.response) }}</dd></div>
+            <div><dt>Description</dt><dd>{{ view.service.description }}</dd></div>
+          </dl>
+        </section>
+        <section class="form-section">
+          <h3>Recent Health Samples</h3>
+          @if (view.samples.length === 0) {
+            <p class="empty-copy">상태 샘플이 없습니다.</p>
+          } @else {
+            <div class="data-table-wrap">
+              <table class="data-table data-table--nested data-table--static">
+                <thead><tr><th>Timestamp</th><th>Status</th><th>Response Time</th></tr></thead>
+                <tbody>
+                  @for (sample of view.samples; track sample.id) {
+                    <tr>
+                      <td>{{ formatStamp(sample.timestamp) }}</td>
+                      <td>{{ statusLabel[sample.status] }}</td>
+                      <td>{{ responseLabel(sample.responseTimeMs) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+        <section class="form-section">
+          <div class="section-head"><h3>Related System Logs</h3><button type="button" class="text-button" (click)="viewLogs(view.service.id)">시스템 로그 보기</button></div>
+          @if (view.logs.length === 0) {
+            <p class="empty-copy">이 서비스의 시스템 로그가 없습니다.</p>
+          } @else {
+            <div class="data-table-wrap">
+              <table class="data-table data-table--nested">
+                <thead><tr><th>Timestamp</th><th>Level</th><th>Event</th><th>Message</th></tr></thead>
+                <tbody>
+                  @for (log of view.logs; track log.id) {
+                    <tr (click)="showLog(log.id, 'service')">
+                      <td>{{ formatStamp(log.timestamp) }}</td>
+                      <td>{{ log.level }}</td>
+                      <td>{{ log.event }}</td>
+                      <td [title]="redact(log.message)">{{ redact(log.message) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+        <section class="form-section">
+          <div class="section-head"><h3>Related Incidents</h3><button type="button" class="text-button" (click)="viewIncidents(view.service.id)">장애 보기</button></div>
+          @if (view.incidents.length === 0) {
+            <p class="empty-copy">연결된 장애가 없습니다.</p>
+          } @else {
+            <ul class="plain-list">
+              @for (incident of view.incidents; track incident.id) {
+                <li><button type="button" class="text-button" (click)="showIncident(incident.id)">{{ incident.id }} · {{ incident.title }}</button> <app-status-badge [label]="incidentStatusLabel[incident.status]" [tone]="incidentTone(incident.status)" /></li>
+              }
+            </ul>
+          }
+        </section>
+        @if (view.back) { <footer class="dialog-footer"><button type="button" class="button button--secondary" (click)="goBack()">장애로 돌아가기</button></footer> }
+      }
+    </section>
+  </div>
+}
+@if (logView(); as detail) {
+  <div class="dialog-backdrop" (click)="dismiss()">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="log-detail-title" (click)="$event.stopPropagation()">
+      @if (!detail.log) {
+        <header>
+          <h2 id="log-detail-title">System Log</h2>
+          <button type="button" class="dialog-close" aria-label="닫기" (click)="dismiss()"><app-icon name="close" [size]="16" /></button>
+        </header>
+        <p>로그를 찾을 수 없습니다.</p>
+      } @else {
+        <header>
+          <div>
+            <p class="dialog-kicker">{{ detail.log.id }}</p>
+            <h2 id="log-detail-title">{{ detail.log.event }}</h2>
+            <span class="badge-row"><app-status-badge [label]="detail.log.level" [tone]="levelTone(detail.log.level)" [showDot]="false" /><span>{{ formatStamp(detail.log.timestamp) }}</span></span>
+          </div>
+          <button type="button" class="dialog-close" aria-label="닫기" (click)="dismiss()"><app-icon name="close" [size]="16" /></button>
+        </header>
+        <section class="form-section">
+          <h3>Log Information</h3>
+          <dl>
+            <div><dt>Log ID</dt><dd>{{ detail.log.id }}</dd></div>
+            <div><dt>Timestamp</dt><dd>{{ formatStamp(detail.log.timestamp) }}</dd></div>
+            <div><dt>Level</dt><dd>{{ detail.log.level }}</dd></div>
+            <div><dt>Service</dt><dd>{{ detail.serviceName }}</dd></div>
+            <div><dt>Event</dt><dd>{{ detail.log.event }}</dd></div>
+            <div><dt>Correlation ID</dt><dd>@if (detail.log.correlationId) { {{ detail.log.correlationId }} <button type="button" class="text-button" (click)="copyValue(detail.log.correlationId, $event)">복사</button> } @else { — }</dd></div>
+          </dl>
+        </section>
+        <section class="form-section">
+          <h3>Message</h3>
+          <p class="message-block">{{ redact(detail.log.message) }}</p>
+        </section>
+        <section class="form-section">
+          <h3>Technical Details</h3>
+          @if (!detail.log.errorCode && !detail.log.errorCategory && !detail.log.sanitizedDetails && !detail.log.context) {
+            <p class="empty-copy">기술 상세가 없습니다.</p>
+          } @else {
+            <dl>
+              @if (detail.log.errorCode) { <div><dt>Error Code</dt><dd>{{ detail.log.errorCode }}</dd></div> }
+              @if (detail.log.errorCategory) { <div><dt>Error Category</dt><dd>{{ detail.log.errorCategory }}</dd></div> }
+              @if (detail.log.context) { <div><dt>Context</dt><dd>{{ redact(detail.log.context) }}</dd></div> }
+              @if (detail.log.sanitizedDetails) { <div class="wide"><dt>Sanitized Stack Trace</dt><dd><pre>{{ redact(detail.log.sanitizedDetails) }}</pre></dd></div> }
+            </dl>
+          }
+        </section>
+        <section class="form-section">
+          <h3>Related Incident</h3>
+          @if (detail.incident) {
+            <p>{{ detail.incident.id }} · {{ detail.incident.title }}</p>
+            <button type="button" class="button button--secondary" (click)="showIncident(detail.incident.id)">장애 보기</button>
+          } @else {
+            <p class="empty-copy">연결된 장애가 없습니다.</p>
+          }
+        </section>
+        @if (detail.back) { <footer class="dialog-footer"><button type="button" class="button button--secondary" (click)="goBack()">{{ detail.back === 'incident' ? '장애로 돌아가기' : '서비스로 돌아가기' }}</button></footer> }
+      }
+    </section>
+  </div>
+}
+@if (formOverlay(); as current) {
+    <div class="dialog-backdrop" (click)="dismiss()">
+      <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="incident-form-title" (click)="$event.stopPropagation()">
+        <header>
+          <div>
+            <h2 id="incident-form-title">{{ current.mode === 'create' ? '장애 추가' : '장애 수정' }}</h2>
+            <p class="dialog-kicker">샘플 장애 기록입니다. 알림을 보내지 않고 서비스 상태도 바꾸지 않습니다.</p>
+          </div>
+          <button type="button" class="dialog-close" aria-label="닫기" (click)="dismiss()"><app-icon name="close" [size]="16" /></button>
+        </header>
+        <div class="form-grid">
+          <label class="field wide">제목<input [value]="formTitle()" (input)="formTitle.set($any($event.target).value)" /></label>
+          <label class="field wide">설명<textarea rows="4" [value]="formDescription()" (input)="formDescription.set($any($event.target).value)"></textarea></label>
+          <label class="field">영향 서비스
+            <select [value]="formService()" (change)="formService.set($any($event.target).value)">
+              <option value="" [selected]="formService() === ''">선택</option>
+              @for (service of store.services(); track service.id) { <option [value]="service.id" [selected]="formService() === service.id">{{ service.name }}</option> }
+            </select>
+          </label>
+          <label class="field">심각도
+            <select [value]="formSeverity()" (change)="formSeverity.set($any($event.target).value)">
+              <option value="" [selected]="formSeverity() === ''">선택</option>
+              @for (severity of severities; track severity) { <option [value]="severity" [selected]="formSeverity() === severity">{{ severity }}</option> }
+            </select>
+          </label>
+          <label class="field">담당자
+            <select [value]="formAssignee()" (change)="formAssignee.set($any($event.target).value)">
+              <option value="" [selected]="formAssignee() === ''">미지정</option>
+              @for (admin of assigneeOptions(); track admin.id) { <option [value]="admin.id" [selected]="formAssignee() === admin.id">{{ admin.fullName }}{{ admin.status === 'inactive' ? ' · 비활성' : '' }}</option> }
+            </select>
+          </label>
+          @if (current.mode === 'create') {
+            <label class="field">초기 상태
+              <select [value]="formStatus()" (change)="formStatus.set($any($event.target).value)">
+                @for (status of statuses; track status) { <option [value]="status" [selected]="formStatus() === status">{{ incidentStatusLabel[status] }}</option> }
+              </select>
+            </label>
+            @if (formStatus() === 'resolved') {
+              <label class="field wide">해결 메모<textarea rows="3" [value]="formNote()" (input)="formNote.set($any($event.target).value)"></textarea></label>
+            }
+          }
+        </div>
+        @if (formError()) { <p class="field-error">{{ formError() }}</p> }
+        <footer class="dialog-footer">
+          <button type="button" class="button button--secondary" (click)="dismiss()">취소</button>
+          <button type="button" class="button button--primary" (click)="saveForm()">저장</button>
+        </footer>
+      </section>
+    </div>
+}
+@if (incidentDialog(); as incident) {
+  <div class="dialog-backdrop" (click)="closeIncident()">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="incident-detail-title" (click)="$event.stopPropagation()">
+      <header>
+        <div>
+          <p class="dialog-kicker">{{ incident.id }}</p>
+          <h2 id="incident-detail-title">{{ incident.title }}</h2>
+          <span class="badge-row">
+            <app-status-badge [label]="incident.severity" [tone]="severityTone(incident.severity)" [showDot]="false" />
+            <app-status-badge [label]="incidentStatusLabel[incident.status]" [tone]="incidentTone(incident.status)" />
+          </span>
+        </div>
+        <button type="button" class="dialog-close" aria-label="닫기" (click)="closeIncident()"><app-icon name="close" [size]="16" /></button>
+      </header>
+
+      <section class="form-section">
+        <div class="section-head">
+          <h3>Overview</h3>
+          <div class="header-actions">
+            <button type="button" class="button button--secondary" (click)="openEdit()">장애 수정</button>
+            <button type="button" class="button button--secondary" (click)="showStatus(incident.id)">상태 변경</button>
+            <button type="button" class="button button--secondary" (click)="notePanel.set(!notePanel()); noteError.set('')">메모 추가</button>
+          </div>
+        </div>
+        <dl>
+          <div><dt>Incident ID</dt><dd>{{ incident.id }}</dd></div>
+          <div><dt>Title</dt><dd>{{ incident.title }}</dd></div>
+          <div class="wide"><dt>Description</dt><dd>{{ incident.description }}</dd></div>
+          <div><dt>Severity</dt><dd>{{ incident.severity }}</dd></div>
+          <div><dt>Status</dt><dd>{{ incidentStatusLabel[incident.status] }}</dd></div>
+          <div><dt>Assignee</dt><dd>{{ assigneeName(incident.assigneeId) }}</dd></div>
+          <div><dt>Created At</dt><dd>{{ formatStamp(incident.createdAt) }}</dd></div>
+          <div><dt>Updated At</dt><dd>{{ formatStamp(incident.updatedAt) }}</dd></div>
+          <div><dt>Resolved At</dt><dd>{{ formatStamp(incident.resolvedAt) }}</dd></div>
+        </dl>
+        @if (statusPanel()) {
+          <div class="inline-panel">
+            <label class="field">변경할 상태
+              <select [value]="statusDraft()" (change)="statusDraft.set($any($event.target).value)">
+                @for (status of statuses; track status) { <option [value]="status" [selected]="statusDraft() === status">{{ incidentStatusLabel[status] }}</option> }
+              </select>
+            </label>
+            @if (statusDraft() === 'resolved') {
+              <label class="field">해결 메모<textarea rows="3" [value]="resolutionNote()" (input)="resolutionNote.set($any($event.target).value)"></textarea></label>
+            }
+            <p class="range-note">상태 순서는 잠정 예시입니다. 이 화면에서는 다른 상태로 바꿀 수 있으며, 서비스 Health는 바뀌지 않습니다.</p>
+            <div class="header-actions">
+              <button type="button" class="button button--secondary" (click)="statusPanel.set(false)">취소</button>
+              <button type="button" class="button button--primary" (click)="saveStatus()">상태 저장</button>
+            </div>
+          </div>
+        }
+        @if (notePanel()) {
+          <div class="inline-panel">
+            <label class="field">메모<textarea rows="3" [value]="noteDraft()" (input)="noteDraft.set($any($event.target).value)"></textarea></label>
+            @if (noteError()) { <p class="field-error">{{ noteError() }}</p> }
+            <p class="range-note">수행자는 Demo Operator로 기록됩니다. 실제 로그인 계정이 아닙니다.</p>
+            <div class="header-actions">
+              <button type="button" class="button button--secondary" (click)="notePanel.set(false)">취소</button>
+              <button type="button" class="button button--primary" (click)="saveNote()">메모 저장</button>
+            </div>
+          </div>
+        }
+      </section>
+
+      <section class="form-section">
+        <h3>Impacted Services</h3>
+        <div class="data-table-wrap">
+          <table class="data-table data-table--nested">
+            <thead><tr><th>Service</th><th>Type</th><th>Current Health</th></tr></thead>
+            <tbody>
+              @for (service of impacted(); track service.id) {
+                <tr>
+                  <td>
+                    @if (service.known) { <button type="button" class="text-button" (click)="showService(service.id, 'incident')">{{ service.name }}</button> }
+                    @else { {{ service.name }} }
+                  </td>
+                  <td>{{ service.type }}</td>
+                  <td><app-status-badge [label]="statusLabel[service.status]" [tone]="healthTone(service.status)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h3>Incident Timeline</h3>
+        <ol class="timeline">
+          @for (event of incidentTimeline(); track event.id) {
+            <li>
+              <time>{{ formatStamp(event.timestamp) }}</time>
+              <strong>{{ timelineText(event.eventType) }}</strong>
+              <span>{{ event.actorLabel }}</span>
+              <p>{{ event.description }}</p>
+            </li>
+          }
+        </ol>
+      </section>
+
+      <section class="form-section">
+        <h3>Related Logs</h3>
+        @if (incidentLogs().length === 0) {
+          <p class="empty-copy">연결된 시스템 로그가 없습니다.</p>
+        } @else {
+          <div class="data-table-wrap">
+            <table class="data-table data-table--nested">
+              <thead><tr><th>Timestamp</th><th>Level</th><th>Service</th><th>Event</th><th>Message</th></tr></thead>
+              <tbody>
+                @for (log of incidentLogs(); track log.id) {
+                  <tr (click)="showLog(log.id, 'incident')">
+                    <td>{{ formatStamp(log.timestamp) }}</td>
+                    <td>{{ log.level }}</td>
+                    <td>{{ store.serviceName(log.serviceId) }}</td>
+                    <td>{{ log.event }}</td>
+                    <td [title]="redact(log.message)">{{ redact(log.message) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    </section>
+  </div>
+}
+
+@if (toast()) { <p class="toast" role="status">{{ toast() }}</p> }

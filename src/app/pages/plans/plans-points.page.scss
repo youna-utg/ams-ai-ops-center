@@ -22,7 +22,7 @@
 .table-title { display: flex; min-width: 0; align-items: center; gap: 8px; }
 .table-title strong { color: var(--color-text-primary); font-size: var(--font-size-body-lg); font-weight: var(--font-weight-semibold); }
 .table-title span { color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
-.table-tools { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.table-tools { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); min-width: 0; }
 .table-search { position: relative; display: flex; width: 240px; flex: 0 0 240px; align-items: center; }
 .table-search app-icon { position: absolute; left: 5px; display: grid; width: 28px; height: 28px; place-items: center; color: var(--color-text-secondary); background: var(--color-neutral-0); border-radius: var(--radius-full); }
 .table-search input { width: 100%; height: var(--control-height-md); padding: 0 var(--space-3) 0 42px; color: var(--color-text-primary); background: var(--color-surface-subtle); border: 1px solid transparent; border-radius: var(--radius-full); outline: 0; }
@@ -40,7 +40,7 @@
 .data-table tbody tr { cursor: pointer; }
 .data-table tbody tr:hover { background: #fcfcfd; }
 .data-table tbody tr:last-child td { border-bottom: 0; }
-.table-actions-heading, .row-actions { width: 72px; overflow: visible; text-align: center; }
+.table-actions-heading, .row-actions { width: 112px; overflow: visible; text-align: center; text-overflow: clip; }
 .table-empty { height: 120px; color: var(--color-text-muted); text-align: center; }
 .icon-action { display: grid; width: var(--control-height-sm); height: var(--control-height-sm); margin-inline: auto; place-items: center; padding: 0; color: var(--color-text-muted); background: transparent; border: 0; border-radius: var(--radius-small); cursor: pointer; }
 .action-menu { position: fixed; z-index: 40; display: grid; width: 148px; padding: 6px; background: var(--color-surface); border: var(--border-default); border-radius: var(--radius-medium); box-shadow: var(--shadow-dropdown); }

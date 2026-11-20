@@ -4,7 +4,6 @@
       <h1>Products</h1>
       <p>제품 정보, 운영 상태, AI 설정을 관리합니다.</p>
     </div>
-    <button type="button" class="button button--primary" (click)="openCreate()">제품 추가</button>
   </header>
 
   <section class="summary-grid" aria-label="제품 요약">
@@ -30,6 +29,7 @@
           <option value="maintenance" [selected]="params().status === 'maintenance'">점검</option>
         </select>
         @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+        <button type="button" class="button button--primary" (click)="openCreate()">제품 추가<app-icon name="plus" [size]="15" /></button>
       </div>
     </header>
     <div class="data-table-wrap">

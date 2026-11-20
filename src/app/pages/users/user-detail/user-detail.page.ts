@@ -98,7 +98,7 @@ export class UserDetailPage {
     });
   });
   protected readonly availableProductCount = computed(
-    () => this.accessRows().filter((row) => row.organizationAccess === '이용 중').length,
+    () => this.accessRows().filter((row) => row.effective === '이용 가능').length,
   );
   protected readonly usageRecords = computed(() => {
     const user = this.user();

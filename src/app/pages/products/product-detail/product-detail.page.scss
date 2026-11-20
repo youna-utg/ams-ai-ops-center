@@ -34,6 +34,7 @@ dl { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
 dd { margin: 4px 0 0; color: var(--color-text-primary); font-size: var(--font-size-body-sm); }
 .note { margin-top: var(--space-5); }
 .filters { flex-wrap: wrap; margin-bottom: var(--space-4); }
+.filters > .button--primary { margin-left: auto; }
 .filters select, .filters input, .field input, .field select, .field textarea { height: 36px; padding: 0 12px; color: var(--color-text-primary); background: var(--color-surface); border: var(--border-default); border-radius: var(--radius-small); font: inherit; }
 .table-search { position: relative; display: flex; width: 240px; }
 .table-search app-icon { position: absolute; left: 5px; display: grid; width: 28px; height: 28px; place-items: center; background: var(--color-neutral-0); border-radius: var(--radius-full); }

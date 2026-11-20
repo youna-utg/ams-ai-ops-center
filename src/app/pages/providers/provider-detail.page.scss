@@ -44,7 +44,7 @@ dd { margin: 4px 0 0; color: var(--color-text-primary); font-size: var(--font-si
 .data-table td strong, .data-table a, .text-link { color: var(--color-text-primary); font-weight: var(--font-weight-semibold); text-decoration: none; }
 .data-table td small { display: block; color: var(--color-text-muted); font-size: var(--font-size-caption); font-weight: var(--font-weight-regular); }
 .data-table tbody tr:hover { background: #fcfcfd; }
-.table-actions-heading, .row-actions { width: 72px; overflow: visible; text-align: center; }
+.table-actions-heading, .row-actions { width: 112px; overflow: visible; text-align: center; text-overflow: clip; }
 .table-empty { height: 120px; color: var(--color-text-muted); text-align: center; }
 .icon-action { display: grid; width: var(--control-height-sm); height: var(--control-height-sm); margin-inline: auto; place-items: center; padding: 0; color: var(--color-text-muted); background: transparent; border: 0; border-radius: var(--radius-small); cursor: pointer; }
 .action-menu { position: fixed; z-index: 40; display: grid; width: 148px; padding: 6px; background: var(--color-surface); border: var(--border-default); border-radius: var(--radius-medium); box-shadow: var(--shadow-dropdown); }

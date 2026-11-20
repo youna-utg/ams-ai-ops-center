@@ -32,7 +32,7 @@
     <section class="summary-grid">
       <article><span>Organization</span><strong>{{ organization()?.name }}</strong><small>{{ organization()?.code }}</small></article>
       <article><span>Team</span><strong>{{ team()?.name ?? '미지정' }}</strong><small>최대 1개 팀</small></article>
-      <article><span>Available Products</span><strong>{{ availableProductCount() }}</strong><small>고객사 이용 중 제품</small></article>
+      <article><span>Available Products</span><strong>{{ availableProductCount() }}</strong><small>실효 이용 가능 제품</small></article>
     </section>
 
     <nav class="top-tabs" role="tablist">
@@ -268,7 +268,7 @@
       </p>
       <footer>
         <button type="button" class="button button--secondary" (click)="confirmAction.set(null)">취소</button>
-        <button type="button" class="button button--primary" (click)="applyAction()">확인</button>
+        <button type="button" class="button" [class.button--danger]="confirmAction() !== 'activate'" [class.button--primary]="confirmAction() === 'activate'" (click)="applyAction()">확인</button>
       </footer>
     </section>
   </div>

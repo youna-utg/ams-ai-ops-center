@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { OrganizationsStore } from '../../organizations/data/organizations.store';
 import {
   ActionCode,
+  CatalogActivity,
   CatalogModel,
   CatalogProduct,
   CatalogProvider,
@@ -32,6 +33,8 @@ export class ProductsStore {
   readonly models = computed(() => this.state().models);
   readonly actionCodes = computed(() => this.state().actionCodes);
   readonly mappings = computed(() => this.state().mappings);
+  readonly activityLog = computed(() => this.state().activities);
+  readonly catalogLog = computed(() => this.state().catalogActivities);
 
   getById(id: string): CatalogProduct | undefined {
     return this.products().find((product) => product.id === id);
@@ -300,7 +303,11 @@ export class ProductsStore {
       createdAt: now,
       updatedAt: now,
     };
-    this.state.set({ ...current, providers: [...current.providers, created] });
+    this.state.set({
+      ...current,
+      providers: [...current.providers, created],
+      catalogActivities: [...current.catalogActivities, this.catalogActivity(current, 'provider', created.id, 'created', [{ field: 'Name', before: null, after: created.name }], now)],
+    });
     return created;
   }
 
@@ -309,14 +316,26 @@ export class ProductsStore {
     const existing = this.requireProvider(id, current);
     const name = input.name.trim();
     if (!name) throw new Error('Provider명을 입력해 주세요.');
+    const now = new Date().toISOString();
     const updated: CatalogProvider = {
       ...existing,
       name,
       description: input.description.trim(),
       endpoint: input.endpoint.trim(),
-      updatedAt: new Date().toISOString(),
+      updatedAt: now,
     };
-    this.state.set({ ...current, providers: current.providers.map((item) => (item.id === id ? updated : item)) });
+    const changes = this.fieldChanges([
+      ['Name', existing.name, updated.name],
+      ['Description', existing.description, updated.description],
+      ['Endpoint', existing.endpoint, updated.endpoint],
+    ]);
+    this.state.set({
+      ...current,
+      providers: current.providers.map((item) => (item.id === id ? updated : item)),
+      catalogActivities: changes.length
+        ? [...current.catalogActivities, this.catalogActivity(current, 'provider', id, 'updated', changes, now)]
+        : current.catalogActivities,
+    });
     return updated;
   }
 
@@ -324,8 +343,16 @@ export class ProductsStore {
     const current = this.state();
     const existing = this.requireProvider(id, current);
     if (existing.status === status) return existing;
-    const updated = { ...existing, status, updatedAt: new Date().toISOString() };
-    this.state.set({ ...current, providers: current.providers.map((item) => (item.id === id ? updated : item)) });
+    const now = new Date().toISOString();
+    const updated = { ...existing, status, updatedAt: now };
+    this.state.set({
+      ...current,
+      providers: current.providers.map((item) => (item.id === id ? updated : item)),
+      catalogActivities: [
+        ...current.catalogActivities,
+        this.catalogActivity(current, 'provider', id, 'status-changed', [{ field: 'Status', before: this.statusLabel(existing.status), after: this.statusLabel(status) }], now),
+      ],
+    });
     return updated;
   }
 
@@ -339,7 +366,11 @@ export class ProductsStore {
       createdAt: now,
       updatedAt: now,
     };
-    this.state.set({ ...current, models: [...current.models, created] });
+    this.state.set({
+      ...current,
+      models: [...current.models, created],
+      catalogActivities: [...current.catalogActivities, this.catalogActivity(current, 'model', created.id, 'created', [{ field: 'Name', before: null, after: created.name }], now)],
+    });
     return created;
   }
 
@@ -348,13 +379,24 @@ export class ProductsStore {
     const existing = this.requireModel(id, current);
     const name = input.name.trim();
     if (!name) throw new Error('Model명을 입력해 주세요.');
+    const now = new Date().toISOString();
     const updated: CatalogModel = {
       ...existing,
       name,
       description: input.description.trim(),
-      updatedAt: new Date().toISOString(),
+      updatedAt: now,
     };
-    this.state.set({ ...current, models: current.models.map((item) => (item.id === id ? updated : item)) });
+    const changes = this.fieldChanges([
+      ['Name', existing.name, updated.name],
+      ['Description', existing.description, updated.description],
+    ]);
+    this.state.set({
+      ...current,
+      models: current.models.map((item) => (item.id === id ? updated : item)),
+      catalogActivities: changes.length
+        ? [...current.catalogActivities, this.catalogActivity(current, 'model', id, 'updated', changes, now)]
+        : current.catalogActivities,
+    });
     return updated;
   }
 
@@ -362,8 +404,16 @@ export class ProductsStore {
     const current = this.state();
     const existing = this.requireModel(id, current);
     if (existing.status === status) return existing;
-    const updated = { ...existing, status, updatedAt: new Date().toISOString() };
-    this.state.set({ ...current, models: current.models.map((item) => (item.id === id ? updated : item)) });
+    const now = new Date().toISOString();
+    const updated = { ...existing, status, updatedAt: now };
+    this.state.set({
+      ...current,
+      models: current.models.map((item) => (item.id === id ? updated : item)),
+      catalogActivities: [
+        ...current.catalogActivities,
+        this.catalogActivity(current, 'model', id, 'status-changed', [{ field: 'Status', before: this.statusLabel(existing.status), after: this.statusLabel(status) }], now),
+      ],
+    });
     return updated;
   }
 
@@ -496,8 +546,32 @@ export class ProductsStore {
       target,
       previousValue,
       nextValue,
+      actorLabel: 'Demo Administrator',
       createdAt: timestamp,
     };
+  }
+
+  private catalogActivity(
+    data: ProductsData,
+    targetType: CatalogActivity['targetType'],
+    targetId: string,
+    action: CatalogActivity['action'],
+    changes: CatalogActivity['changes'],
+    timestamp: string,
+  ): CatalogActivity {
+    return {
+      id: this.nextId('catalog-activity', data.catalogActivities.map((item) => item.id)),
+      targetType,
+      targetId,
+      action,
+      changes,
+      actorLabel: 'Demo Administrator',
+      createdAt: timestamp,
+    };
+  }
+
+  private fieldChanges(pairs: readonly (readonly [string, string, string])[]): CatalogActivity['changes'] {
+    return pairs.filter(([, before, after]) => before !== after).map(([field, before, after]) => ({ field, before, after }));
   }
 
   private statusLabel(status: string): string {
@@ -522,6 +596,7 @@ export class ProductsStore {
       actionCodes: data.actionCodes.map((item) => ({ ...item })),
       mappings: data.mappings.map((item) => ({ ...item })),
       activities: data.activities.map((item) => ({ ...item })),
+      catalogActivities: data.catalogActivities.map((item) => ({ ...item, changes: item.changes.map((change) => ({ ...change })) })),
     };
   }
 }

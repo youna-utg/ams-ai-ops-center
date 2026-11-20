@@ -1,0 +1,41 @@
+<div class="matrix">
+  <p class="matrix-legend"><span title="해당 메뉴의 정보를 조회할 수 있습니다.">View</span>는 조회, <span title="데이터를 추가·수정·상태 변경할 수 있습니다. Manage를 켜면 View도 켜집니다.">Manage</span>는 관리입니다. Manage를 켜면 View도 켜지고, View를 끄면 Manage도 꺼집니다.</p>
+  @for (group of groups(); track group.label) {
+    <section class="matrix-group">
+      <button type="button" class="matrix-group__toggle" (click)="toggleGroup(group.label)" [attr.aria-expanded]="open(group.label)">
+        <strong>{{ group.label }}</strong>
+        <span>{{ groupSummary(group.menus) }}</span>
+      </button>
+      @if (open(group.label)) {
+        <div class="matrix-scroll">
+          <table class="matrix-table">
+            <thead>
+              <tr><th>Menu</th><th>View</th><th>Manage</th></tr>
+            </thead>
+            <tbody>
+              @for (menu of group.menus; track menu.key) {
+                <tr>
+                  <td>{{ menu.label }}</td>
+                  <td>
+                    <label class="matrix-check">
+                      <input type="checkbox" [checked]="permission(menu.key).view" [disabled]="!editable()" (change)="toggle(menu.key, 'view', $event)" [attr.aria-label]="menu.label + ' View'" />
+                    </label>
+                  </td>
+                  <td>
+                    @if (menu.viewOnly) {
+                      <span class="matrix-na" title="Dashboard는 조회 권한만 제공하는 임시 설정입니다.">—</span>
+                    } @else {
+                      <label class="matrix-check">
+                        <input type="checkbox" [checked]="permission(menu.key).manage" [disabled]="!editable()" (change)="toggle(menu.key, 'manage', $event)" [attr.aria-label]="menu.label + ' Manage'" />
+                      </label>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>

@@ -585,6 +585,7 @@ export class OrganizationDetailPage implements OnDestroy {
   }
 
   protected actorName(activity: OrganizationActivity): string {
+    if (activity.actorLabel) return activity.actorLabel;
     if (!activity.actorId) return '시스템';
     return this.detail()?.users.find((user) => user.id === activity.actorId)?.name ?? '시스템';
   }

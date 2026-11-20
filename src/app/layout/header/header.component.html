@@ -10,7 +10,7 @@
     </button>
 
     <div class="breadcrumb" aria-label="현재 위치">
-      <span class="breadcrumb__root">AMS</span>
+      <span class="breadcrumb__root">{{ workspaceName() }}</span>
       <app-icon name="chevron-right" [size]="14" />
       @if (organizationName()) {
         <a routerLink="/organizations" [queryParams]="organizationListQuery()">

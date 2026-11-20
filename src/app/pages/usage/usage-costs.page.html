@@ -1,0 +1,370 @@
+<section class="usage-page">
+  <header class="usage-page__header">
+    <div>
+      <h1>Usage & Costs</h1>
+      <p>API 사용량, 외부 Provider 비용, 단가 정보를 확인합니다.</p>
+    </div>
+  </header>
+
+  <nav class="page-tabs" role="tablist" aria-label="Usage & Costs">
+    @for (tab of tabs; track tab.id) {
+      <button type="button" role="tab" [class.is-active]="params().tab === tab.id" [attr.aria-selected]="params().tab === tab.id" (click)="setTab(tab.id)">{{ tab.label }}</button>
+    }
+  </nav>
+
+  @if (params().tab !== 'rate-cards') {
+    <section class="filter-bar" aria-label="분석 필터">
+      <div class="range-switch" role="group" aria-label="Date Range">
+        @for (item of ranges; track item.id) {
+          <button type="button" [class.is-active]="params().range === item.id" (click)="setRange(item.id)">{{ item.label }}</button>
+        }
+      </div>
+      @if (params().range === 'custom') {
+        <label class="date-field">시작<input type="date" [value]="params().from" (change)="updateAnalysis('from', $any($event.target).value)" /></label>
+        <label class="date-field">종료<input type="date" [value]="params().to" (change)="updateAnalysis('to', $any($event.target).value)" /></label>
+      }
+      <select class="toolbar-select" aria-label="Product" [value]="params().product" (change)="updateAnalysis('product', $any($event.target).value)">
+        <option value="all" [selected]="params().product === 'all'">전체 Product</option>
+        @for (product of productsStore.products(); track product.id) { <option [value]="product.id" [selected]="params().product === product.id">{{ product.name }}</option> }
+      </select>
+      <select class="toolbar-select" aria-label="Provider" [value]="params().provider" (change)="updateAnalysis('provider', $any($event.target).value)">
+        <option value="all" [selected]="params().provider === 'all'">전체 Provider</option>
+        @for (provider of productsStore.providers(); track provider.id) { <option [value]="provider.id" [selected]="params().provider === provider.id">{{ provider.name }}</option> }
+      </select>
+      <select class="toolbar-select" aria-label="Model" [value]="params().model" (change)="updateAnalysis('model', $any($event.target).value)">
+        <option value="all" [selected]="params().model === 'all'">전체 Model</option>
+        @for (model of modelOptions(); track model.id) { <option [value]="model.id" [selected]="params().model === model.id">{{ model.name }}</option> }
+      </select>
+      @if (params().tab === 'api-usage') {
+        <select class="toolbar-select" aria-label="Request Status" [value]="params().status" (change)="updateAnalysis('status', $any($event.target).value)">
+          <option value="all" [selected]="params().status === 'all'">전체 상태</option>
+          <option value="success" [selected]="params().status === 'success'">성공</option>
+          <option value="error" [selected]="params().status === 'error'">오류</option>
+        </select>
+      }
+      @if (analysisFiltered()) { <button type="button" class="text-button" (click)="clearAnalysis()">필터 지우기</button> }
+      <span class="range-note">{{ granularityLabel() }} · KST · 기준일 {{ '2026-11-20' }}</span>
+    </section>
+  }
+
+  @if (params().tab === 'api-usage') {
+    <section class="summary-grid summary-grid--six" aria-label="API Usage 요약">
+      <article class="summary-card"><span>Total Requests</span><strong>{{ formatCount(usageSummary().total) }}</strong><small>필터된 요청</small></article>
+      <article class="summary-card"><span title="성공 요청 수 / 전체 요청 수">Success Rate</span><strong>{{ formatPercent(usageSummary().successRate) }}</strong><small>성공 / 전체</small></article>
+      <article class="summary-card"><span title="오류 요청 수 / 전체 요청 수">Error Rate</span><strong>{{ formatPercent(usageSummary().errorRate) }}</strong><small>오류 / 전체</small></article>
+      <article class="summary-card"><span>Input Tokens</span><strong>{{ formatTokens(usageSummary().input) }}</strong><small>입력 합계</small></article>
+      <article class="summary-card"><span>Output Tokens</span><strong>{{ formatTokens(usageSummary().output) }}</strong><small>출력 합계</small></article>
+      <article class="summary-card"><span>Avg. Response Time</span><strong>{{ formatLatency(usageSummary().latency) }}</strong><small>평균 응답 시간</small></article>
+    </section>
+    <section class="chart-grid chart-grid--three">
+      <article class="chart-card"><header><h2>API Requests Trend</h2><p>성공과 오류 요청 수</p></header><app-chart type="line" [data]="requestsChart()" [options]="lineOptions" [height]="220" label="API 요청 추이" /></article>
+      <article class="chart-card"><header><h2>Token Usage Trend</h2><p>Input / Output Tokens</p></header><app-chart type="line" [data]="tokenChart()" [options]="lineOptions" [height]="220" label="토큰 사용 추이" /></article>
+      <article class="chart-card"><header><h2>Error Rate Trend</h2><p>구간별 오류율</p></header><app-chart type="line" [data]="errorChart()" [options]="percentOptions" [height]="220" label="오류율 추이" /></article>
+    </section>
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>Request History</strong><span>{{ requestRows().length }}개 항목</span></div>
+        <select class="toolbar-select" aria-label="페이지 크기" [value]="params().size" (change)="changeRequestSize($any($event.target).value)">
+          <option value="10" [selected]="params().size === 10">10개</option>
+          <option value="20" [selected]="params().size === 20">20개</option>
+          <option value="50" [selected]="params().size === 50">50개</option>
+        </select>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortRequests('timestamp')">Timestamp</button></th>
+              <th><button type="button" class="sort-button" (click)="sortRequests('id')">Request ID</button></th>
+              <th><button type="button" class="sort-button" (click)="sortRequests('product')">Product</button></th>
+              <th><button type="button" class="sort-button" (click)="sortRequests('provider')">Provider</button></th>
+              <th><button type="button" class="sort-button" (click)="sortRequests('model')">Model</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortRequests('input')">Input Tokens</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortRequests('output')">Output Tokens</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortRequests('latency')">Latency</button></th>
+              <th><button type="button" class="sort-button" (click)="sortRequests('status')">Status</button></th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of pagedRequests(); track record.id) {
+              <tr (click)="openRequestFromRow(record.id, $event)">
+                <td>{{ formatStamp(record.timestamp) }}</td>
+                <td class="mono">{{ record.id }}</td>
+                <td><a [routerLink]="['/products', record.productId]">{{ productsStore.getById(record.productId)?.name }}</a></td>
+                <td><a [routerLink]="['/providers-models/providers', record.providerId]">{{ productsStore.providerName(record.providerId) }}</a></td>
+                <td>{{ productsStore.modelName(record.modelId) }}</td>
+                <td class="numeric">{{ formatTokenCell(record.inputTokens) }}</td>
+                <td class="numeric">{{ formatTokenCell(record.outputTokens) }}</td>
+                <td class="numeric">{{ formatLatency(record.latencyMs) }}</td>
+                <td><app-status-badge [label]="statusLabel(record.status)" [tone]="record.status === 'success' ? 'success' : 'danger'" /></td>
+                <td><button type="button" class="text-button" (click)="openRequest(record)">상세</button></td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="10">{{ analysisFiltered() ? '조건에 맞는 요청이 없습니다.' : '표시할 요청이 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer"><nav class="pagination" aria-label="요청 페이지"><button type="button" aria-label="이전" [disabled]="requestPage() <= 1" (click)="changeRequestPage(requestPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>@for (page of pages(requestPages()); track page) { <button type="button" [class.is-active]="page === requestPage()" (click)="changeRequestPage(page)">{{ page }}</button> }<button type="button" aria-label="다음" [disabled]="requestPage() >= requestPages()" (click)="changeRequestPage(requestPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button></nav></footer>
+    </section>
+  } @else if (params().tab === 'cost-analytics') {
+    <section class="summary-grid summary-grid--four" aria-label="Cost Analytics 요약">
+      <article class="summary-card"><span>Total Provider Cost</span><strong>{{ formatUsd(costSummary().total) }}</strong><small>외부 Provider 원가</small></article>
+      <article class="summary-card"><span title="직전 동일 길이 기간 대비 증감. 비교 비용이 없으면 N/A">Cost Change</span><strong>{{ costSummary().change === null ? 'N/A' : formatPercent(costSummary().change) }}</strong><small>이전 기간 대비</small></article>
+      <article class="summary-card"><span>Top Cost Product</span><strong class="name">{{ costSummary().topProduct }}</strong><small>가장 큰 제품 비용</small></article>
+      <article class="summary-card"><span>Top Cost Provider</span><strong class="name">{{ costSummary().topProvider }}</strong><small>가장 큰 Provider 비용</small></article>
+    </section>
+    <article class="chart-card chart-card--wide">
+      <header><h2>Provider Cost Trend</h2><p>선택한 기간의 외부 Provider 비용</p></header>
+      <app-chart type="line" [data]="costTrendChart()" [options]="moneyOptions" [height]="240" label="Provider 비용 추이" />
+    </article>
+    <section class="chart-grid">
+      <article class="chart-card"><header><h2>Cost by Product</h2><p>제품별 원가</p></header><app-chart type="bar" [data]="productCostChart()" [options]="barOptions" [plugins]="barPlugins" [height]="240" label="제품별 비용" /></article>
+      <article class="chart-card"><header><h2>Cost by Provider</h2><p>Provider별 원가</p></header><app-chart type="doughnut" [data]="providerCostChart()" [options]="doughnutOptions" [height]="240" label="Provider별 비용" /></article>
+    </section>
+    <article class="chart-card chart-card--wide">
+      <header><h2>Cost by Model</h2><p>Model별 원가</p></header>
+      <app-chart type="bar" [data]="modelCostChart()" [options]="barOptions" [plugins]="barPlugins" [height]="220" label="Model별 비용" />
+    </article>
+    <section class="table-card">
+      <header class="table-toolbar"><div class="table-title"><strong>Cost Breakdown</strong><span>{{ breakdownRows().length }}개 조합 · 합계 {{ formatUsd(breakdownTotal()) }}</span></div></header>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortBreakdown('product')">Product</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBreakdown('provider')">Provider</button></th>
+              <th><button type="button" class="sort-button" (click)="sortBreakdown('model')">Model</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortBreakdown('requests')">Requests</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortBreakdown('input')">Input Tokens</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortBreakdown('output')">Output Tokens</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortBreakdown('cost')">Provider Cost</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortBreakdown('share')">Cost Share</button></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of pagedBreakdown(); track row.productId + row.providerId + row.modelId) {
+              <tr>
+                <td><a [routerLink]="['/products', row.productId]">{{ productsStore.getById(row.productId)?.name }}</a></td>
+                <td><a [routerLink]="['/providers-models/providers', row.providerId]">{{ productsStore.providerName(row.providerId) }}</a></td>
+                <td>{{ productsStore.modelName(row.modelId) }}</td>
+                <td class="numeric">{{ formatCount(row.requests) }}</td>
+                <td class="numeric">{{ formatCount(row.input) }}</td>
+                <td class="numeric">{{ formatCount(row.output) }}</td>
+                <td class="numeric">{{ formatUsd(row.cost) }}</td>
+                <td class="numeric">{{ formatPercent(row.share) }}</td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="8">조건에 맞는 비용이 없습니다.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer"><nav class="pagination" aria-label="비용 페이지"><button type="button" aria-label="이전" [disabled]="breakdownPage() <= 1" (click)="changeBreakdownPage(breakdownPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>@for (page of pages(breakdownPages()); track page) { <button type="button" [class.is-active]="page === breakdownPage()" (click)="changeBreakdownPage(page)">{{ page }}</button> }<button type="button" aria-label="다음" [disabled]="breakdownPage() >= breakdownPages()" (click)="changeBreakdownPage(breakdownPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button></nav></footer>
+    </section>
+  } @else {
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>Rate Cards</strong><span>{{ rateRows().length }}개 항목</span></div>
+        <div class="table-tools">
+          <label class="table-search"><span class="u-sr-only">Rate Card 검색</span><app-icon name="search" [size]="16" /><input type="search" placeholder="Provider 또는 Model 검색" [value]="params().rq" (input)="updateRateFilter('rq', $any($event.target).value)" /></label>
+          <select class="toolbar-select" aria-label="Provider" [value]="params().rProvider" (change)="updateRateFilter('rProvider', $any($event.target).value)">
+            <option value="all" [selected]="params().rProvider === 'all'">전체 Provider</option>
+            @for (provider of productsStore.providers(); track provider.id) { <option [value]="provider.id" [selected]="params().rProvider === provider.id">{{ provider.name }}</option> }
+          </select>
+          <select class="toolbar-select" aria-label="Model" [value]="params().rModel" (change)="updateRateFilter('rModel', $any($event.target).value)">
+            <option value="all" [selected]="params().rModel === 'all'">전체 Model</option>
+            @for (model of rateModelOptions(); track model.id) { <option [value]="model.id" [selected]="params().rModel === model.id">{{ model.name }}</option> }
+          </select>
+          <select class="toolbar-select" aria-label="Billing Unit" [value]="params().rUnit" (change)="updateRateFilter('rUnit', $any($event.target).value)">
+            <option value="all" [selected]="params().rUnit === 'all'">전체 단위</option>
+            @for (unit of billingUnits; track unit.id) { <option [value]="unit.id" [selected]="params().rUnit === unit.id">{{ unit.label }}</option> }
+          </select>
+          <select class="toolbar-select" aria-label="상태" [value]="params().rStatus" (change)="updateRateFilter('rStatus', $any($event.target).value)">
+            <option value="all" [selected]="params().rStatus === 'all'">전체 상태</option>
+            <option value="active" [selected]="params().rStatus === 'active'">활성</option>
+            <option value="inactive" [selected]="params().rStatus === 'inactive'">비활성</option>
+          </select>
+          <label class="date-field" title="단가가 적용되기 시작한 날짜">적용 시작<input type="date" [value]="params().rFrom" (change)="updateRateFilter('rFrom', $any($event.target).value)" /></label>
+          <label class="date-field">적용 종료<input type="date" [value]="params().rTo" (change)="updateRateFilter('rTo', $any($event.target).value)" /></label>
+          @if (ratesFiltered()) { <button type="button" class="text-button" (click)="clearRates()">필터 지우기</button> }
+          <button type="button" class="button button--primary" (click)="openRate()">Rate Card 추가<app-icon name="plus" [size]="15" /></button>
+        </div>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortRates('provider')">Provider</button></th>
+              <th><button type="button" class="sort-button" (click)="sortRates('model')">Model</button></th>
+              <th><button type="button" class="sort-button" (click)="sortRates('unit')">Billing Unit</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortRates('input')">Input Price</button></th>
+              <th class="numeric"><button type="button" class="sort-button" (click)="sortRates('output')">Output Price</button></th>
+              <th>Currency</th>
+              <th><button type="button" class="sort-button" (click)="sortRates('date')">Effective Date</button></th>
+              <th><button type="button" class="sort-button" (click)="sortRates('status')">Status</button></th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (card of pagedRates(); track card.id) {
+              <tr (click)="openRateFromRow(card.id, $event)">
+                <td><a [routerLink]="['/providers-models/providers', card.providerId]">{{ productsStore.providerName(card.providerId) }}</a></td>
+                <td>{{ productsStore.modelName(card.modelId) }}</td>
+                <td>{{ unitLabel(card.billingUnit) }}</td>
+                <td class="numeric">@if (card.unitPrice !== null) { {{ formatUsd(card.unitPrice) }} <small>Unit</small> } @else { {{ formatPrice(card.inputPrice) }} }</td>
+                <td class="numeric">{{ formatPrice(card.outputPrice) }}</td>
+                <td>{{ card.currency }}</td>
+                <td>{{ card.effectiveDate }}</td>
+                <td><app-status-badge [label]="statusLabel(card.status)" [tone]="card.status === 'active' ? 'success' : 'neutral'" /></td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="Rate Card 작업" [attr.aria-expanded]="actionMenu() === card.id" (click)="toggleActionMenu(card.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="9">{{ ratesFiltered() ? '조건에 맞는 Rate Card가 없습니다.' : '등록된 Rate Card가 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer"><nav class="pagination" aria-label="단가 페이지"><button type="button" aria-label="이전" [disabled]="ratePage() <= 1" (click)="changeRatePage(ratePage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>@for (page of pages(ratePages()); track page) { <button type="button" [class.is-active]="page === ratePage()" (click)="changeRatePage(page)">{{ page }}</button> }<button type="button" aria-label="다음" [disabled]="ratePage() >= ratePages()" (click)="changeRatePage(ratePage() + 1)"><app-icon name="chevron-right" [size]="14" /></button></nav></footer>
+    </section>
+  }
+</section>
+
+@if (actionMenu(); as menuId) {
+  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
+    <button type="button" (click)="openRateView(menuId)">상세</button>
+    <button type="button" (click)="editMenuRate()">수정</button>
+    <button type="button" (click)="toggleMenuRate()">{{ menuRateActive() ? '비활성화' : '활성화' }}</button>
+  </div>
+}
+
+@if (dialog() === 'request') {
+  @if (viewedRequest(); as record) {
+    <div class="dialog-backdrop" (click)="closeDialog()">
+      <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header>
+          <div><h2>{{ record.id }}</h2><p>{{ formatStamp(record.timestamp) }}</p></div>
+          <app-status-badge [label]="statusLabel(record.status)" [tone]="record.status === 'success' ? 'success' : 'danger'" />
+          <button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button>
+        </header>
+        <section class="form-section"><h3>Request Information</h3><dl>
+          <div><dt>Request ID</dt><dd>{{ record.id }} <button type="button" class="text-button" (click)="copyRequestId(record.id)">복사</button></dd></div>
+          <div><dt>Product</dt><dd><a [routerLink]="['/products', record.productId]">{{ productsStore.getById(record.productId)?.name }}</a></dd></div>
+          <div><dt>Provider</dt><dd>{{ productsStore.providerName(record.providerId) }}</dd></div>
+          <div><dt>Model</dt><dd>{{ productsStore.modelName(record.modelId) }}</dd></div>
+          <div><dt>Timestamp</dt><dd>{{ formatStamp(record.timestamp) }} KST</dd></div>
+          <div><dt>Request Status</dt><dd>{{ statusLabel(record.status) }}</dd></div>
+        </dl></section>
+        <section class="form-section"><h3>Token Usage</h3><dl>
+          <div><dt>Input Tokens</dt><dd>{{ formatTokenCell(record.inputTokens) }}</dd></div>
+          <div><dt>Output Tokens</dt><dd>{{ formatTokenCell(record.outputTokens) }}</dd></div>
+          <div><dt>Total Tokens</dt><dd>{{ record.inputTokens === null && record.outputTokens === null ? '—' : formatCount((record.inputTokens ?? 0) + (record.outputTokens ?? 0)) }}</dd></div>
+        </dl></section>
+        <section class="form-section"><h3>Performance</h3><dl>
+          <div><dt>Latency</dt><dd>{{ formatLatency(record.latencyMs) }}</dd></div>
+          <div><dt>HTTP Status Code</dt><dd>{{ record.httpStatus }}</dd></div>
+          <div><dt>Error Category</dt><dd>{{ record.errorCategory || '—' }}</dd></div>
+          <div><dt>Error Message</dt><dd>{{ record.errorMessage || '—' }}</dd></div>
+        </dl></section>
+        <section class="form-section"><h3>Cost</h3><dl>
+          <div><dt>Estimated Provider Cost</dt><dd>{{ formatUsd(record.costUsd) }}</dd></div>
+          <div><dt>Currency</dt><dd>USD</dd></div>
+        </dl><p class="hint">저장된 샘플 금액입니다. 실제 청구 금액이 아니며 Rate Card를 바꿔도 이 요청의 금액은 바뀌지 않습니다.</p></section>
+        <section class="form-section"><h3>Preview</h3><p class="masked">[Masked sample request content]</p><p class="masked">[Masked sample response content]</p></section>
+      </section>
+    </div>
+  }
+}
+
+@if (dialog() === 'rate') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>{{ editingId() ? 'Rate Card 수정' : 'Rate Card 추가' }}</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <form [formGroup]="rateForm" (ngSubmit)="saveRate()">
+        <section class="form-section"><h3>Provider & Model</h3><div class="form-grid">
+          <label class="field">Provider <em>*</em>
+            <select formControlName="providerId" (change)="changeRateProvider($event)"><option value="" [selected]="selectedProviderId() === ''">선택</option>@for (provider of productsStore.providers(); track provider.id) { <option [value]="provider.id" [selected]="selectedProviderId() === provider.id">{{ provider.name }}</option> }</select>
+          </label>
+          <label class="field">Model <em>*</em>
+            <select formControlName="modelId"><option value="" [selected]="rateForm.controls.modelId.value === ''">선택</option>@for (model of formModels(); track model.id) { <option [value]="model.id" [selected]="rateForm.controls.modelId.value === model.id">{{ model.name }}</option> }</select>
+          </label>
+        </div></section>
+        <section class="form-section"><h3>Pricing Configuration</h3><div class="form-grid">
+          <label class="field">Billing Unit <em>*</em>
+            <select formControlName="billingUnit" (change)="changeRateUnit($event)">@for (unit of billingUnits; track unit.id) { <option [value]="unit.id" [selected]="selectedUnit() === unit.id">{{ unit.label }}</option> }</select>
+          </label>
+          <label class="field">Currency<input value="USD" readonly /></label>
+          @if (dualPrice()) {
+            <label class="field">Input Price <em>*</em><input formControlName="inputPrice" type="number" min="0" step="0.0001" /></label>
+            <label class="field">Output Price <em>*</em><input formControlName="outputPrice" type="number" min="0" step="0.0001" /></label>
+          } @else {
+            <label class="field">Unit Price <em>*</em><input formControlName="unitPrice" type="number" min="0" step="0.0001" /></label>
+          }
+        </div></section>
+        <section class="form-section"><h3>Effective Date</h3><div class="form-grid"><label class="field">적용 시작일 <em>*</em><input formControlName="effectiveDate" type="date" /><small class="hint">이 날짜부터 적용하는 샘플 단가입니다.</small></label>
+          @if (!editingId()) { <label class="field">초기 상태<select formControlName="status"><option value="active" [selected]="rateForm.controls.status.value === 'active'">활성</option><option value="inactive" [selected]="rateForm.controls.status.value === 'inactive'">비활성</option></select></label> }
+        </div></section>
+        @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+        <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'view-rate') {
+  @if (viewedRate(); as card) {
+    <div class="dialog-backdrop" (click)="closeDialog()">
+      <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header><div><h2>{{ productsStore.providerName(card.providerId) }}</h2><p>{{ productsStore.modelName(card.modelId) }}</p></div><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+        <section class="form-section"><h3>Basic Information</h3><dl>
+          <div><dt>Provider</dt><dd>{{ productsStore.providerName(card.providerId) }}</dd></div>
+          <div><dt>Model</dt><dd>{{ productsStore.modelName(card.modelId) }}</dd></div>
+          <div><dt>Billing Unit</dt><dd>{{ unitLabel(card.billingUnit) }}</dd></div>
+          <div><dt>Currency</dt><dd>{{ card.currency }}</dd></div>
+          <div><dt>Status</dt><dd>{{ statusLabel(card.status) }}</dd></div>
+        </dl></section>
+        <section class="form-section"><h3>Current Pricing</h3><dl>
+          <div><dt>Input Price</dt><dd>{{ formatPrice(card.inputPrice) }}</dd></div>
+          <div><dt>Output Price</dt><dd>{{ formatPrice(card.outputPrice) }}</dd></div>
+          <div><dt>Unit Price</dt><dd>{{ formatPrice(card.unitPrice) }}</dd></div>
+          <div><dt>Effective Date</dt><dd>{{ card.effectiveDate }}</dd></div>
+        </dl></section>
+        <section class="form-section"><h3>Pricing History</h3>
+          <div class="data-table-wrap">
+            <table class="data-table data-table--inner">
+              <thead><tr><th>Effective Date</th><th>Previous Price</th><th>New Price</th><th>Updated At</th><th>Updated By</th></tr></thead>
+              <tbody>
+                @for (entry of viewedHistory(); track entry.id) {
+                  <tr>
+                    <td>{{ entry.effectiveDate }}</td>
+                    <td>{{ formatPrice(entry.previousInputPrice ?? entry.previousUnitPrice) }} / {{ formatPrice(entry.previousOutputPrice) }}</td>
+                    <td>{{ formatPrice(entry.nextInputPrice ?? entry.nextUnitPrice) }} / {{ formatPrice(entry.nextOutputPrice) }}</td>
+                    <td>{{ formatStamp(entry.updatedAt) }}</td>
+                    <td>{{ entry.updatedBy }}</td>
+                  </tr>
+                } @empty { <tr><td class="table-empty" colspan="5">변경 이력이 없습니다.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <footer>
+          <button type="button" class="button button--secondary" (click)="openRate(card)">수정</button>
+          <button type="button" class="button" [class.button--danger]="card.status === 'active'" [class.button--primary]="card.status !== 'active'" (click)="requestRateStatus(card.id, card.status !== 'active')">{{ card.status === 'active' ? '비활성화' : '활성화' }}</button>
+        </footer>
+      </section>
+    </div>
+  }
+}
+
+@if (dialog() === 'confirm') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>비활성화</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <p>이 Rate Card를 비활성화합니다. 이미 기록된 요청 비용은 다시 계산하지 않습니다.</p>
+      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--danger" (click)="confirmRateStatus()">비활성화</button></footer>
+    </section>
+  </div>
+}
+
+@if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }

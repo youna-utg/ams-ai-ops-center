@@ -4,10 +4,6 @@
       <h1>Organizations</h1>
       <p>고객사, 팀, 사용자와 Product 이용 정보를 관리합니다.</p>
     </div>
-    <button type="button" class="button button--primary" (click)="openCreate()">
-      <app-icon name="plus" [size]="16" />
-      Organization 추가
-    </button>
   </header>
 
   <div class="summary-grid">
@@ -56,6 +52,10 @@
             <option [value]="product" [selected]="query().product === product">{{ product }}</option>
           }
         </select>
+        <button type="button" class="button button--primary" (click)="openCreate()">
+          Organization 추가
+          <app-icon name="plus" [size]="15" />
+        </button>
       </div>
     </header>
 
@@ -247,7 +247,7 @@
       </p>
       <footer>
         <button type="button" class="button button--ghost" (click)="dialog.set(null)">취소</button>
-        <button type="button" class="button" [class.button--danger]="pendingAction() === 'delete'" [class.button--primary]="pendingAction() !== 'delete'" (click)="confirmAction()">
+        <button type="button" class="button" [class.button--danger]="pendingAction() === 'delete' || editing()?.status === 'active'" [class.button--primary]="pendingAction() !== 'delete' && editing()?.status !== 'active'" (click)="confirmAction()">
           확인
         </button>
       </footer>

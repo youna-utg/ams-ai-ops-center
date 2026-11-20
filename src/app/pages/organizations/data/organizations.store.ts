@@ -83,6 +83,10 @@ export class OrganizationsStore {
     );
   });
 
+  readonly activityLog = computed(() => this.state().activities);
+  readonly organizationRecords = computed(() => this.state().organizations);
+  readonly userRecords = computed(() => this.state().users);
+
   readonly organizationDetails = computed<readonly OrganizationDetail[]>(() =>
     this.organizations().map((organization) =>
       this.buildDetail(organization, this.state()),
@@ -842,7 +846,7 @@ export class OrganizationsStore {
     change: Partial<
       Pick<
         OrganizationActivity,
-        'subjectUserId' | 'field' | 'previousValue' | 'nextValue' | 'actorId'
+        'subjectUserId' | 'field' | 'previousValue' | 'nextValue' | 'actorId' | 'actorLabel'
       >
     > = {},
   ): OrganizationActivity {
@@ -853,6 +857,7 @@ export class OrganizationsStore {
       title,
       description,
       actorId: change.actorId ?? null,
+      actorLabel: change.actorLabel ?? (change.actorId ? null : 'Demo Administrator'),
       subjectUserId: change.subjectUserId ?? null,
       field: change.field ?? null,
       previousValue: change.previousValue ?? null,

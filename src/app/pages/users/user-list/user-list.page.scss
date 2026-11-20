@@ -20,7 +20,7 @@
 .table-title { display: flex; min-width: 0; align-items: center; gap: 8px; }
 .table-title strong { color: var(--color-text-primary); font-size: var(--font-size-body-lg); font-weight: var(--font-weight-semibold); line-height: 1; }
 .table-title span { color: var(--color-text-muted); font-size: var(--font-size-body-sm); line-height: 1; }
-.table-tools { display: flex; flex: 0 0 auto; align-items: center; gap: var(--space-2); }
+.table-tools { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); min-width: 0; }
 .table-search { position: relative; display: flex; width: 240px; flex: 0 0 240px; align-items: center; }
 .table-search app-icon { position: absolute; left: 5px; display: grid; width: 28px; height: 28px; place-items: center; color: var(--color-text-secondary); background: var(--color-neutral-0); border-radius: var(--radius-full); }
 .table-search input { width: 100%; height: var(--control-height-md); padding: 0 var(--space-3) 0 42px; color: var(--color-text-primary); background: var(--color-surface-subtle); border: 1px solid transparent; border-radius: var(--radius-full); outline: 0; }

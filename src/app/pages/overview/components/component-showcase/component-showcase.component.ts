@@ -5,6 +5,7 @@ import {
   computed,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ChartData, ChartOptions } from 'chart.js';
 import { areaFade, barGradientPlugin } from '../../../../shared/charts/chart-fill';
 import { ChartComponent } from '../../../../shared/components/chart/chart.component';
@@ -52,6 +53,7 @@ const ACTION_CODES: ActionCodeRow[] = [
     AmsSpecializedShowcaseComponent,
     ChartComponent,
     IconComponent,
+    RouterLink,
     StatusBadgeComponent,
   ],
   templateUrl: './component-showcase.component.html',

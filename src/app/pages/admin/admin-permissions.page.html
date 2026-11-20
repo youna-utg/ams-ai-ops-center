@@ -1,0 +1,360 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Admin & Permissions</h1>
+      <p>관리자 계정, 접근 권한, 권한 Preset을 관리합니다.</p>
+    </div>
+  </header>
+
+  <nav class="page-tabs" role="tablist" aria-label="Admin & Permissions">
+    @for (tab of tabs; track tab.id) {
+      <button type="button" role="tab" [class.is-active]="params().tab === tab.id" [attr.aria-selected]="params().tab === tab.id" (click)="setTab(tab.id)">{{ tab.label }}</button>
+    }
+  </nav>
+
+  @if (params().tab === 'accounts') {
+    <section class="summary-grid" aria-label="관리자 요약">
+      <article class="summary-card"><span>Total Admins</span><strong>{{ accountSummary().total }}</strong><small>등록된 관리자</small></article>
+      <article class="summary-card"><span>Active Admins</span><strong>{{ accountSummary().active }}</strong><small>활성</small></article>
+      <article class="summary-card"><span>Inactive Admins</span><strong>{{ accountSummary().inactive }}</strong><small>비활성</small></article>
+    </section>
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>Admin Accounts</strong><span>{{ accountRows().length }}개 항목</span></div>
+        <div class="table-tools">
+          <label class="table-search"><span class="u-sr-only">관리자 검색</span><app-icon name="search" [size]="16" /><input type="search" placeholder="이름 또는 이메일 검색" [value]="params().q" (input)="updateAccounts('q', $any($event.target).value)" /></label>
+          <select class="toolbar-select" aria-label="상태" [value]="params().status" (change)="updateAccounts('status', $any($event.target).value)">
+            <option value="all" [selected]="params().status === 'all'">전체 상태</option>
+            <option value="active" [selected]="params().status === 'active'">활성</option>
+            <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
+          </select>
+          <select class="toolbar-select" aria-label="Permission Type" [value]="params().type" (change)="updateAccounts('type', $any($event.target).value)">
+            <option value="all" [selected]="params().type === 'all'">전체 유형</option>
+            <option value="preset" [selected]="params().type === 'preset'">Preset</option>
+            <option value="custom" [selected]="params().type === 'custom'">Custom</option>
+          </select>
+          <select class="toolbar-select" aria-label="Assigned Preset" [value]="params().preset" (change)="updateAccounts('preset', $any($event.target).value)">
+            <option value="all" [selected]="params().preset === 'all'">전체 Preset</option>
+            @for (preset of store.presets(); track preset.id) { <option [value]="preset.id" [selected]="params().preset === preset.id">{{ preset.name }}</option> }
+          </select>
+          @if (accountsFiltered()) { <button type="button" class="text-button" (click)="clearAccounts()">필터 지우기</button> }
+          <button type="button" class="button button--primary" (click)="openAdmin()">관리자 추가<app-icon name="plus" [size]="15" /></button>
+        </div>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortAccounts('name')">Admin</button></th>
+              <th><button type="button" class="sort-button" (click)="sortAccounts('email')">Email</button></th>
+              <th><button type="button" class="sort-button" (click)="sortAccounts('type')">Permission Type</button></th>
+              <th><button type="button" class="sort-button" (click)="sortAccounts('preset')">Assigned Preset</button></th>
+              <th><button type="button" class="sort-button" (click)="sortAccounts('status')">Status</button></th>
+              <th><button type="button" class="sort-button" (click)="sortAccounts('login')">Last Login</button></th>
+              <th><button type="button" class="sort-button" (click)="sortAccounts('created')">Created At</button></th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (admin of pagedAccounts(); track admin.id) {
+              <tr (click)="openFromRow(admin.id, $event)">
+                <td><strong>{{ admin.fullName }}</strong></td>
+                <td>{{ admin.email }}</td>
+                <td>{{ admin.permissionType === 'preset' ? 'Preset' : 'Custom' }}</td>
+                <td>{{ admin.permissionType === 'preset' ? store.presetName(admin.presetId) : 'Custom' }}</td>
+                <td><app-status-badge [label]="statusLabel(admin.status)" [tone]="admin.status === 'active' ? 'success' : 'neutral'" /></td>
+                <td>{{ formatStamp(admin.lastLoginAt) }}</td>
+                <td>{{ formatStamp(admin.createdAt) }}</td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="관리자 작업" [attr.aria-expanded]="actionMenu() === admin.id" (click)="toggleActionMenu(admin.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="8">{{ accountsFiltered() ? '조건에 맞는 관리자가 없습니다.' : '등록된 관리자가 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer"><nav class="pagination" aria-label="관리자 페이지"><button type="button" aria-label="이전" [disabled]="accountPage() <= 1" (click)="changeAccountPage(accountPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>@for (page of pages(accountPages()); track page) { <button type="button" [class.is-active]="page === accountPage()" (click)="changeAccountPage(page)">{{ page }}</button> }<button type="button" aria-label="다음" [disabled]="accountPage() >= accountPages()" (click)="changeAccountPage(accountPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button></nav></footer>
+    </section>
+  } @else if (params().tab === 'permissions') {
+    <section class="permission-panel">
+      <header class="permission-panel__header">
+        <div>
+          <h2>Permissions</h2>
+          <p>관리자별 메뉴 조회와 관리 권한을 설정합니다. 이 설정은 프로토타입 데이터이며 실제 화면 접근을 막지 않습니다.</p>
+        </div>
+        <label class="field">Admin
+          <select [value]="selectedAdmin().id" (change)="selectAdmin($any($event.target).value)">
+            @for (admin of store.admins(); track admin.id) { <option [value]="admin.id" [selected]="selectedAdmin().id === admin.id">{{ admin.fullName }}</option> }
+          </select>
+        </label>
+      </header>
+      @if (selectedAdmin(); as admin) {
+        <dl class="identity">
+          <div><dt>Admin</dt><dd>{{ admin.fullName }}</dd></div>
+          <div><dt>Email</dt><dd>{{ admin.email }}</dd></div>
+          <div><dt>Status</dt><dd>{{ statusLabel(admin.status) }}</dd></div>
+          <div><dt>Permission Type</dt><dd>{{ admin.permissionType === 'preset' ? 'Preset' : 'Custom' }}</dd></div>
+          <div><dt>Source</dt><dd>{{ customizing() ? 'Custom Permissions' : admin.permissionType === 'preset' ? store.presetName(presetDraftId()) : 'Custom Permissions' }}</dd></div>
+          <div><dt>Accessible Menus</dt><dd>{{ summaryText(visiblePermissions()) }}</dd></div>
+        </dl>
+        <div class="permission-actions">
+          @if (admin.permissionType === 'preset' && !customizing()) {
+            <label class="field">Preset
+              <select [value]="presetDraftId() ?? ''" (change)="changeDraftPreset($event)">
+                @for (preset of store.presets(); track preset.id) { <option [value]="preset.id" [selected]="presetDraftId() === preset.id">{{ preset.name }}</option> }
+              </select>
+            </label>
+            <button type="button" class="button button--secondary" (click)="startCustomize()">맞춤 권한으로 전환</button>
+          }
+          @if (permissionDirty()) {
+            <span class="dirty">저장되지 않은 변경</span>
+            <button type="button" class="button button--secondary" (click)="cancelPermissions()">취소</button>
+            <button type="button" class="button button--primary" (click)="savePermissions()">저장</button>
+          }
+        </div>
+        @if (admin.permissionType === 'preset' && !customizing()) {
+          <p class="hint">Preset 권한은 읽기 전용입니다. Preset 원본은 Presets 탭에서만 수정합니다.</p>
+        }
+        <app-permission-matrix [permissions]="visiblePermissions()" [editable]="permissionEditable()" (changed)="onPermissionMatrix($event)" />
+      }
+    </section>
+  } @else {
+    <section class="summary-grid summary-grid--two" aria-label="Preset 요약">
+      <article class="summary-card"><span>Total Presets</span><strong>{{ presetSummary().total }}</strong><small>등록된 Preset</small></article>
+      <article class="summary-card"><span>Assigned Admins</span><strong>{{ presetSummary().assigned }}</strong><small>Preset을 사용 중인 관리자</small></article>
+    </section>
+    <section class="table-card">
+      <header class="table-toolbar">
+        <div class="table-title"><strong>Permission Presets</strong><span>{{ presetRows().length }}개 항목</span></div>
+        <div class="table-tools">
+          <label class="table-search"><span class="u-sr-only">Preset 검색</span><app-icon name="search" [size]="16" /><input type="search" placeholder="이름 또는 코드 검색" [value]="params().pq" (input)="updatePresets($any($event.target).value)" /></label>
+          @if (params().pq) { <button type="button" class="text-button" (click)="clearPresets()">필터 지우기</button> }
+          <button type="button" class="button button--primary" (click)="openPreset()">Preset 추가<app-icon name="plus" [size]="15" /></button>
+        </div>
+      </header>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="sort-button" (click)="sortPresets('name')">Preset</button></th>
+              <th><button type="button" class="sort-button" (click)="sortPresets('code')">Preset Code</button></th>
+              <th>Description</th>
+              <th><button type="button" class="sort-button" (click)="sortPresets('menus')">Accessible Menus</button></th>
+              <th><button type="button" class="sort-button" (click)="sortPresets('assigned')">Assigned Admins</button></th>
+              <th><button type="button" class="sort-button" (click)="sortPresets('updated')">Updated At</button></th>
+              <th class="table-actions-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (preset of pagedPresets(); track preset.id) {
+              <tr (click)="openPresetFromRow(preset.id, $event)">
+                <td><strong>{{ preset.name }}</strong></td>
+                <td>{{ preset.code }}</td>
+                <td>{{ preset.description || '—' }}</td>
+                <td>{{ presetAccessible(preset) }} / {{ menuCount }} Menus</td>
+                <td>{{ store.assignedCount(preset.id) }}</td>
+                <td>{{ formatStamp(preset.updatedAt) }}</td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="Preset 작업" [attr.aria-expanded]="actionMenu() === preset.id" (click)="toggleActionMenu(preset.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+              </tr>
+            } @empty {
+              <tr><td class="table-empty" colspan="7">{{ params().pq ? '조건에 맞는 Preset이 없습니다.' : '등록된 Preset이 없습니다.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="table-footer"><nav class="pagination" aria-label="Preset 페이지"><button type="button" aria-label="이전" [disabled]="presetPage() <= 1" (click)="changePresetPage(presetPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>@for (page of pages(presetPages()); track page) { <button type="button" [class.is-active]="page === presetPage()" (click)="changePresetPage(page)">{{ page }}</button> }<button type="button" aria-label="다음" [disabled]="presetPage() >= presetPages()" (click)="changePresetPage(presetPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button></nav></footer>
+    </section>
+  }
+</section>
+
+@if (actionMenu(); as menuId) {
+  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
+    @if (params().tab === 'presets') {
+      <button type="button" (click)="openPresetDetail(menuId)">상세</button>
+      <button type="button" (click)="editMenuPreset()">수정</button>
+      <button type="button" (click)="openDuplicate(menuId)">복제</button>
+    } @else {
+      <button type="button" (click)="openDetail(menuId)">상세</button>
+      <button type="button" (click)="editMenuAdmin()">수정</button>
+      <button type="button" (click)="managePermissions(menuId)">권한 설정</button>
+      <button type="button" (click)="requestStatus(menuId, menuAdmin()?.status === 'active' ? 'inactive' : 'active')">{{ menuAdmin()?.status === 'active' ? '비활성화' : '활성화' }}</button>
+    }
+  </div>
+}
+
+@if (dialog() === 'admin') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--wide" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>{{ editingId() ? '관리자 수정' : '관리자 추가' }}</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <form [formGroup]="adminForm" (ngSubmit)="saveAdmin()">
+        <section class="form-section"><h3>Basic Information</h3><div class="form-grid">
+          <label class="field">Full Name <em>*</em><input formControlName="fullName" /></label>
+          <label class="field">Email <em>*</em><input formControlName="email" type="email" /></label>
+          <label class="field">Initial Status <em>*</em>
+            <select formControlName="status"><option value="inactive" [selected]="adminForm.controls.status.value === 'inactive'">비활성</option><option value="active" [selected]="adminForm.controls.status.value === 'active'">활성</option></select>
+            @if (editingId()) { <small class="hint">상태는 목록의 활성화 액션에서 변경합니다.</small> }
+          </label>
+        </div></section>
+        <section class="form-section"><h3>Permission Assignment</h3><div class="form-grid">
+          <label class="field">Permission Type <em>*</em>
+            <select formControlName="permissionType" (change)="changePermissionType($event)"><option value="preset" [selected]="permissionType() === 'preset'">Preset 사용</option><option value="custom" [selected]="permissionType() === 'custom'">Custom Permissions</option></select>
+          </label>
+          @if (permissionType() === 'preset') {
+            <label class="field">Permission Preset <em>*</em>
+              <select formControlName="presetId"><option value="">선택</option>@for (preset of store.presets(); track preset.id) { <option [value]="preset.id" [selected]="adminForm.controls.presetId.value === preset.id">{{ preset.name }}</option> }</select>
+            </label>
+          }
+        </div>
+          @if (permissionType() === 'preset' && store.presetById(adminForm.controls.presetId.value); as selected) {
+            <p class="hint">{{ selected.name }} · {{ summaryText(selected.permissions) }}</p>
+          }
+          @if (permissionType() === 'custom') {
+            <app-permission-matrix [permissions]="dialogPermissions()" [editable]="true" (changed)="onDialogMatrix($event)" />
+          }
+        </section>
+        <p class="hint">비밀번호와 초대 메일은 만들지 않습니다. 저장하면 이 브라우저의 샘플 관리자 목록에만 추가됩니다.</p>
+        @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+        <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'detail') {
+  @if (viewedAdmin(); as admin) {
+    <div class="dialog-backdrop" (click)="closeDialog()">
+      <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header><div><h2>{{ admin.fullName }}</h2><p>{{ admin.email }}</p></div><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+        <section class="form-section"><h3>Basic Information</h3><dl>
+          <div><dt>Full Name</dt><dd>{{ admin.fullName }}</dd></div>
+          <div><dt>Email</dt><dd>{{ admin.email }}</dd></div>
+          <div><dt>Status</dt><dd>{{ statusLabel(admin.status) }}</dd></div>
+          <div><dt>Created At</dt><dd>{{ formatStamp(admin.createdAt) }}</dd></div>
+          <div><dt>Last Login</dt><dd>{{ formatStamp(admin.lastLoginAt) }}</dd></div>
+        </dl><p class="hint">Last Login은 샘플 시각입니다. 실제 로그인 기록이 아닙니다.</p></section>
+        <section class="form-section"><h3>Permission Assignment</h3><dl>
+          <div><dt>Permission Type</dt><dd>{{ admin.permissionType === 'preset' ? 'Preset' : 'Custom' }}</dd></div>
+          <div><dt>Assigned Preset</dt><dd>{{ admin.permissionType === 'preset' ? store.presetName(admin.presetId) : 'Custom' }}</dd></div>
+          <div><dt>Accessible Menus</dt><dd>{{ summaryText(store.effectivePermissions(admin)) }}</dd></div>
+        </dl></section>
+        <section class="form-section"><h3>Recent Activity</h3>
+          @if (store.activitiesFor(admin).length) {
+            <div class="data-table-wrap">
+              <table class="data-table data-table--inner">
+                <thead><tr><th>Timestamp</th><th>Action</th><th>Previous</th><th>New</th><th>Actor</th></tr></thead>
+                <tbody>
+                  @for (activity of store.activitiesFor(admin).slice(0, 8); track activity.id) {
+                    <tr>
+                      <td>{{ formatStamp(activity.timestamp) }}</td>
+                      <td>{{ activityLabel(activity.action) }}</td>
+                      <td>{{ activity.previousValue || '—' }}</td>
+                      <td>{{ activity.newValue || '—' }}</td>
+                      <td>{{ activity.actorName }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="table-empty">기록된 변경이 없습니다.</p> }
+        </section>
+        <footer>
+          <button type="button" class="button button--secondary" (click)="openAdmin(admin)">수정</button>
+          <button type="button" class="button button--secondary" (click)="managePermissions(admin.id)">권한 설정</button>
+          <button type="button" class="button" [class.button--danger]="admin.status === 'active'" [class.button--primary]="admin.status !== 'active'" (click)="requestStatus(admin.id, admin.status === 'active' ? 'inactive' : 'active')">{{ admin.status === 'active' ? '비활성화' : '활성화' }}</button>
+        </footer>
+      </section>
+    </div>
+  }
+}
+
+@if (dialog() === 'preset' || dialog() === 'confirm-preset') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--wide" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      @if (dialog() === 'confirm-preset') {
+        <header><h2>Preset 변경</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="backToPreset()"><app-icon name="close" [size]="16" /></button></header>
+        <p>이 Preset을 사용하는 관리자 {{ store.assignedCount(editingId() ?? '') }}명에게 변경된 권한이 반영됩니다. Custom 권한을 쓰는 관리자는 바뀌지 않습니다.</p>
+        <footer><button type="button" class="button button--secondary" (click)="backToPreset()">취소</button><button type="button" class="button button--primary" (click)="confirmPreset()">저장</button></footer>
+      } @else {
+        <header><h2>{{ editingId() ? 'Preset 수정' : 'Preset 추가' }}</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+        <form [formGroup]="presetForm" (ngSubmit)="savePreset()">
+          <section class="form-section"><h3>Basic Information</h3><div class="form-grid">
+            <label class="field">Preset Name <em>*</em><input formControlName="name" /></label>
+            <label class="field">Preset Code <em>*</em><input formControlName="code" /><small class="hint">등록 후에는 코드를 바꾸지 않습니다.</small></label>
+            <label class="field field--wide">Description<textarea formControlName="description" rows="2"></textarea></label>
+          </div>
+            @if (editingId()) { <p class="hint">현재 {{ store.assignedCount(editingId() ?? '') }}명의 관리자에게 적용 중입니다.</p> }
+          </section>
+          <section class="form-section"><h3>Permission Matrix</h3>
+            <app-permission-matrix [permissions]="presetPermissions()" [editable]="true" (changed)="onPresetMatrix($event)" />
+          </section>
+          @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+          <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="submit" class="button button--primary">저장</button></footer>
+        </form>
+      }
+    </section>
+  </div>
+}
+
+@if (dialog() === 'preset-detail') {
+  @if (viewedPreset(); as preset) {
+    <div class="dialog-backdrop" (click)="closeDialog()">
+      <section class="dialog dialog--wide" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header><div><h2>{{ preset.name }}</h2><p>{{ preset.code }}</p></div><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+        <section class="form-section"><h3>Basic Information</h3><dl>
+          <div><dt>Preset</dt><dd>{{ preset.name }}</dd></div>
+          <div><dt>Preset Code</dt><dd>{{ preset.code }}</dd></div>
+          <div><dt>Description</dt><dd>{{ preset.description || '—' }}</dd></div>
+          <div><dt>Accessible Menus</dt><dd>{{ presetAccessible(preset) }} / {{ menuCount }}</dd></div>
+          <div><dt>Assigned Admins</dt><dd>{{ store.assignedCount(preset.id) }}</dd></div>
+          <div><dt>Updated At</dt><dd>{{ formatStamp(preset.updatedAt) }}</dd></div>
+        </dl></section>
+        <section class="form-section"><h3>Permission Matrix</h3>
+          <app-permission-matrix [permissions]="preset.permissions" [editable]="false" />
+        </section>
+        <footer>
+          <button type="button" class="button button--secondary" (click)="openDuplicate(preset.id)">복제</button>
+          <button type="button" class="button button--primary" (click)="openPreset(preset)">수정</button>
+        </footer>
+      </section>
+    </div>
+  }
+}
+
+@if (dialog() === 'duplicate') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>Preset 복제</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <p class="hint">원본 Preset의 권한을 복사합니다. 원본은 바뀌지 않습니다.</p>
+      <form [formGroup]="duplicateForm" (ngSubmit)="saveDuplicate()">
+        <div class="form-grid">
+          <label class="field">Preset Name <em>*</em><input formControlName="name" /></label>
+          <label class="field">Preset Code <em>*</em><input formControlName="code" /></label>
+        </div>
+        @if (formError()) { <p class="form-error">{{ formError() }}</p> }
+        <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="submit" class="button button--primary">복제</button></footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'confirm-status') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>{{ statusIntent() === 'active' ? '활성화' : '비활성화' }}</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <p>{{ statusIntent() === 'active' ? '이 관리자를 프로토타입에서 활성으로 표시합니다. 실제 로그인 권한은 부여하지 않습니다.' : '이 관리자는 프로토타입에서 비활성으로 표시됩니다. 실제 로그인 세션이나 메뉴 접근은 차단하지 않습니다.' }}</p>
+      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button" [class.button--danger]="statusIntent() !== 'active'" [class.button--primary]="statusIntent() === 'active'" (click)="confirmStatus()">{{ statusIntent() === 'active' ? '활성화' : '비활성화' }}</button></footer>
+    </section>
+  </div>
+}
+
+@if (dialog() === 'discard') {
+  <div class="dialog-backdrop" (click)="closeDialog()">
+    <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header><h2>저장하지 않은 변경</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
+      <p>저장하지 않은 권한 변경을 취소하고 이동합니다.</p>
+      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">머무르기</button><button type="button" class="button button--primary" (click)="confirmDiscard()">이동</button></footer>
+    </section>
+  </div>
+}
+
+@if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }

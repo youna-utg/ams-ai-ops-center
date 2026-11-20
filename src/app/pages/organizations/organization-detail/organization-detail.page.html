@@ -23,7 +23,9 @@
         <button type="button" class="button button--outline" (click)="openOrganizationEdit()">수정</button>
         <button
           type="button"
-          class="button button--outline"
+          class="button"
+          [class.button--danger]="current.organization.status === 'active'"
+          [class.button--primary]="current.organization.status !== 'active'"
           (click)="requestConfirmation(current.organization.status === 'active' ? 'deactivate' : 'activate')"
         >
           {{ current.organization.status === 'active' ? '비활성화' : '활성화' }}
@@ -90,7 +92,7 @@
           <section class="card table-card">
             <header class="section-header">
               <div><div class="table-title"><h2>Teams</h2><span>{{ current.teams.length }}개 항목</span></div><p>소속 사용자와 팀 구성을 관리합니다.</p></div>
-              <button type="button" class="button button--primary" (click)="openTeam()"><app-icon name="plus" [size]="15" />Team 추가</button>
+              <button type="button" class="button button--primary" (click)="openTeam()">Team 추가<app-icon name="plus" [size]="15" /></button>
             </header>
             <div class="table-scroll">
               <table>
@@ -154,7 +156,7 @@
             <section class="card table-card">
               <header class="section-header">
                 <div><div class="table-title"><h2>Current Product Access</h2><span>{{ activeAccesses().length }}개 항목</span></div><p>현재 이용 중인 Product입니다.</p></div>
-                <button type="button" class="button button--primary" (click)="openAccess()"><app-icon name="plus" [size]="15" />Product 추가</button>
+                <button type="button" class="button button--primary" (click)="openAccess()">Product 추가<app-icon name="plus" [size]="15" /></button>
               </header>
               <div class="table-scroll">
                 <table>
@@ -323,7 +325,7 @@
       <h2 id="confirm-title">{{ confirmationTitle() }}</h2>
       <p>{{ confirmationText() }}</p>
       @if (error()) {<p class="form-error">{{ error() }}</p>}
-      <footer><button type="button" class="button button--ghost" (click)="dialog.set(null)">취소</button><button type="button" class="button" [class.button--danger]="pendingAction() === 'delete-organization' || pendingAction() === 'delete-team' || pendingAction() === 'remove-access' || pendingAction() === 'end-access'" [class.button--primary]="pendingAction() !== 'delete-organization' && pendingAction() !== 'delete-team' && pendingAction() !== 'remove-access' && pendingAction() !== 'end-access'" (click)="confirmAction()">확인</button></footer>
+      <footer><button type="button" class="button button--ghost" (click)="dialog.set(null)">취소</button><button type="button" class="button" [class.button--danger]="pendingAction() === 'deactivate' || pendingAction() === 'delete-organization' || pendingAction() === 'delete-team' || pendingAction() === 'remove-access' || pendingAction() === 'end-access'" [class.button--primary]="pendingAction() === 'activate'" (click)="confirmAction()">확인</button></footer>
     </section>
   </div>
 }

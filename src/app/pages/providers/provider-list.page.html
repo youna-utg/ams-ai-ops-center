@@ -4,11 +4,6 @@
       <h1>Providers & Models</h1>
       <p>AI Provider, Model, 제품 연결을 관리합니다.</p>
     </div>
-    @if (params().tab === 'providers') {
-      <button type="button" class="button button--primary" (click)="openProvider()">Provider 추가</button>
-    } @else {
-      <button type="button" class="button button--primary" (click)="openModel()">Model 추가</button>
-    }
   </header>
 
   <nav class="page-tabs" role="tablist" aria-label="Providers & Models">
@@ -40,6 +35,7 @@
             <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
           </select>
           @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+          <button type="button" class="button button--primary" (click)="openProvider()">Provider 추가<app-icon name="plus" [size]="15" /></button>
         </div>
       </header>
       <div class="data-table-wrap">
@@ -102,6 +98,7 @@
             <option value="inactive" [selected]="params().status === 'inactive'">비활성</option>
           </select>
           @if (hasFilters()) { <button type="button" class="text-button" (click)="clearFilters()">필터 지우기</button> }
+          <button type="button" class="button button--primary" (click)="openModel()">Model 추가<app-icon name="plus" [size]="15" /></button>
         </div>
       </header>
       <div class="data-table-wrap">
@@ -270,7 +267,7 @@
       </section>
       <footer>
         <button type="button" class="button button--secondary" (click)="openModel(model)">수정</button>
-        <button type="button" class="button button--primary" (click)="requestStatus(model.id, model.status !== 'active')">{{ model.status === 'active' ? '비활성화' : '활성화' }}</button>
+        <button type="button" class="button" [class.button--danger]="model.status === 'active'" [class.button--primary]="model.status !== 'active'" (click)="requestStatus(model.id, model.status !== 'active')">{{ model.status === 'active' ? '비활성화' : '활성화' }}</button>
       </footer>
     </section>
   </div>
@@ -282,7 +279,7 @@
     <section class="dialog dialog--confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
       <header><h2>비활성화</h2><button type="button" class="dialog-close" aria-label="닫기" (click)="closeDialog()"><app-icon name="close" [size]="16" /></button></header>
       <p>{{ params().tab === 'providers' ? '이 Provider를 비활성화합니다.' : '이 Model을 비활성화합니다.' }} 연결된 Model과 Mapping은 유지됩니다. 현재 {{ confirmCount() }}개 제품과 연결되어 있습니다. 실제 요청은 차단하지 않습니다.</p>
-      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--primary" (click)="confirmStatus()">비활성화</button></footer>
+      <footer><button type="button" class="button button--secondary" (click)="closeDialog()">취소</button><button type="button" class="button button--danger" (click)="confirmStatus()">비활성화</button></footer>
     </section>
   </div>
 }
