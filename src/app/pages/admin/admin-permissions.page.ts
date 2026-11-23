@@ -2,14 +2,18 @@ import { Component, DestroyRef, HostListener, computed, inject, signal } from '@
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { NAV_GROUPS } from '../../core/config/navigation.config';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import { AdminStore } from './data/admin.store';
 import {
   MenuPermission,
   PERMISSION_MENU_COUNT,
+  PERMISSION_MENUS,
   accessibleCount,
+  applyToggle,
   clonePermissions,
+  grant,
   manageCount,
   samePermissions,
 } from './data/permission-catalog';
@@ -56,6 +60,15 @@ export class AdminPermissionsPage {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly menuCount = PERMISSION_MENU_COUNT;
+  protected readonly permissionGroups = NAV_GROUPS.map((group) => ({
+    label: group.label,
+    menus: group.items.map((item) => ({
+      key: item.path.replace(/^\//, ''),
+      label: item.label,
+      description: item.description,
+      viewOnly: item.path === '/overview',
+    })),
+  }));
   protected readonly tabs = [
     { id: 'accounts' as const, label: 'Admin Accounts' },
     { id: 'permissions' as const, label: 'Permissions' },
@@ -97,7 +110,7 @@ export class AdminPermissionsPage {
     code: ['', Validators.required],
   });
 
-  protected readonly selectedAdmin = computed(() => {
+  protected readonly selectedAdmin = computed((): AdminAccount | null => {
     const requested = this.store.adminById(this.params().admin);
     return requested ?? this.store.admins()[0] ?? null;
   });
@@ -244,6 +257,31 @@ export class AdminPermissionsPage {
     return Boolean(params.q) || params.status !== 'all' || params.type !== 'all' || params.preset !== 'all';
   }
 
+  protected initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+    return name.trim().slice(0, 2).toUpperCase();
+  }
+
+  protected roleLabel(admin: AdminAccount): string {
+    return admin.permissionType === 'preset' ? this.store.presetName(admin.presetId) : 'Custom';
+  }
+
+  protected permissionOf(key: string): MenuPermission {
+    return this.visiblePermissions().find((item) => item.menuKey === key) ?? { menuKey: key, view: false, manage: false };
+  }
+
+  protected togglePermission(key: string, field: 'view' | 'manage', event: Event): void {
+    if (!this.permissionEditable()) return;
+    const checked = event.target instanceof HTMLInputElement && event.target.checked;
+    this.permissionDraft.set(applyToggle(this.visiblePermissions(), key, field, checked));
+  }
+
+  protected setAllPermissions(enabled: boolean): void {
+    if (!this.permissionEditable()) return;
+    this.permissionDraft.set(enabled ? grant(PERMISSION_MENUS.map((menu) => menu.key), 'manage') : clonePermissions([]));
+  }
+
   protected selectAdmin(id: string): void {
     if (id === this.selectedAdmin()?.id) return;
     if (this.permissionDirty()) {
@@ -342,10 +380,6 @@ export class AdminPermissionsPage {
     this.store.setStatus(id, this.statusIntent());
     this.closeDialog();
     this.showToast(this.statusIntent() === 'active' ? '활성으로 표시했습니다.' : '비활성으로 표시했습니다.');
-  }
-
-  protected onPermissionMatrix(permissions: MenuPermission[]): void {
-    this.permissionDraft.set(permissions);
   }
 
   protected onDialogMatrix(permissions: MenuPermission[]): void {

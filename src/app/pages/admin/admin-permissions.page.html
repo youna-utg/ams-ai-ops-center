@@ -76,46 +76,107 @@
       <footer class="table-footer"><nav class="pagination" aria-label="관리자 페이지"><button type="button" aria-label="이전" [disabled]="accountPage() <= 1" (click)="changeAccountPage(accountPage() - 1)"><app-icon name="chevron-left" [size]="14" /></button>@for (page of pages(accountPages()); track page) { <button type="button" [class.is-active]="page === accountPage()" (click)="changeAccountPage(page)">{{ page }}</button> }<button type="button" aria-label="다음" [disabled]="accountPage() >= accountPages()" (click)="changeAccountPage(accountPage() + 1)"><app-icon name="chevron-right" [size]="14" /></button></nav></footer>
     </section>
   } @else if (params().tab === 'permissions') {
-    <section class="permission-panel">
-      <header class="permission-panel__header">
-        <div>
-          <h2>Permissions</h2>
-          <p>관리자별 메뉴 조회와 관리 권한을 설정합니다. 이 설정은 프로토타입 데이터이며 실제 화면 접근을 막지 않습니다.</p>
-        </div>
-        <label class="field">Admin
-          <select [value]="selectedAdmin().id" (change)="selectAdmin($any($event.target).value)">
-            @for (admin of store.admins(); track admin.id) { <option [value]="admin.id" [selected]="selectedAdmin().id === admin.id">{{ admin.fullName }}</option> }
-          </select>
-        </label>
-      </header>
-      @if (selectedAdmin(); as admin) {
-        <dl class="identity">
-          <div><dt>Admin</dt><dd>{{ admin.fullName }}</dd></div>
-          <div><dt>Email</dt><dd>{{ admin.email }}</dd></div>
-          <div><dt>Status</dt><dd>{{ statusLabel(admin.status) }}</dd></div>
-          <div><dt>Permission Type</dt><dd>{{ admin.permissionType === 'preset' ? 'Preset' : 'Custom' }}</dd></div>
-          <div><dt>Source</dt><dd>{{ customizing() ? 'Custom Permissions' : admin.permissionType === 'preset' ? store.presetName(presetDraftId()) : 'Custom Permissions' }}</dd></div>
-          <div><dt>Accessible Menus</dt><dd>{{ summaryText(visiblePermissions()) }}</dd></div>
-        </dl>
-        <div class="permission-actions">
-          @if (admin.permissionType === 'preset' && !customizing()) {
-            <label class="field">Preset
-              <select [value]="presetDraftId() ?? ''" (change)="changeDraftPreset($event)">
-                @for (preset of store.presets(); track preset.id) { <option [value]="preset.id" [selected]="presetDraftId() === preset.id">{{ preset.name }}</option> }
-              </select>
-            </label>
-            <button type="button" class="button button--secondary" (click)="startCustomize()">맞춤 권한으로 전환</button>
-          }
-          @if (permissionDirty()) {
-            <span class="dirty">저장되지 않은 변경</span>
-            <button type="button" class="button button--secondary" (click)="cancelPermissions()">취소</button>
-            <button type="button" class="button button--primary" (click)="savePermissions()">저장</button>
-          }
-        </div>
-        @if (admin.permissionType === 'preset' && !customizing()) {
-          <p class="hint">Preset 권한은 읽기 전용입니다. Preset 원본은 Presets 탭에서만 수정합니다.</p>
+    <section class="permission-layout">
+      <aside class="account-list" aria-label="관리자 목록">
+        <header><h2>Administrators</h2><span>{{ store.admins().length }}명</span></header>
+        @for (admin of store.admins(); track admin.id) {
+          <button type="button" [class.is-selected]="selectedAdmin()?.id === admin.id" (click)="selectAdmin(admin.id)">
+            <span class="account-avatar" aria-hidden="true">{{ initials(admin.fullName) }}</span>
+            <span><b>{{ admin.fullName }}</b><small>{{ roleLabel(admin) }}</small></span>
+            <app-icon name="chevron-right" [size]="15" />
+          </button>
+        } @empty {
+          <p class="account-list__empty">등록된 관리자가 없습니다.</p>
         }
-        <app-permission-matrix [permissions]="visiblePermissions()" [editable]="permissionEditable()" (changed)="onPermissionMatrix($event)" />
+      </aside>
+
+      @if (selectedAdmin(); as admin) {
+        <article class="permission-editor">
+          <header class="selected-account">
+            <span class="account-avatar account-avatar--large" aria-hidden="true">{{ initials(admin.fullName) }}</span>
+            <div>
+              <h2>{{ admin.fullName }}</h2>
+              <p>{{ admin.email }} · 최근 로그인 {{ formatStamp(admin.lastLoginAt) }}</p>
+            </div>
+            <app-status-badge [label]="statusLabel(admin.status)" [tone]="admin.status === 'active' ? 'success' : 'neutral'" />
+          </header>
+
+          <div class="permission-toolbar">
+            @if (admin.permissionType === 'preset' && !customizing()) {
+              <label>
+                <span>Permission Preset</span>
+                <select [value]="presetDraftId() ?? ''" (change)="changeDraftPreset($event)" aria-label="Permission Preset">
+                  @for (preset of store.presets(); track preset.id) { <option [value]="preset.id" [selected]="presetDraftId() === preset.id">{{ preset.name }}</option> }
+                </select>
+              </label>
+            } @else {
+              <label>
+                <span>Permission Preset</span>
+                <select disabled aria-label="Permission Preset"><option>Custom</option></select>
+              </label>
+            }
+            <div>
+              <span>{{ summaryText(visiblePermissions()) }}</span>
+              <span>{{ admin.permissionType === 'preset' && !customizing() ? 'Preset' : 'Custom' }}</span>
+              <button type="button" [disabled]="!permissionEditable()" (click)="setAllPermissions(true)">전체 선택</button>
+              <button type="button" [disabled]="!permissionEditable()" (click)="setAllPermissions(false)">선택 해제</button>
+              @if (admin.permissionType === 'preset' && !customizing()) {
+                <button type="button" (click)="startCustomize()">맞춤 권한으로 전환</button>
+              }
+            </div>
+          </div>
+
+          @if (admin.permissionType === 'preset' && !customizing()) {
+            <p class="custom-notice"><app-icon name="info" [size]="15" />Preset 권한은 읽기 전용입니다. Preset 원본은 Presets 탭에서만 수정합니다. 이 설정은 프로토타입 데이터이며 실제 화면 접근을 막지 않습니다.</p>
+          } @else {
+            <p class="custom-notice"><app-icon name="info" [size]="15" />Custom Permissions · 이 관리자에게 개별 권한이 적용됩니다. 이 설정은 프로토타입 데이터이며 실제 화면 접근을 막지 않습니다.</p>
+          }
+
+          <p class="matrix-legend">View는 조회, Manage는 관리입니다. Manage를 켜면 View도 켜지고, View를 끄면 Manage도 꺼집니다. Dashboard는 조회만 제공합니다.</p>
+
+          <div class="permission-groups">
+            @for (group of permissionGroups; track group.label) {
+              <section>
+                <h3>{{ group.label }}</h3>
+                @for (menu of group.menus; track menu.key) {
+                  <div class="permission-item">
+                    <div>
+                      <b>{{ menu.label }}</b>
+                      <small>{{ menu.description }}</small>
+                    </div>
+                    <div class="permission-toggles">
+                      <label>
+                        <input type="checkbox" [checked]="permissionOf(menu.key).view" [disabled]="!permissionEditable()" (change)="togglePermission(menu.key, 'view', $event)" [attr.aria-label]="menu.label + ' View'" />
+                        View
+                      </label>
+                      @if (menu.viewOnly) {
+                        <span class="permission-na" title="Dashboard는 조회 권한만 제공합니다.">Manage —</span>
+                      } @else {
+                        <label>
+                          <input type="checkbox" [checked]="permissionOf(menu.key).manage" [disabled]="!permissionEditable()" (change)="togglePermission(menu.key, 'manage', $event)" [attr.aria-label]="menu.label + ' Manage'" />
+                          Manage
+                        </label>
+                      }
+                    </div>
+                  </div>
+                }
+              </section>
+            }
+          </div>
+
+          <footer class="permission-footer">
+            <p>
+              적용 기준 {{ customizing() ? 'Custom Permissions' : admin.permissionType === 'preset' ? store.presetName(presetDraftId()) : 'Custom Permissions' }}
+              @if (permissionDirty()) { · 저장되지 않은 변경 }
+            </p>
+            <div>
+              @if (permissionDirty()) { <button type="button" class="button button--secondary" (click)="cancelPermissions()">취소</button> }
+              <button type="button" class="button button--primary" [disabled]="!permissionDirty()" (click)="savePermissions()">변경사항 저장</button>
+            </div>
+          </footer>
+        </article>
+      } @else {
+        <article class="permission-editor"><p class="account-list__empty">권한을 설정할 관리자가 없습니다.</p></article>
       }
     </section>
   } @else {
