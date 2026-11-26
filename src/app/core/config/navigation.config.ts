@@ -1,5 +1,6 @@
 export type NavIcon =
   | 'overview'
+  | 'design'
   | 'organizations'
   | 'users'
   | 'products'
@@ -50,6 +51,12 @@ export const NAV_GROUPS: NavGroup[] = [
         path: '/overview',
         description: '전체 운영 현황',
         icon: 'overview',
+      },
+      {
+        label: 'Design System',
+        path: '/design-system',
+        description: '운영 화면과 공통 UI 컴포넌트',
+        icon: 'design',
       },
     ],
   },

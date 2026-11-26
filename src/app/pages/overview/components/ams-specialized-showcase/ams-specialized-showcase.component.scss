@@ -1053,13 +1053,12 @@
   background: var(--color-surface-subtle);
   border: 0;
   border-radius: var(--radius-full);
+  cursor: pointer;
 }
 
-.activity-toolbar button:hover,
 .activity-toolbar button.is-active {
   color: var(--color-primary-active);
   background: var(--color-primary-subtle);
-  border-color: var(--color-primary-200);
 }
 
 .severity {

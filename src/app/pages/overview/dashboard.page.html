@@ -1,0 +1,261 @@
+<section class="page">
+  <header class="page__header">
+    <div>
+      <h1 class="page__title">운영 대시보드</h1>
+      <p class="page__description">AI 서비스의 사용량, 비용과 운영 상태를 한눈에 확인합니다.</p>
+    </div>
+    <span class="page__updated">데이터 기준 시각 · 2026-11-26 11:50 KST</span>
+  </header>
+
+  <section class="kpi-grid" aria-label="오늘의 주요 지표">
+    <article class="kpi-card kpi-card--primary">
+      <div class="kpi-card__copy">
+        <p class="kpi-card__label">오늘 AI 사용량</p>
+        <div class="kpi-card__metric">
+          <strong class="kpi-card__value">6,840건</strong>
+          <span class="trend trend--up"><app-icon name="arrow-up" [size]="11" /> 12%</span>
+        </div>
+        <p class="kpi-card__help">어제 대비 사용량</p>
+      </div>
+      <span class="kpi-card__icon"><app-icon name="usage" [size]="18" /></span>
+    </article>
+    <article class="kpi-card kpi-card--cost">
+      <div class="kpi-card__copy">
+        <p class="kpi-card__label">이번 달 외부 비용</p>
+        <div class="kpi-card__metric">
+          <strong class="kpi-card__value">$986.40</strong>
+          <span class="trend trend--up"><app-icon name="arrow-up" [size]="11" /> 8%</span>
+        </div>
+        <p class="kpi-card__help">전월 대비 비용</p>
+      </div>
+      <span class="kpi-card__icon"><app-icon name="pricing" [size]="18" /></span>
+    </article>
+    <article class="kpi-card kpi-card--points">
+      <div class="kpi-card__copy">
+        <p class="kpi-card__label">전체 포인트 잔액</p>
+        <div class="kpi-card__metric"><strong class="kpi-card__value">186,400 P</strong></div>
+        <p class="kpi-card__help">이번 달 차감 24,800 P</p>
+      </div>
+      <span class="kpi-card__icon"><app-icon name="points" [size]="18" /></span>
+    </article>
+    <article class="kpi-card kpi-card--customers">
+      <div class="kpi-card__copy">
+        <p class="kpi-card__label">활성 고객사</p>
+        <div class="kpi-card__metric"><strong class="kpi-card__value">17개사</strong></div>
+        <p class="kpi-card__help">일시 중지 1개사</p>
+      </div>
+      <span class="kpi-card__icon"><app-icon name="organizations" [size]="18" /></span>
+    </article>
+    <article class="kpi-card kpi-card--error">
+      <div class="kpi-card__copy">
+        <p class="kpi-card__label">오류율 (오늘)</p>
+        <div class="kpi-card__metric">
+          <strong class="kpi-card__value">1.4%</strong>
+          <app-status-badge label="안정" tone="success" [showDot]="true" />
+        </div>
+        <p class="kpi-card__help">장애 진행 중 0건</p>
+      </div>
+      <span class="kpi-card__icon"><app-icon name="health" [size]="18" /></span>
+    </article>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section class="usage-layout" aria-labelledby="usage-title">
+    <div class="usage-main">
+      <header class="section-heading">
+        <div>
+          <h2 id="usage-title">사용량 및 비용 추이</h2>
+          <p>기간별 AI 요청량과 외부 Provider 비용을 함께 비교합니다.</p>
+        </div>
+        <a routerLink="/usage-costs" [queryParams]="{ tab: 'api-usage' }">상세 조회</a>
+      </header>
+
+      <div class="range-group" aria-label="조회 기간">
+        <button type="button" [class.is-active]="selectedRange() === 'today'" (click)="setRange('today')">오늘</button>
+        <button type="button" [class.is-active]="selectedRange() === '7d'" (click)="setRange('7d')">최근 7일</button>
+        <button type="button" [class.is-active]="selectedRange() === '30d'" (click)="setRange('30d')">최근 30일</button>
+      </div>
+
+      <article class="panel trend-panel">
+        <app-chart
+          type="line"
+          [data]="trendData()"
+          [options]="trendOptions"
+          [height]="256"
+          label="기간별 AI 사용량 및 외부 비용 추이"
+        />
+      </article>
+
+      <div class="ranking-grid">
+        <article class="panel ranking-card">
+          <header class="panel__header"><h3>고객사별 사용량 Top 5</h3></header>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>고객사</th><th>사용량</th><th>비용</th></tr></thead>
+              <tbody>
+                @for (customer of customers(); track customer.name) {
+                  <tr><td>{{ customer.name }}</td><td>{{ customer.usage }}</td><td>{{ customer.cost }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel ranking-card">
+          <header class="panel__header"><h3>제품별 사용량 Top 5</h3></header>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>제품</th><th>사용량</th><th>비용</th></tr></thead>
+              <tbody>
+                @for (product of products(); track product.name) {
+                  <tr><td>{{ product.name }}</td><td>{{ product.usage }}</td><td>{{ product.cost }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel trend-donut">
+          <header class="panel__header">
+            <div>
+              <h3>Cost by Provider</h3>
+              <p>선택한 기간 외부 비용의 Provider 비중</p>
+            </div>
+          </header>
+          <app-chart
+            type="doughnut"
+            [data]="providerCostData()"
+            [options]="doughnutOptions"
+            [plugins]="doughnutPlugins"
+            [height]="248"
+            label="선택한 기간의 Provider별 외부 비용"
+          />
+        </article>
+      </div>
+    </div>
+
+    <aside class="gauge-column" aria-labelledby="performance-title">
+      <header class="section-heading">
+        <div>
+          <h2 id="performance-title">작업 성과와 포인트</h2>
+          <p>작업 성과와 포인트 상태입니다.</p>
+        </div>
+      </header>
+
+      <article class="panel gauge-card">
+        <header class="panel__header">
+          <div><h3>AI 작업 성공률</h3><p>완료된 작업 중 성공 비율</p></div>
+          <span class="metric-delta metric-delta--up"><app-icon name="arrow-up" [size]="11" /> 2.4%</span>
+        </header>
+        <app-gauge [value]="96.4" label="작업 성공률" />
+        <div class="gauge-summary">
+          <span>성공 작업 <strong>6,596</strong></span>
+          <span>실패 작업 <strong>244</strong></span>
+        </div>
+      </article>
+
+      <article class="panel gauge-card">
+        <header class="panel__header">
+          <div><h3>포인트 잔여율</h3><p>전체 포인트 중 사용 가능한 잔액</p></div>
+          <span class="metric-delta">이번 달 -4.5%</span>
+        </header>
+        <app-gauge [value]="70.8" label="포인트 잔여율" />
+        <div class="gauge-summary">
+          <span>잔여 포인트 <strong>186.4K</strong></span>
+          <span>이번 달 소진 <strong>24.8K</strong></span>
+        </div>
+      </article>
+    </aside>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section class="operations-layout" aria-labelledby="error-title">
+    <div class="error-area">
+      <header class="section-heading">
+        <div><h2 id="error-title">오류·장애 현황</h2><p>오늘 발생한 오류와 처리 결과를 확인합니다.</p></div>
+        <a routerLink="/system-monitoring" [queryParams]="{ tab: 'system-logs' }">전체 조회</a>
+      </header>
+
+      <div class="error-kpi-grid">
+        <article class="kpi-card kpi-card--compact"><span>오늘 API 오류</span><strong>96건</strong><small>4xx 74 / 5xx 22</small></article>
+        <article class="kpi-card kpi-card--compact"><span>평균 응답 시간</span><strong>312ms</strong><small>지연 임계 초과 2건</small></article>
+        <article class="kpi-card kpi-card--compact">
+          <span>제품 운영 상태</span><strong class="status-overview">정상 12 / 경고 2 / 오류 1</strong>
+          <a routerLink="/system-monitoring">운영 상태 관리</a>
+        </article>
+      </div>
+
+      <article class="panel error-table">
+        <header class="panel__header"><h3>최근 오류 기록</h3></header>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>발생 시각</th><th>제품</th><th>오류 유형</th><th>처리 결과</th></tr></thead>
+            <tbody>
+              @for (error of recentErrors; track error.time) {
+                <tr>
+                  <td>{{ error.time }}</td><td>{{ error.product }}</td><td>{{ error.type }}</td>
+                  <td><app-status-badge [label]="error.result" [tone]="error.tone" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <footer><a routerLink="/usage-costs" [queryParams]="{ tab: 'api-usage' }">사용·비용 연계 조사 <app-icon name="chevron-right" [size]="14" /></a></footer>
+      </article>
+    </div>
+
+    <aside class="provider-area">
+      <header class="section-heading">
+        <div><h2>AI 제공자·모델 상태</h2><p>활성 연결의 실시간 응답 상태입니다.</p></div>
+      </header>
+      <article class="panel provider-table">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>제공자</th><th>모델</th><th>상태</th><th>응답시간</th></tr></thead>
+            <tbody>
+              @for (item of providerModels; track item.provider + item.model) {
+                <tr>
+                  <td>{{ item.provider }}</td><td>{{ item.model }}</td>
+                  <td><app-status-badge [label]="item.status" [tone]="item.tone" /></td><td>{{ item.latency }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <footer><a routerLink="/providers-models">제공자·모델 상태 보기 <app-icon name="chevron-right" [size]="14" /></a></footer>
+      </article>
+    </aside>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section class="shortcuts" aria-labelledby="shortcut-title">
+    <header class="section-heading"><div><h2 id="shortcut-title">관리 바로가기</h2><p>자주 사용하는 운영 메뉴로 이동합니다.</p></div></header>
+    <div class="shortcut-grid">
+      <article class="panel shortcut-card">
+        <h3>비용 및 포인트</h3>
+        <a routerLink="/usage-costs" [queryParams]="{ tab: 'cost-analytics' }">외부 AI 비용 조회</a>
+        <a routerLink="/plans-points" [queryParams]="{ tab: 'point-policies' }">포인트 잔액·차감 내역</a>
+        <a routerLink="/plans-points" [queryParams]="{ tab: 'point-policies' }">플랜·포인트 기준 설정</a>
+      </article>
+      <article class="panel shortcut-card">
+        <h3>AI 모델 설정</h3>
+        <a routerLink="/providers-models">AI 모델 연결 설정</a>
+        <a routerLink="/products">제품 이용 권한·기간</a>
+        <a routerLink="/usage-costs" [queryParams]="{ tab: 'rate-cards' }">API 요청 제한 설정</a>
+      </article>
+      <article class="panel shortcut-card">
+        <h3>고객사·계정 관리</h3>
+        <a routerLink="/organizations">고객사 목록</a>
+        <a routerLink="/admin-permissions">관리자 계정 목록</a>
+      </article>
+      <article class="panel shortcut-card">
+        <h3>운영 이력 및 조사</h3>
+        <a routerLink="/usage-costs">사용·비용 연계 조사</a>
+        <a routerLink="/activity-history">변경 이력 조회</a>
+      </article>
+    </div>
+  </section>
+</section>

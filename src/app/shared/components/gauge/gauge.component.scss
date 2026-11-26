@@ -25,7 +25,7 @@
 .gauge__readout strong {
   display: block;
   color: var(--color-text-primary);
-  font-size: var(--font-size-kpi);
+  font-size: var(--gauge-value-font-size, var(--font-size-kpi));
   font-weight: var(--font-weight-bold);
   letter-spacing: -0.04em;
   line-height: 1;
@@ -36,5 +36,5 @@
   display: block;
   margin-top: 6px;
   color: var(--color-text-muted);
-  font-size: var(--font-size-caption);
+  font-size: var(--gauge-label-font-size, var(--font-size-caption));
 }

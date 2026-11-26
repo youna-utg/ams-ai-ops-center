@@ -2,11 +2,12 @@ import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { NAV_ITEMS } from './core/config/navigation.config';
 import { ShellComponent } from './layout/shell/shell.component';
+import { DashboardPage } from './pages/overview/dashboard.page';
 import { OverviewPage } from './pages/overview/overview.page';
 import { PlaceholderPage } from './pages/placeholder/placeholder.page';
 
 const placeholderRoutes: Routes = NAV_ITEMS.filter(
-  (item) => !['/overview', '/organizations', '/users', '/products', '/plans-points', '/providers-models', '/usage-costs', '/admin-permissions', '/activity-history', '/system-monitoring', '/settings'].includes(item.path),
+  (item) => !['/overview', '/design-system', '/organizations', '/users', '/products', '/plans-points', '/providers-models', '/usage-costs', '/admin-permissions', '/activity-history', '/system-monitoring', '/settings'].includes(item.path),
 ).map((item) => ({
   path: item.path.slice(1),
   component: PlaceholderPage,
@@ -79,7 +80,8 @@ export const routes: Routes = [
     component: ShellComponent,
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'overview', component: OverviewPage },
+      { path: 'overview', component: DashboardPage },
+      { path: 'design-system', component: OverviewPage },
 
       {
         path: 'organizations',
