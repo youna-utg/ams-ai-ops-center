@@ -218,7 +218,7 @@
                 <td>{{ card.currency }}</td>
                 <td>{{ card.effectiveDate }}</td>
                 <td><app-status-badge [label]="statusLabel(card.status)" [tone]="card.status === 'active' ? 'success' : 'neutral'" /></td>
-                <td class="row-actions"><button type="button" class="icon-action" aria-label="Rate Card 작업" [attr.aria-expanded]="actionMenu() === card.id" (click)="toggleActionMenu(card.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="Rate Card 상세" (click)="openRateDetail(card.id, $event)"><app-icon name="more" [size]="16" /></button></td>
               </tr>
             } @empty {
               <tr><td class="table-empty" colspan="9">{{ ratesFiltered() ? '조건에 맞는 Rate Card가 없습니다.' : '등록된 Rate Card가 없습니다.' }}</td></tr>
@@ -230,14 +230,6 @@
     </section>
   }
 </section>
-
-@if (actionMenu(); as menuId) {
-  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
-    <button type="button" (click)="openRateView(menuId)">상세</button>
-    <button type="button" (click)="editMenuRate()">수정</button>
-    <button type="button" (click)="toggleMenuRate()">{{ menuRateActive() ? '비활성화' : '활성화' }}</button>
-  </div>
-}
 
 @if (dialog() === 'request') {
   @if (viewedRequest(); as record) {

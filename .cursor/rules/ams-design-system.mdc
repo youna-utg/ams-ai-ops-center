@@ -1,0 +1,37 @@
+---
+description: AMS 화면 설계·구현 시 기존 AI-Ready Design System을 강제하는 프로젝트 규칙
+alwaysApply: true
+---
+
+# AMS Design System
+
+## 작업 전
+
+- UI 작업 전 `docs/AMS_DESIGN_SYSTEM.md`를 읽고 구현/합의/샘플/미구현 상태를 구분한다.
+- 실제 근거를 먼저 확인한다: `src/styles/tokens/`, `src/styles/base/`, `src/app/shared/components/`, `src/app/layout/`, `src/app/pages/overview/`.
+- `/design-system` 로컬 데모를 import 가능한 공용 컴포넌트로 가정하지 않는다.
+- 유사한 기존 페이지와 shared component를 검색한 후 새 컴포넌트 필요성을 판단한다.
+
+## 필수 구현 규칙
+
+- 기존 semantic CSS token과 4px spacing scale를 우선한다. 임의 색상, 여백, radius, shadow, z-index, breakpoint를 추가하지 않는다.
+- App Shell, Header, Sidebar와 navigation 구조를 페이지 단위 작업으로 변경하거나 복제하지 않는다.
+- 기본 카드는 `--color-surface`, border 0, shadow 없음, `--radius-large`를 사용한다.
+- control 높이는 32/36/40px, 페이지 제목은 H1 token, 숫자는 `.text-data`/tabular figures를 사용한다.
+- 동일 목적에는 기존 component와 variant를 재사용한다. Icon, StatusBadge, Chart, Gauge는 실제 shared component를 사용한다.
+- table은 기존 list pattern을 따른다: toolbar → horizontal scroll table → pagination, 56px header, numeric right alignment, empty state.
+- Actions meatball은 상세/수정 popup을 만들지 않고 해당 행의 기존 상세 route/dialog를 바로 연다.
+- 상단/toolbar pill은 pointer를 유지한다. 단순 hover 색 변화는 추가하지 않고 open/active/selected 상태만 표시한다.
+- 샘플 데이터, Draft, 미확정 UI를 제품 정책으로 확정해 구현하지 않는다.
+
+## 변경 관리
+
+- 기존 시스템에 없는 component가 필요하면 기존 primitive 조합을 먼저 검토한다.
+- token, shared component, App Shell 변경이 필요하면 이유, API/값, 기존 화면 영향 범위를 먼저 설명하고 승인을 요청한다.
+- 한 화면만을 위한 별도 디자인 언어 또는 중복 공통 스타일을 만들지 않는다.
+
+## 완료 전
+
+- `docs/AMS_DESIGN_SYSTEM.md`의 Design System Compliance Checklist를 수행한다.
+- build/lint와 실제 브라우저에서 hover, focus, active, selected, disabled, loading, empty, responsive 상태를 확인한다.
+- 변경 파일이 요청 범위 안인지 확인하고, 디자인 시스템 불일치나 미확정 사항을 결과에 명시한다.

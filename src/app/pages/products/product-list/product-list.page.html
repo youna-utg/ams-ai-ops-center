@@ -59,7 +59,7 @@
               <td>{{ activeUsers(product) }}</td>
               <td>{{ product.createdAt | date: 'yyyy-MM-dd' }}</td>
               <td class="row-actions">
-                <button type="button" class="icon-action" aria-label="Product 작업" [attr.aria-expanded]="actionMenu() === product.id" (click)="toggleActionMenu(product.id, $event)">
+                <button type="button" class="icon-action" aria-label="Product 상세" (click)="openProductDetail(product, $event)">
                   <app-icon name="more" [size]="16" />
                 </button>
               </td>
@@ -81,14 +81,6 @@
     </footer>
   </section>
 </section>
-
-@if (activeActionProduct(); as product) {
-  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
-    <a [routerLink]="['/products', product.id]" [queryParams]="listQuery()">상세</a>
-    <button type="button" (click)="openEdit(product)">수정</button>
-    <button type="button" (click)="openStatus(product)">상태 변경</button>
-  </div>
-}
 
 @if (dialog() === 'create' || dialog() === 'edit') {
   <div class="dialog-backdrop" (click)="closeDialog()">

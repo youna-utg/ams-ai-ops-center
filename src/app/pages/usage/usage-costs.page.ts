@@ -451,6 +451,11 @@ export class UsageCostsPage {
     this.openRateView(id);
   }
 
+  protected openRateDetail(id: string, event: Event): void {
+    event.stopPropagation();
+    this.openRateView(id);
+  }
+
   protected openRateView(id: string): void {
     this.actionMenu.set(null);
     this.editingId.set(id);

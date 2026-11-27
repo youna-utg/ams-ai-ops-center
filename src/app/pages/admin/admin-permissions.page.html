@@ -65,7 +65,7 @@
                 <td><app-status-badge [label]="statusLabel(admin.status)" [tone]="admin.status === 'active' ? 'success' : 'neutral'" /></td>
                 <td>{{ formatStamp(admin.lastLoginAt) }}</td>
                 <td>{{ formatStamp(admin.createdAt) }}</td>
-                <td class="row-actions"><button type="button" class="icon-action" aria-label="관리자 작업" [attr.aria-expanded]="actionMenu() === admin.id" (click)="toggleActionMenu(admin.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="관리자 상세" (click)="openAdminDetail(admin.id, $event)"><app-icon name="more" [size]="16" /></button></td>
               </tr>
             } @empty {
               <tr><td class="table-empty" colspan="8">{{ accountsFiltered() ? '조건에 맞는 관리자가 없습니다.' : '등록된 관리자가 없습니다.' }}</td></tr>
@@ -215,7 +215,7 @@
                 <td>{{ presetAccessible(preset) }} / {{ menuCount }} Menus</td>
                 <td>{{ store.assignedCount(preset.id) }}</td>
                 <td>{{ formatStamp(preset.updatedAt) }}</td>
-                <td class="row-actions"><button type="button" class="icon-action" aria-label="Preset 작업" [attr.aria-expanded]="actionMenu() === preset.id" (click)="toggleActionMenu(preset.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="Preset 상세" (click)="openPresetFromMenu(preset.id, $event)"><app-icon name="more" [size]="16" /></button></td>
               </tr>
             } @empty {
               <tr><td class="table-empty" colspan="7">{{ params().pq ? '조건에 맞는 Preset이 없습니다.' : '등록된 Preset이 없습니다.' }}</td></tr>
@@ -227,21 +227,6 @@
     </section>
   }
 </section>
-
-@if (actionMenu(); as menuId) {
-  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
-    @if (params().tab === 'presets') {
-      <button type="button" (click)="openPresetDetail(menuId)">상세</button>
-      <button type="button" (click)="editMenuPreset()">수정</button>
-      <button type="button" (click)="openDuplicate(menuId)">복제</button>
-    } @else {
-      <button type="button" (click)="openDetail(menuId)">상세</button>
-      <button type="button" (click)="editMenuAdmin()">수정</button>
-      <button type="button" (click)="managePermissions(menuId)">권한 설정</button>
-      <button type="button" (click)="requestStatus(menuId, menuAdmin()?.status === 'active' ? 'inactive' : 'active')">{{ menuAdmin()?.status === 'active' ? '비활성화' : '활성화' }}</button>
-    }
-  </div>
-}
 
 @if (dialog() === 'admin') {
   <div class="dialog-backdrop" (click)="closeDialog()">

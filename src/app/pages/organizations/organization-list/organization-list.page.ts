@@ -348,6 +348,11 @@ export class OrganizationListPage {
 
   protected openDetail(organization: Organization, event: Event): void {
     if ((event.target as HTMLElement).closest('a, button')) return;
+    this.openOrganizationDetail(organization, event);
+  }
+
+  protected openOrganizationDetail(organization: Organization, event: Event): void {
+    event.stopPropagation();
     void this.router.navigate(['/organizations', organization.id], {
       queryParams: this.detailParams(),
     });

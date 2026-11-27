@@ -182,6 +182,11 @@ export class UserListPage {
     return this.queryFrom(this.params());
   }
 
+  protected openUserDetail(user: OrganizationUser, event: Event): void {
+    event.stopPropagation();
+    void this.router.navigate(['/users', user.id], { queryParams: this.detailQuery() });
+  }
+
   protected updateQuery(value: string): void {
     this.navigate({ ...this.params(), q: value, page: 1 });
   }

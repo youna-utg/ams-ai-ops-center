@@ -62,7 +62,7 @@
                 <td>{{ providerProductCount(provider.id) }}</td>
                 <td><app-status-badge [label]="statusLabel(provider.status)" [tone]="provider.status === 'active' ? 'success' : 'neutral'" /></td>
                 <td>{{ provider.updatedAt | date: 'yyyy-MM-dd' }}</td>
-                <td class="row-actions"><button type="button" class="icon-action" aria-label="Provider 작업" [attr.aria-expanded]="actionMenu() === provider.id" (click)="toggleActionMenu(provider.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="Provider 상세" (click)="openProviderDetail(provider.id, $event)"><app-icon name="more" [size]="16" /></button></td>
               </tr>
             } @empty {
               <tr><td class="table-empty" colspan="8">{{ hasFilters() ? '조건에 맞는 Provider가 없습니다.' : '등록된 Provider가 없습니다.' }}</td></tr>
@@ -125,7 +125,7 @@
                 <td>{{ modelProductCount(model.id) }}</td>
                 <td><app-status-badge [label]="statusLabel(model.status)" [tone]="model.status === 'active' ? 'success' : 'neutral'" /></td>
                 <td>{{ model.updatedAt | date: 'yyyy-MM-dd' }}</td>
-                <td class="row-actions"><button type="button" class="icon-action" aria-label="Model 작업" [attr.aria-expanded]="actionMenu() === model.id" (click)="toggleActionMenu(model.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+                <td class="row-actions"><button type="button" class="icon-action" aria-label="Model 상세" (click)="openModelDetail(model.id, $event)"><app-icon name="more" [size]="16" /></button></td>
               </tr>
             } @empty {
               <tr><td class="table-empty" colspan="8">{{ hasFilters() ? '조건에 맞는 Model이 없습니다.' : '등록된 Model이 없습니다.' }}</td></tr>
@@ -137,20 +137,6 @@
     </section>
   }
 </section>
-
-@if (actionMenu(); as menuId) {
-  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
-    @if (params().tab === 'providers') {
-      <a [routerLink]="['/providers-models/providers', menuId]" [queryParams]="detailQuery()">상세</a>
-      <button type="button" (click)="openProvider(store.providerById(menuId))">수정</button>
-      <button type="button" (click)="requestStatus(menuId, store.providerById(menuId)?.status !== 'active')">{{ store.providerById(menuId)?.status === 'active' ? '비활성화' : '활성화' }}</button>
-    } @else {
-      <button type="button" (click)="openModelViewById(menuId)">상세</button>
-      <button type="button" (click)="openModel(store.modelById(menuId))">수정</button>
-      <button type="button" (click)="requestStatus(menuId, store.modelById(menuId)?.status !== 'active')">{{ store.modelById(menuId)?.status === 'active' ? '비활성화' : '활성화' }}</button>
-    }
-  </div>
-}
 
 @if (dialog() === 'provider') {
   <div class="dialog-backdrop" (click)="closeDialog()">

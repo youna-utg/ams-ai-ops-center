@@ -78,7 +78,7 @@
                     <td>{{ kindLabel(model.kind) }}</td>
                     <td><app-status-badge [label]="statusLabel(model.status)" [tone]="statusTone(model.status)" /></td>
                     <td>{{ modelProductCount(model.id) }}</td>
-                    <td class="row-actions"><button type="button" class="icon-action" aria-label="Model 작업" [attr.aria-expanded]="actionMenu() === model.id" (click)="toggleActionMenu(model.id, $event)"><app-icon name="more" [size]="16" /></button></td>
+                    <td class="row-actions"><button type="button" class="icon-action" aria-label="Model 상세" (click)="openModelDetail(model.id, $event)"><app-icon name="more" [size]="16" /></button></td>
                   </tr>
                 } @empty {
                   <tr><td class="table-empty" colspan="6">등록된 Model이 없습니다.</td></tr>
@@ -122,14 +122,6 @@
     </section>
   }
 </section>
-
-@if (actionMenu(); as menuId) {
-  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
-    <button type="button" (click)="openModelViewById(menuId)">상세</button>
-    <button type="button" (click)="openModel(store.modelById(menuId))">수정</button>
-    <button type="button" (click)="requestStatus('model', menuId, store.modelById(menuId)?.status !== 'active')">{{ store.modelById(menuId)?.status === 'active' ? '비활성화' : '활성화' }}</button>
-  </div>
-}
 
 @if (dialog() === 'provider') {
   <div class="dialog-backdrop" (click)="closeDialog()">

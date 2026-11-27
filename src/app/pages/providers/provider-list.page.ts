@@ -356,7 +356,17 @@ export class ProviderListPage {
   protected openProviderFromRow(id: string, event: MouseEvent): void {
     const target = event.target;
     if (target instanceof Element && target.closest('a, button')) return;
+    this.openProviderDetail(id, event);
+  }
+
+  protected openProviderDetail(id: string, event: Event): void {
+    event.stopPropagation();
     void this.router.navigate(['/providers-models/providers', id], { queryParams: this.detailQuery() });
+  }
+
+  protected openModelDetail(id: string, event: Event): void {
+    event.stopPropagation();
+    this.openModelViewById(id);
   }
 
   protected openModelFromRow(id: string, event: MouseEvent): void {

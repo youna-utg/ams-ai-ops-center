@@ -68,7 +68,7 @@
                 <td>{{ limitLabel(plan) }}</td>
                 <td><app-status-badge [label]="statusLabel(plan.status)" [tone]="plan.status === 'active' ? 'success' : 'neutral'" /></td>
                 <td class="row-actions">
-                  <button type="button" class="icon-action" aria-label="Plan 작업" [attr.aria-expanded]="actionMenu() === plan.id" (click)="toggleActionMenu(plan.id, $event)"><app-icon name="more" [size]="16" /></button>
+                  <button type="button" class="icon-action" aria-label="Plan 상세" (click)="openPlanDetail(plan, $event)"><app-icon name="more" [size]="16" /></button>
                 </td>
               </tr>
             } @empty {
@@ -139,7 +139,7 @@
                 <td><app-status-badge [label]="statusLabel(policy.status)" [tone]="policy.status === 'active' ? 'success' : 'neutral'" /></td>
                 <td>{{ policy.updatedAt | date: 'yyyy-MM-dd' }}</td>
                 <td class="row-actions">
-                  <button type="button" class="icon-action" aria-label="Policy 작업" [attr.aria-expanded]="actionMenu() === policy.id" (click)="toggleActionMenu(policy.id, $event)"><app-icon name="more" [size]="16" /></button>
+                  <button type="button" class="icon-action" aria-label="Policy 상세" (click)="openPolicyDetail(policy, $event)"><app-icon name="more" [size]="16" /></button>
                 </td>
               </tr>
             } @empty {
@@ -158,13 +158,6 @@
     </section>
   }
 </section>
-
-@if (actionMenu(); as menuId) {
-  <div class="action-menu" [style.top]="actionMenuStyle()?.top" [style.left]="actionMenuStyle()?.left">
-    <button type="button" (click)="editMenuRecord()">수정</button>
-    <button type="button" (click)="requestStatus(menuId, !menuIsActive())">{{ menuIsActive() ? '비활성화' : '활성화' }}</button>
-  </div>
-}
 
 @if (dialog() === 'plan') {
   <div class="dialog-backdrop" (click)="closeDialog()">

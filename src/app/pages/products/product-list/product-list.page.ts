@@ -245,6 +245,11 @@ export class ProductListPage {
   protected openDetail(product: CatalogProduct, event: MouseEvent): void {
     const target = event.target;
     if (target instanceof Element && target.closest('a, button')) return;
+    this.openProductDetail(product, event);
+  }
+
+  protected openProductDetail(product: CatalogProduct, event: Event): void {
+    event.stopPropagation();
     void this.router.navigate(['/products', product.id], { queryParams: this.listQuery() });
   }
 

@@ -207,6 +207,16 @@ export class PlansPointsPage {
     this.navigate({ ...this.params(), page });
   }
 
+  protected openPlanDetail(plan: Plan, event: Event): void {
+    event.stopPropagation();
+    this.openPlan(plan);
+  }
+
+  protected openPolicyDetail(policy: PointPolicy, event: Event): void {
+    event.stopPropagation();
+    this.openPolicy(policy);
+  }
+
   protected openPlan(plan?: Plan): void {
     this.actionMenu.set(null);
     const duration = !plan

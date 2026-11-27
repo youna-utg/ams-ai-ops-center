@@ -107,9 +107,8 @@
                 <button
                   type="button"
                   class="icon-action"
-                  aria-label="Organization 작업"
-                  [attr.aria-expanded]="actionMenu() === row.organization.id"
-                  (click)="toggleActionMenu(row.organization.id, $event)"
+                  aria-label="Organization 상세"
+                  (click)="openOrganizationDetail(row.organization, $event)"
                 >
                   <app-icon name="more" [size]="17" />
                 </button>
@@ -145,26 +144,6 @@
     </footer>
   </section>
 </section>
-
-@if (activeActionOrganization(); as organization) {
-  <div
-    class="action-menu"
-    [style.top]="actionMenuStyle()?.top"
-    [style.left]="actionMenuStyle()?.left"
-  >
-    <a
-      [routerLink]="['/organizations', organization.id]"
-      [queryParams]="detailParams()"
-    >상세</a>
-    <button type="button" (click)="openEdit(organization)">수정</button>
-    <button type="button" (click)="requestAction(organization, 'toggle')">
-      {{ organization.status === 'active' ? '비활성화' : '활성화' }}
-    </button>
-    <button type="button" class="danger" (click)="requestAction(organization, 'delete')">
-      삭제
-    </button>
-  </div>
-}
 
 @if (dialog() === 'form') {
   <div class="dialog-backdrop" (click)="dialog.set(null)">

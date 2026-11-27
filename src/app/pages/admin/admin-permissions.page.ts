@@ -338,6 +338,16 @@ export class AdminPermissionsPage {
     }
   }
 
+  protected openAdminDetail(id: string, event: Event): void {
+    event.stopPropagation();
+    this.openDetail(id);
+  }
+
+  protected openPresetFromMenu(id: string, event: Event): void {
+    event.stopPropagation();
+    this.openPresetDetail(id);
+  }
+
   protected openDetail(id: string): void {
     this.actionMenu.set(null);
     this.editingId.set(id);

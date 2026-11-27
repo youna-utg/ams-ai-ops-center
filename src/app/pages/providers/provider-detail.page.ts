@@ -219,6 +219,11 @@ export class ProviderDetailPage {
     if (model) this.openModelView(model);
   }
 
+  protected openModelDetail(id: string, event: Event): void {
+    event.stopPropagation();
+    this.openModelViewById(id);
+  }
+
   protected requestStatus(kind: 'provider' | 'model', id: string, active: boolean): void {
     this.actionMenu.set(null);
     if (active) {
